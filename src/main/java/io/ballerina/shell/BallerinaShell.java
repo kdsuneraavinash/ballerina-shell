@@ -19,9 +19,10 @@ package io.ballerina.shell;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
-import io.ballerina.shell.executor.DirectExecutor;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.ExecutorResult;
+import io.ballerina.shell.executor.ProcessExecutor;
+import io.ballerina.shell.executor.wrapper.TemplateWrapper;
 import io.ballerina.shell.postprocessor.BasicPostprocessor;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.preprocessor.CombinedPreprocessor;
@@ -31,7 +32,6 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.transformer.MasterTransformer;
 import io.ballerina.shell.treeparser.TreeParser;
 import io.ballerina.shell.treeparser.TrialTreeParser;
-import io.ballerina.shell.wrapper.TemplateWrapper;
 
 import java.util.List;
 
@@ -49,7 +49,8 @@ public class BallerinaShell {
         this.preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
         this.parser = new TrialTreeParser();
         this.transformer = new MasterTransformer();
-        this.executor = new DirectExecutor(new TemplateWrapper());
+        this.executor = new ProcessExecutor(new TemplateWrapper());
+        // this.executor = new ProjectApiExecutor(new TemplateWrapper());
         this.postprocessor = new BasicPostprocessor();
     }
 
@@ -57,9 +58,9 @@ public class BallerinaShell {
      * Base evaluation function.
      * Evaluates a input line.
      *
-     * @param input                Input line from user.
+     * @param input                 Input line from user.
      * @param shellResultController Shell result object which contain
-     *                             the results of the shell after the execution is done.
+     *                              the results of the shell after the execution is done.
      */
     public void evaluate(String input, ShellResultController shellResultController) {
         List<String> source = preprocessor.preprocess(input);

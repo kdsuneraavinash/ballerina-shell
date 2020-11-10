@@ -15,12 +15,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.wrapper;
+package io.ballerina.shell.executor.wrapper;
 
-import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.tools.text.TextDocument;
-import io.ballerina.tools.text.TextDocuments;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,17 +34,15 @@ public class TemplateWrapper implements Wrapper {
     private static final String TEMPLATE_FILE = "template.bal";
 
     @Override
-    public SyntaxTree wrap(Collection<Snippet<?>> imports,
-                           Collection<Snippet<?>> moduleDeclarations,
-                           Collection<Snippet<?>> statements, Snippet<?> expression) {
+    public String wrap(Collection<Snippet<?>> imports,
+                       Collection<Snippet<?>> moduleDeclarations,
+                       Collection<Snippet<?>> statements, Snippet<?> expression) {
         String sourceCodeTemplate = readTemplate();
-        String sourceCode = String.format(sourceCodeTemplate,
+        return String.format(sourceCodeTemplate,
                 toCodeLines(imports),
                 toCodeLines(moduleDeclarations),
                 toCodeLines(statements),
                 expression.toSourceCode());
-        TextDocument textDocument = TextDocuments.from(sourceCode);
-        return SyntaxTree.from(textDocument);
     }
 
     /**

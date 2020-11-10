@@ -28,7 +28,7 @@ import org.jline.utils.AttributedStyle;
  * output to the terminal.
  * Colors will be used as necessary.
  */
-public class ReplResultController extends ShellResultController {
+public class ReplResultController implements ShellResultController {
     private final Terminal terminal;
 
     public ReplResultController(Terminal terminal) {
@@ -37,7 +37,6 @@ public class ReplResultController extends ShellResultController {
 
     @Override
     public void addBallerinaShellResult(BallerinaShellResult ballerinaShellResultPart) {
-        super.addBallerinaShellResult(ballerinaShellResultPart);
         printShellResult(ballerinaShellResultPart);
     }
 

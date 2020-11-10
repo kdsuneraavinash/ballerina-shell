@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.executor;
+package io.ballerina.shell.executor.process;
 
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 
@@ -47,6 +47,9 @@ public class ShellProcessInvoker implements ProcessInvoker {
 
     @Override
     public void execute() throws IOException, InterruptedException {
+        this.standardOutput.clear();
+        this.standardError.clear();
+
         Instant start = Instant.now();
         Runtime runtime = Runtime.getRuntime();
         Process process = runtime.exec(command);
@@ -62,10 +65,10 @@ public class ShellProcessInvoker implements ProcessInvoker {
         ) {
             String line;
             while ((line = stdOutBuff.readLine()) != null) {
-                standardOutput.add(line);
+                this.standardOutput.add(line);
             }
             while ((line = stdErrBuff.readLine()) != null) {
-                standardError.add(line);
+                this.standardError.add(line);
             }
             Instant end = Instant.now();
 

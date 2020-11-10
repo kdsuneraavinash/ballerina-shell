@@ -15,17 +15,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell;
+package io.ballerina.shell.executor;
+
+import io.ballerina.shell.executor.wrapper.Wrapper;
 
 /**
- * Public interface for the shell result of the Ballerina Shell.
+ * An executor that will delegate the compilation to the experimental Project API.
+ * This would create an in-memory compilation unit and execute it.
  */
-public interface ShellResultController {
-    /**
-     * Adds a shell results to the output.
-     * Child classes may override this to fetch the shell results.
-     *
-     * @param ballerinaShellResultPart current shell result.
-     */
-    void addBallerinaShellResult(BallerinaShellResult ballerinaShellResultPart);
+public class ProjectApiExecutor extends StatelessExecutor {
+    public ProjectApiExecutor(Wrapper wrapper) {
+        super(wrapper);
+    }
+
+    @Override
+    protected ExecutorResult evaluateSourceCode(String sourceCode) {
+        throw new UnsupportedOperationException();
+    }
 }

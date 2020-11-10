@@ -22,11 +22,13 @@ import io.ballerina.shell.snippet.Snippet;
 import java.util.List;
 
 /**
- * Executes a snippet.
+ * Executes a list of snippets.
  */
 public interface Executor {
     /**
      * Executes a snippet and returns the output lines.
+     * Snippets parameter should only include newly added snippets.
+     * Old snippets should be managed as necessary by the implementation.
      *
      * @param newSnippets New snippets to execute.
      * @return Execution output lines.

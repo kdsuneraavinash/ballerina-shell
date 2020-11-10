@@ -19,40 +19,34 @@ package io.ballerina.shell.executor;
 
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.shell.executor.wrapper.Wrapper;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.wrapper.Wrapper;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Stack;
 
 /**
- * An executor that will delegate the process to the external ballerina executable command.
- * Ballerina must be installed and on path to use this executor.
- * This would directly call the ballerina command.
+ * Executes a list of snippets.
+ * The stateless nature of the executor comes because the
+ * compiler itself wont preserve state.
+ * The syntax tree would be re-evaluated at each statement
+ * resulting in major performance losses as well as bugs when
+ * randoms are involved.
  */
-public class DirectExecutor implements Executor {
-    public static final String TEMP_FILE = "._main_exec.bal";
-    private final Wrapper wrapper;
-    private final Stack<Snippet<?>> snippets;
+public abstract class StatelessExecutor implements Executor {
+    protected final Stack<Snippet<?>> snippets;
+    protected final Wrapper wrapper;
 
-    public DirectExecutor(Wrapper wrapper) {
+    protected StatelessExecutor(Wrapper wrapper) {
         this.wrapper = wrapper;
-        snippets = new Stack<>();
+        this.snippets = new Stack<>();
     }
 
     @Override
     public ExecutorResult execute(List<Snippet<?>> newSnippets) {
         assert !newSnippets.isEmpty();
-
-        boolean isExecutionError = false;
 
         // Default values for all snippets
         List<Snippet<?>> importSnippets = new ArrayList<>();
@@ -85,24 +79,16 @@ public class DirectExecutor implements Executor {
             }
         }
 
+        boolean isExecutionError = false;
         try {
-            // Temporarily remove current snippet
-            // We re-add after we confirm that it is valid
-            createSourceCodeFile(importSnippets, moduleDeclarationSnippets,
-                    statementSnippets, expressionSnippet);
-
-            // Execute and return correct output.
-            String command = String.format("ballerina run %s", TEMP_FILE);
-            ProcessInvoker processInvoker = new ShellProcessInvoker(command);
-            processInvoker.execute();
-
-            isExecutionError = processInvoker.isErrorExit();
-            List<String> standardStrings = isExecutionError
-                    ? processInvoker.getStandardError()
-                    : processInvoker.getStandardOutput();
-
-            String output = String.join("\n", standardStrings);
-            return new ExecutorResult(isExecutionError, output);
+            // Evaluate the wrapped source code
+            String sourceCode = wrapper.wrap(
+                    importSnippets, moduleDeclarationSnippets,
+                    statementSnippets, expressionSnippet
+            );
+            ExecutorResult executorResult = evaluateSourceCode(sourceCode);
+            isExecutionError = executorResult.isError();
+            return executorResult;
         } catch (Exception e) {
             isExecutionError = true;
             throw new RuntimeException(e);
@@ -117,25 +103,10 @@ public class DirectExecutor implements Executor {
     }
 
     /**
-     * Generate and dump the source file in the TEMP_FILE location.
+     * Method to evaluate a whole string of source code.
      *
-     * @param importSnippets            Import statements.
-     * @param moduleDeclarationSnippets Module declarations.
-     * @param statementSnippets         Statements.
-     * @param expressionSnippet         Expression  to output.
-     * @throws IOException If source file creation failed.
+     * @param sourceCode Source code to evaluate.
+     * @return Evaluation result.
      */
-    private void createSourceCodeFile(Collection<Snippet<?>> importSnippets,
-                                      Collection<Snippet<?>> moduleDeclarationSnippets,
-                                      Collection<Snippet<?>> statementSnippets,
-                                      Snippet<?> expressionSnippet) throws IOException {
-        SyntaxTree syntaxTree = wrapper.wrap(
-                importSnippets, moduleDeclarationSnippets,
-                statementSnippets, expressionSnippet
-        );
-        File file = new File(TEMP_FILE);
-        try (FileWriter fileWriter = new FileWriter(file, Charset.defaultCharset())) {
-            fileWriter.write(syntaxTree.toSourceCode());
-        }
-    }
+    protected abstract ExecutorResult evaluateSourceCode(String sourceCode);
 }

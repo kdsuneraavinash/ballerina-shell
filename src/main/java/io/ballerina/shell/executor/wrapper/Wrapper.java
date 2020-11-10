@@ -15,9 +15,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.wrapper;
+package io.ballerina.shell.executor.wrapper;
 
-import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.shell.snippet.Snippet;
 
 import java.util.Collection;
@@ -34,9 +33,9 @@ public interface Wrapper {
      * @param moduleDeclarations Module level declaration snippets.
      * @param statements         Statement snippets to wrapped in a function body.
      * @param expression         Expression statement that is evaluated.
-     * @return Syntax tree corresponding to the wrapped snippets.
+     * @return Source code corresponding to the wrapped snippets.
      */
-    SyntaxTree wrap(Collection<Snippet<?>> imports,
-                    Collection<Snippet<?>> moduleDeclarations,
-                    Collection<Snippet<?>> statements, Snippet<?> expression);
+    String wrap(Collection<Snippet<?>> imports,
+                Collection<Snippet<?>> moduleDeclarations,
+                Collection<Snippet<?>> statements, Snippet<?> expression);
 }
