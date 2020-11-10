@@ -15,21 +15,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.executor;
+package io.ballerina.shell;
 
-import io.ballerina.shell.snippet.Snippet;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Executes a snippet.
+ * Public interface for the shell result of the Ballerina Shell.
  */
-public interface Executor {
+public abstract class ShellResultController {
+    protected final List<BallerinaShellResult> ballerinaShellResultParts;
+
+    protected ShellResultController() {
+        this.ballerinaShellResultParts = new ArrayList<>();
+    }
+
     /**
-     * Executes a snippet and returns the output lines.
+     * Adds a shell results to the memory cache.
+     * Child classes may override this to fetch the shell results.
      *
-     * @param newSnippets New snippets to execute.
-     * @return Execution output lines.
+     * @param ballerinaShellResultPart current shell result.
      */
-    ExecutorResult execute(List<Snippet<?>> newSnippets);
+    public void addBallerinaShellResult(BallerinaShellResult ballerinaShellResultPart) {
+        ballerinaShellResultParts.add(ballerinaShellResultPart);
+    }
 }

@@ -15,21 +15,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.executor;
-
-import io.ballerina.shell.snippet.Snippet;
-
-import java.util.List;
+package io.ballerina.shell.diagnostics;
 
 /**
- * Executes a snippet.
+ * Diagnostic writer that ignores the input.
  */
-public interface Executor {
-    /**
-     * Executes a snippet and returns the output lines.
-     *
-     * @param newSnippets New snippets to execute.
-     * @return Execution output lines.
-     */
-    ExecutorResult execute(List<Snippet<?>> newSnippets);
+public class DefaultDiagnosticWriter implements DiagnosticWriter {
+    @Override
+    public void write(String write) {
+        // Ignore
+    }
 }

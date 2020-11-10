@@ -20,7 +20,6 @@ package io.ballerina.shell.executor;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
-import io.ballerina.shell.postprocessor.PostProcessor;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.wrapper.Wrapper;
@@ -41,26 +40,38 @@ import java.util.Stack;
  */
 public class DirectExecutor implements Executor {
     public static final String TEMP_FILE = "._main_exec.bal";
-    private final PostProcessor postProcessor;
     private final Wrapper wrapper;
     private final Stack<Snippet<?>> snippets;
 
-    public DirectExecutor(Wrapper wrapper, PostProcessor postProcessor) {
+    public DirectExecutor(Wrapper wrapper) {
         this.wrapper = wrapper;
-        this.postProcessor = postProcessor;
         snippets = new Stack<>();
     }
 
     @Override
-    public String execute(Snippet<?> newSnippet) {
+    public ExecutorResult execute(List<Snippet<?>> newSnippets) {
+        assert !newSnippets.isEmpty();
+
+        boolean isExecutionError = false;
+
         // Default values for all snippets
         List<Snippet<?>> importSnippets = new ArrayList<>();
         List<Snippet<?>> moduleDeclarationSnippets = new ArrayList<>();
         List<Snippet<?>> statementSnippets = new ArrayList<>();
-        Snippet<?> expressionSnippet = newSnippet;
+        Snippet<?> expressionSnippet = new ExpressionSnippet(
+                NodeFactory.createNilLiteralNode(
+                        NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
+                        NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)));
+
+        // Add snippets to process
+        for (Snippet<?> newSnippet : newSnippets) {
+            snippets.push(newSnippet);
+            if (newSnippet instanceof ExpressionSnippet) {
+                expressionSnippet = newSnippet;
+            }
+        }
 
         // Add snippets to the relevant category.
-        snippets.push(newSnippet);
         for (Snippet<?> snippet : snippets) {
             if (snippet.isPersistent()) {
                 if (snippet.getKind() == Snippet.SnippetKind.IMPORT_KIND) {
@@ -73,15 +84,6 @@ public class DirectExecutor implements Executor {
                 }
             }
         }
-        snippets.pop();
-
-        // If statement is not a expression, set the default printing value to null
-        if (newSnippet.getKind() != Snippet.SnippetKind.EXPRESSION_KIND) {
-            expressionSnippet = new ExpressionSnippet(
-                    NodeFactory.createNilLiteralNode(
-                            NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
-                            NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)));
-        }
 
         try {
             // Temporarily remove current snippet
@@ -91,17 +93,26 @@ public class DirectExecutor implements Executor {
 
             // Execute and return correct output.
             String command = String.format("ballerina run %s", TEMP_FILE);
-            ProcessInvoker processInvoker = new ShellCommandProcessInvoker(command);
+            ProcessInvoker processInvoker = new ShellProcessInvoker(command);
             processInvoker.execute();
 
-            String output = String.join("\n", processInvoker.getStandardError());
-            if (!processInvoker.isErrorExit()) {
-                snippets.add(newSnippet);
-                output = String.join("\n", processInvoker.getStandardOutput());
-            }
-            return postProcessor.process(processInvoker.isErrorExit(), output);
+            isExecutionError = processInvoker.isErrorExit();
+            List<String> standardStrings = isExecutionError
+                    ? processInvoker.getStandardError()
+                    : processInvoker.getStandardOutput();
+
+            String output = String.join("\n", standardStrings);
+            return new ExecutorResult(isExecutionError, output);
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            isExecutionError = true;
+            throw new RuntimeException(e);
+        } finally {
+            if (isExecutionError) {
+                // Remove snippets from the stack if error
+                for (int i = 0; i < newSnippets.size(); i++) {
+                    snippets.pop();
+                }
+            }
         }
     }
 

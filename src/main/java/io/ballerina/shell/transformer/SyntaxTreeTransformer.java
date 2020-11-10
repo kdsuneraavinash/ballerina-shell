@@ -17,7 +17,7 @@
  */
 package io.ballerina.shell.transformer;
 
-import io.ballerina.compiler.syntax.tree.ExpressionStatementNode;
+import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
@@ -31,9 +31,6 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.StatementSnippet;
 import io.ballerina.shell.snippet.VariableDefinitionSnippet;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 
 /**
  * Transforms the syntax tree into the corresponding snippet.
@@ -41,20 +38,16 @@ import java.util.logging.Logger;
  * {@code ExpressionSnippet}, {@code ModuleMemberDeclarationSnippet} and {@code StatementSnippet}.
  */
 public class SyntaxTreeTransformer implements Transformer<Node, Snippet<?>> {
-    private static final Logger LOGGER = Logger.getLogger(SyntaxTreeTransformer.class.getName());
-
     @Override
     public Snippet<?> transform(Node value) {
-        LOGGER.log(Level.INFO, "Identified type: " + value.getClass().getSimpleName());
-
         if (value instanceof ImportDeclarationNode) {
             return new ImportSnippet((ImportDeclarationNode) value);
         } else if (value instanceof ModuleVariableDeclarationNode) {
             // VariableDeclarationNode is also here. But they are currently rejected from parser.
             // TODO: Accept VariableDeclarationNode as well.
             return new VariableDefinitionSnippet((ModuleVariableDeclarationNode) value);
-        } else if (value instanceof ExpressionStatementNode) {
-            return new ExpressionSnippet((ExpressionStatementNode) value);
+        } else if (value instanceof ExpressionNode) {
+            return new ExpressionSnippet((ExpressionNode) value);
         } else if (value instanceof ModuleMemberDeclarationNode) {
             return new ModuleMemberDeclarationSnippet(((ModuleMemberDeclarationNode) value));
         } else if (value instanceof StatementNode) {

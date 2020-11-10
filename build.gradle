@@ -35,6 +35,9 @@ dependencies {
     implementation name: 'ballerina-parser-2.0.0-Preview6-SNAPSHOT'
     implementation name: 'ballerina-tools-api-2.0.0-Preview5-SNAPSHOT'
 
+    implementation(group: 'org.jline', name: 'jline', version: '3.1.3'){
+        because("To implement the REPL CLI functionalities")
+    }
     testImplementation('org.testng:testng:6.14.3') {
         because("To test the core functionality")
     }
@@ -54,15 +57,18 @@ compileJava {
     }
 }
 
-def mainCliClass = 'io.ballerina.shell.BallerinaShell'
+def mainCliClass = 'org.ballerina.shell.BallerinaReplShell'
 task run(type: JavaExec) {
     main = mainCliClass
     standardInput = System.in
     classpath = sourceSets.main.runtimeClasspath
-    if (project.hasProperty('props')) {
-        //noinspection GroovyAssignabilityCheck
-        args(project.property('props').split(' '))
-    }
+}
+
+task fatJar(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes 'Main-Class': mainCliClass }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
 }
 
 ext.moduleName = 'io.ballerina.shell'

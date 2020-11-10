@@ -15,33 +15,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.postprocessor;
+
+package io.ballerina.shell.preprocessor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Returns the output as is.
+ * Combines several preprocessors into a single preprocessor.
  */
-public class BasicPostProcessor implements PostProcessor {
-    private static final String[] WHITE_LISTED_STD_ERR_PREFIXES = {
-            "error:", "warning:"
-    };
+public class CombinedPreprocessor implements Preprocessor {
+    private final Preprocessor[] preprocessors;
+
+    public CombinedPreprocessor(Preprocessor... preprocessors) {
+        this.preprocessors = preprocessors;
+    }
 
     @Override
-    public String process(boolean isError, String output) {
-        String[] lines = output.split("\n");
-        if (isError && lines.length > 1) {
-            List<String> formatted = new ArrayList<>();
-            for (String line : lines) {
-                for (String prefix : WHITE_LISTED_STD_ERR_PREFIXES) {
-                    if (line.startsWith(prefix)) {
-                        formatted.add(line);
-                    }
-                }
+    public List<String> preprocess(String input) {
+        List<String> strings = List.of(input);
+        for (Preprocessor preprocessor : preprocessors) {
+            List<String> processed = new ArrayList<>();
+            for (String string : strings) {
+                processed.addAll(preprocessor.preprocess(string));
             }
-            return String.join("\n", formatted);
+            strings = processed;
         }
-        return output;
+        return strings;
     }
 }

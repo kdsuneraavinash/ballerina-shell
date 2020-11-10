@@ -15,21 +15,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.executor;
 
-import io.ballerina.shell.snippet.Snippet;
-
-import java.util.List;
+package io.ballerina.shell.diagnostics;
 
 /**
- * Executes a snippet.
+ * Private statement structure to keep track of the
+ * provider and the message.
  */
-public interface Executor {
-    /**
-     * Executes a snippet and returns the output lines.
-     *
-     * @param newSnippets New snippets to execute.
-     * @return Execution output lines.
-     */
-    ExecutorResult execute(List<Snippet<?>> newSnippets);
+public class ShellDiagnosticMessage {
+    private final Class<?> provider;
+    private final String message;
+
+    protected ShellDiagnosticMessage(Class<?> provider, String message) {
+        this.provider = provider;
+        this.message = message;
+    }
+
+    @Override
+    public String toString() {
+        if (provider == null) {
+            return String.format("[DEBUG] %s", message);
+        }
+        return String.format("[DEBUG]:%s %s", provider.getSimpleName(), message);
+    }
 }

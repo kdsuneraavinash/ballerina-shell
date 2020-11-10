@@ -26,7 +26,10 @@ import java.util.Stack;
  * based on the semicolons and brackets.
  * Outputs the split input.
  */
-public class StatementSeparatorPreprocessor implements Preprocessor {
+public class SeparatorPreprocessor implements Preprocessor {
+    private static final char ESCAPE_CHAR = '\\';
+    private static final char SINGLE_QUOTE = '\'';
+    private static final char DOUBLE_QUOTE = '\"';
     private static final char SEMICOLON = ';';
     private static final char PARENTHESIS_OPEN = '(';
     private static final char PARENTHESIS_CLOSE = ')';
@@ -44,19 +47,31 @@ public class StatementSeparatorPreprocessor implements Preprocessor {
 
         Stack<Character> brackets = new Stack<>();
 
-        // TODO: Handle bracket ignoring inside string literals
+        boolean isInStringLiteral = false;
         for (int i = 0; i < input.length(); i++) {
             char character = input.charAt(i);
             builder.append(character);
 
-            if (character == SEMICOLON && brackets.isEmpty()) {
-                snippets.add(builder.toString());
-                builder.setLength(0);
-            } else if (isOpeningBracket(character)) {
-                brackets.push(character);
-            } else if (!brackets.isEmpty() && isBracketPair(brackets.peek(), character)) {
-                brackets.pop();
+            if (character == SINGLE_QUOTE || character == DOUBLE_QUOTE) {
+                if (!isEscaped(input, i)) {
+                    isInStringLiteral = !isInStringLiteral;
+                }
             }
+
+            if (!isInStringLiteral) {
+                if (character == SEMICOLON && brackets.isEmpty()) {
+                    snippets.add(builder.toString());
+                    builder.setLength(0);
+                } else if (isOpeningBracket(character)) {
+                    brackets.push(character);
+                } else if (!brackets.isEmpty() && isBracketPair(brackets.peek(), character)) {
+                    brackets.pop();
+                }
+            }
+        }
+
+        if (!brackets.isEmpty()) {
+            throw new RuntimeException("Brackets do not match");
         }
 
         // Append remaining string to the statements.
@@ -68,6 +83,17 @@ public class StatementSeparatorPreprocessor implements Preprocessor {
         }
 
         return snippets;
+    }
+
+    /**
+     * Whether the character at the given position was escaped or not.
+     *
+     * @param input    Whole input string.
+     * @param position Position of character to check.
+     * @return Whether the character was escaped.
+     */
+    private boolean isEscaped(String input, int position) {
+        return position > 0 && input.charAt(position - 1) == ESCAPE_CHAR;
     }
 
     /**

@@ -15,21 +15,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.executor;
+package io.ballerina.shell.postprocessor;
 
-import io.ballerina.shell.snippet.Snippet;
-
-import java.util.List;
+import io.ballerina.shell.executor.ExecutorResult;
 
 /**
- * Executes a snippet.
+ * Processes a string output to a processed string.
+ * May perform some filtering, mapping on the output string.
  */
-public interface Executor {
+public interface Postprocessor {
     /**
-     * Executes a snippet and returns the output lines.
+     * Processes the output depending on the exit type.
      *
-     * @param newSnippets New snippets to execute.
-     * @return Execution output lines.
+     * @param executorResult Result of the executor
+     * @return The output processed string.
      */
-    ExecutorResult execute(List<Snippet<?>> newSnippets);
+    String process(ExecutorResult executorResult);
 }

@@ -22,12 +22,20 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.Scanner;
 
 /**
  * Wrapper to wrap snippets with a code template.
  */
 public class TemplateWrapper implements Wrapper {
+    private static final String SPECIAL_DELIMITER = "\\A";
+    private static final String TEMPLATE_FILE = "template.bal";
+
     @Override
     public SyntaxTree wrap(Collection<Snippet<?>> imports,
                            Collection<Snippet<?>> moduleDeclarations,
@@ -63,26 +71,11 @@ public class TemplateWrapper implements Wrapper {
      * @return Read the template from a resource file.
      */
     private String readTemplate() {
-        return "import ballerina/io;\n" +
-                "%s\n" +
-                "%s\n" +
-                "function stmts() returns error? {\n" +
-                "    %s\n" +
-                "}\n" +
-                "function do_it() returns string|error{\n" +
-                "    check stmts();\n" +
-                "    any|error expr = %s;\n" +
-                "    any value = checkpanic expr;\n" +
-                "    string repr = io:sprintf(\"%%s\", value);\n" +
-                "    return repr;\n" +
-                "}\n" +
-                "public function main(){\n" +
-                "    string|error result = trap do_it();\n" +
-                "    if (result is string) {\n" +
-                "        io:println(result);\n" +
-                "    } else {\n" +
-                "         io:println(\"Error occurred: \", result.message());\n" +
-                "    }\n" +
-                "}";
+        ClassLoader classLoader = getClass().getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(TEMPLATE_FILE);
+        Objects.requireNonNull(inputStream, "File open failed");
+        InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        Scanner scanner = new Scanner(reader).useDelimiter(SPECIAL_DELIMITER);
+        return scanner.hasNext() ? scanner.next() : "";
     }
 }

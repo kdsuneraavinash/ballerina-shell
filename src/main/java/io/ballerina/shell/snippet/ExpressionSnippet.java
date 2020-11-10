@@ -18,7 +18,6 @@
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.ExpressionNode;
-import io.ballerina.compiler.syntax.tree.ExpressionStatementNode;
 
 /**
  * These are expressions that are executable but are not persistent.
@@ -27,10 +26,6 @@ import io.ballerina.compiler.syntax.tree.ExpressionStatementNode;
  * (If the expression is a Expression Statement, the semicolon will be stripped.)
  */
 public class ExpressionSnippet extends Snippet<ExpressionNode> {
-    public ExpressionSnippet(ExpressionStatementNode node) {
-        this(node.expression());
-    }
-
     public ExpressionSnippet(ExpressionNode node) {
         super(node, SnippetKind.EXPRESSION_KIND);
     }

@@ -17,6 +17,8 @@
  */
 package io.ballerina.shell.executor;
 
+import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,22 +27,18 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * External process information and invoker.
  * Invokes a shell command given and provides APIs to retrieve stdout/stderr/exit code.
  */
-public class ShellCommandProcessInvoker implements ProcessInvoker {
-    private static final Logger LOGGER = Logger.getLogger(ShellCommandProcessInvoker.class.getName());
-
+public class ShellProcessInvoker implements ProcessInvoker {
     private final String command;
     private final List<String> standardOutput;
     private final List<String> standardError;
     private int exitCode;
 
-    public ShellCommandProcessInvoker(String command) {
+    public ShellProcessInvoker(String command) {
         this.command = command;
         this.standardOutput = new ArrayList<>();
         this.standardError = new ArrayList<>();
@@ -71,10 +69,13 @@ public class ShellCommandProcessInvoker implements ProcessInvoker {
             }
             Instant end = Instant.now();
 
-
             Duration duration = Duration.between(start, end);
-            String timeString = String.format("Compilation and execution took %s ms.", duration.toMillis());
-            LOGGER.log(Level.INFO, timeString);
+            ShellDiagnosticProvider.sendMessage(
+                    "Compilation and execution took %s ms.", String.valueOf(duration.toMillis()));
+            if (isErrorExit()) {
+                ShellDiagnosticProvider.sendMessage(
+                        "Execution failed with exit code %s.", String.valueOf(exitCode));
+            }
         }
     }
 

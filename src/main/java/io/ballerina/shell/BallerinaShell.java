@@ -18,82 +18,71 @@
 package io.ballerina.shell;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.DirectExecutor;
 import io.ballerina.shell.executor.Executor;
-import io.ballerina.shell.postprocessor.BasicPostProcessor;
+import io.ballerina.shell.executor.ExecutorResult;
+import io.ballerina.shell.postprocessor.BasicPostprocessor;
+import io.ballerina.shell.postprocessor.Postprocessor;
+import io.ballerina.shell.preprocessor.CombinedPreprocessor;
 import io.ballerina.shell.preprocessor.Preprocessor;
-import io.ballerina.shell.preprocessor.StatementSeparatorPreprocessor;
+import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.transformer.MasterTransformer;
 import io.ballerina.shell.treeparser.TreeParser;
 import io.ballerina.shell.treeparser.TrialTreeParser;
 import io.ballerina.shell.wrapper.TemplateWrapper;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Main shell entry point.
  */
 public class BallerinaShell {
-    private static final Logger LOGGER = Logger.getLogger(BallerinaShell.class.getName());
-
-    private final PrintStream outStream;
-    private final PrintStream errStream;
-
     private final Preprocessor preprocessor;
     private final TreeParser parser;
     private final MasterTransformer transformer;
     private final Executor executor;
+    private final Postprocessor postprocessor;
 
-    public BallerinaShell(PrintStream outStream, PrintStream errStream) {
-        this.outStream = outStream;
-        this.errStream = errStream;
-        this.preprocessor = new StatementSeparatorPreprocessor();
+    public BallerinaShell() {
+        this.preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
         this.parser = new TrialTreeParser();
         this.transformer = new MasterTransformer();
-        this.executor = new DirectExecutor(new TemplateWrapper(), new BasicPostProcessor());
+        this.executor = new DirectExecutor(new TemplateWrapper());
+        this.postprocessor = new BasicPostprocessor();
     }
 
-    public void evaluate(String input) {
-        try {
-            List<String> source = preprocessor.preprocess(input);
-            for (String sourceLine : source) {
-                Node rootNode = parser.parse(sourceLine);
-                List<Snippet<?>> snippets = transformer.transform(rootNode);
-                for (Snippet<?> snippet : snippets) {
-                    String output = executor.execute(snippet);
-                    outStream.println(output);
-                }
-            }
-        } catch (Exception e) {
-            errStream.println(e.getMessage());
-        }
-    }
+    /**
+     * Base evaluation function.
+     * Evaluates a input line.
+     *
+     * @param input                Input line from user.
+     * @param shellResultController Shell result object which contain
+     *                             the results of the shell after the execution is done.
+     */
+    public void evaluate(String input, ShellResultController shellResultController) {
+        List<String> source = preprocessor.preprocess(input);
+        for (String sourceLine : source) {
+            ShellDiagnosticProvider.sendMessage("Executing source line %s.", sourceLine);
 
-    public static void main(String[] args) throws IOException {
-        Reader reader = new InputStreamReader(System.in, Charset.defaultCharset());
-        BallerinaShell shell = new BallerinaShell(System.out, System.err);
-        BufferedReader bufferedReader = new BufferedReader(reader);
+            Node rootNode = parser.parse(sourceLine);
+            ShellDiagnosticProvider.sendMessage(
+                    "Root node of the source %s is of type %s.",
+                    rootNode.toSourceCode(), rootNode.getClass().getSimpleName());
 
-        String input;
-        System.out.print(">> ");
-        while ((input = bufferedReader.readLine()) != null) {
-            try {
-                shell.evaluate(input);
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, e.getMessage());
-            } finally {
-                System.out.print(">> ");
+            List<Snippet<?>> snippets = transformer.transform(rootNode);
+
+            for (Snippet<?> snippet : snippets) {
+                ShellDiagnosticProvider.sendMessage(
+                        "Identified code %s as a %s snippet.",
+                        snippet.toSourceCode(), snippet.getKind().toString());
             }
+
+            ExecutorResult executorResult = executor.execute(snippets);
+            String output = postprocessor.process(executorResult);
+            BallerinaShellResult ballerinaShellResultPart = new BallerinaShellResult(output, executorResult.isError());
+            shellResultController.addBallerinaShellResult(ballerinaShellResultPart);
         }
-        bufferedReader.close();
     }
 }

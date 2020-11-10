@@ -17,7 +17,11 @@
  */
 package io.ballerina.shell.treeparser;
 
+import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeFactory;
+import io.ballerina.compiler.syntax.tree.SyntaxKind;
+import io.ballerina.shell.treeparser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.treeparser.trials.ExpressionTrial;
 import io.ballerina.shell.treeparser.trials.FailedTrialException;
 import io.ballerina.shell.treeparser.trials.ImportDeclarationTrial;
@@ -31,6 +35,7 @@ import io.ballerina.shell.treeparser.trials.TreeParserTrial;
  * This continues until the correct type can be determined.
  */
 public class TrialTreeParser implements TreeParser {
+
     @Override
     public Node parse(String source) {
         assert source.endsWith(";");
@@ -40,6 +45,7 @@ public class TrialTreeParser implements TreeParser {
                 new ExpressionTrial(),
                 new StatementTrial(),
                 new ModuleMemberTrial(),
+                new EmptyExpressionTrial(),
         };
 
         for (TreeParserTrial treeParserTrial : treeParserTrials) {
@@ -49,6 +55,20 @@ public class TrialTreeParser implements TreeParser {
                 // Trial failed, try next trial
             }
         }
-        throw new RuntimeException("There is an error in your input: " + source);
+
+        throw new RuntimeException("[Parsing Failed] Error in input: " + source);
+    }
+
+    /**
+     * Creates a nil literal node. ()
+     * This is the default placeholder expression.
+     *
+     * @return A new nil literal node
+     */
+    public static ExpressionNode nilLiteralExpression() {
+        return NodeFactory.createNilLiteralNode(
+                NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
+                NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)
+        );
     }
 }

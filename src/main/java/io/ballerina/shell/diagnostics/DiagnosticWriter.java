@@ -15,19 +15,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.postprocessor;
+package io.ballerina.shell.diagnostics;
 
 /**
- * Processes a string output to a processed string.
- * May perform some filtering, mapping on the output string.
+ * Interface of a callback to output diagnostics.
  */
-public interface PostProcessor {
-    /**
-     * Processes the output depending on the exit type.
-     *
-     * @param isError Whether the output corresponds to a error message.
-     * @param output  String to be processed.
-     * @return Processed string.
-     */
-    String process(boolean isError, String output);
+public interface DiagnosticWriter {
+    void write(String write);
 }

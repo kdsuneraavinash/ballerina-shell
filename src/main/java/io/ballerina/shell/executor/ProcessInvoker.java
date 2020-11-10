@@ -39,7 +39,19 @@ public interface ProcessInvoker {
      */
     boolean isErrorExit();
 
+    /**
+     * Getter for the standard output of the process.
+     * Each entry represents a line.
+     *
+     * @return Strings outputted from the process to stdout.
+     */
     List<String> getStandardError();
 
+    /**
+     * Getter for the standard error of the process.
+     * Each entry represents a line.
+     *
+     * @return Strings outputted from the process to stderr.
+     */
     List<String> getStandardOutput();
 }
