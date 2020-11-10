@@ -2,7 +2,7 @@ module io.ballerina.shell {
     requires java.sql;
     requires io.ballerina.parser;
     requires io.ballerina.tools.api;
-    requires jline;
+    requires org.jline;
 
     exports io.ballerina.shell;
     exports io.ballerina.shell.executor;
@@ -13,5 +13,5 @@ module io.ballerina.shell {
     exports io.ballerina.shell.wrapper;
     exports io.ballerina.shell.postprocessor;
 
-    exports org.ballerina.shell;
+    exports org.ballerina.repl;
 }

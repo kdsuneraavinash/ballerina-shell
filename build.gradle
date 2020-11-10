@@ -35,7 +35,7 @@ dependencies {
     implementation name: 'ballerina-parser-2.0.0-Preview6-SNAPSHOT'
     implementation name: 'ballerina-tools-api-2.0.0-Preview5-SNAPSHOT'
 
-    implementation(group: 'org.jline', name: 'jline', version: '3.1.3'){
+    implementation(group: 'org.jline', name: 'jline', version: '3.17.1'){
         because("To implement the REPL CLI functionalities")
     }
     testImplementation('org.testng:testng:6.14.3') {
@@ -57,7 +57,7 @@ compileJava {
     }
 }
 
-def mainCliClass = 'org.ballerina.shell.BallerinaReplShell'
+def mainCliClass = 'org.ballerina.repl.ReplShell'
 task run(type: JavaExec) {
     main = mainCliClass
     standardInput = System.in

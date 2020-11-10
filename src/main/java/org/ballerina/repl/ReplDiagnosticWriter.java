@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.ballerina.shell;
+package org.ballerina.repl;
 
 import io.ballerina.shell.diagnostics.DiagnosticWriter;
 import org.jline.terminal.Terminal;
@@ -36,7 +36,7 @@ public class ReplDiagnosticWriter implements DiagnosticWriter {
     @Override
     public void write(String write) {
         String message = new AttributedStringBuilder()
-                .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.CYAN))
+                .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.BRIGHT))
                 .append(write).toAnsi();
         terminal.writer().println(message);
         terminal.writer().flush();

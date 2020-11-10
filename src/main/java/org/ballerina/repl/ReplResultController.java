@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.ballerina.shell;
+package org.ballerina.repl;
 
 import io.ballerina.shell.BallerinaShellResult;
 import io.ballerina.shell.ShellResultController;
@@ -24,7 +24,9 @@ import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
 /**
- *
+ * Shell controller that will manage outputting the shell
+ * output to the terminal.
+ * Colors will be used as necessary.
  */
 public class ReplResultController extends ShellResultController {
     private final Terminal terminal;
@@ -39,6 +41,12 @@ public class ReplResultController extends ShellResultController {
         printShellResult(ballerinaShellResultPart);
     }
 
+    /**
+     * Prints a shell result to the terminal.
+     * Errors will be colorized.
+     *
+     * @param shellResult Result to output.
+     */
     private void printShellResult(BallerinaShellResult shellResult) {
         String message = shellResult.getOutput();
         if (shellResult.isError()) {

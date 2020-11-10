@@ -37,8 +37,6 @@ public class SeparatorPreprocessor implements Preprocessor {
     private static final char SQUARE_BR_CLOSE = ']';
     private static final char CURLY_BR_OPEN = '{';
     private static final char CURLY_BR_CLOSE = '}';
-    private static final char ANGLE_BR_OPEN = '<';
-    private static final char ANGLE_BR_CLOSE = '>';
 
     @Override
     public List<String> preprocess(String input) {
@@ -105,8 +103,7 @@ public class SeparatorPreprocessor implements Preprocessor {
     private boolean isOpeningBracket(char character) {
         return character == PARENTHESIS_OPEN
                 || character == SQUARE_BR_OPEN
-                || character == CURLY_BR_OPEN
-                || character == ANGLE_BR_OPEN;
+                || character == CURLY_BR_OPEN;
     }
 
     /**
@@ -119,7 +116,6 @@ public class SeparatorPreprocessor implements Preprocessor {
     private boolean isBracketPair(char opening, char closing) {
         return (opening == PARENTHESIS_OPEN && closing == PARENTHESIS_CLOSE)
                 || (opening == SQUARE_BR_OPEN && closing == SQUARE_BR_CLOSE)
-                || (opening == CURLY_BR_OPEN && closing == CURLY_BR_CLOSE)
-                || (opening == ANGLE_BR_OPEN && closing == ANGLE_BR_CLOSE);
+                || (opening == CURLY_BR_OPEN && closing == CURLY_BR_CLOSE);
     }
 }
