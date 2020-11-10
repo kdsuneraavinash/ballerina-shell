@@ -1,0 +1,79 @@
+/*
+ * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ * WSO2 Inc. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package io.ballerina.shell.treeparser.trials;
+
+import io.ballerina.compiler.syntax.tree.FunctionBodyBlockNode;
+import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
+import io.ballerina.compiler.syntax.tree.LocalTypeDefinitionStatementNode;
+import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
+import io.ballerina.compiler.syntax.tree.ModulePartNode;
+import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.StatementNode;
+import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
+import io.ballerina.compiler.syntax.tree.XMLNamespaceDeclarationNode;
+import io.ballerina.tools.text.TextDocument;
+import io.ballerina.tools.text.TextDocuments;
+
+import java.util.Objects;
+
+/**
+ * Attempts to parse source as a statement.
+ * Puts in the main function statement level and checks for the the entry.
+ */
+public class StatementTrial implements TreeParserTrial {
+    @Override
+    public Node tryParse(String source) throws FailedTrialException {
+        try {
+            String sourceCode = String.format("function main(){%s}", source);
+
+            TextDocument document = TextDocuments.from(sourceCode);
+            SyntaxTree tree = SyntaxTree.from(document);
+            ModulePartNode node = tree.rootNode();
+
+            ModuleMemberDeclarationNode moduleDeclaration = node.members().get(0);
+            FunctionDefinitionNode mainFunction = (FunctionDefinitionNode) moduleDeclaration;
+            FunctionBodyBlockNode mainFunctionBody = (FunctionBodyBlockNode) mainFunction.functionBody();
+            StatementNode statement = mainFunctionBody.statements().get(0);
+            Objects.requireNonNull(statement);
+
+            // XMLNamespaceDeclarationNode is passed as a statement.
+            // So, do not have a prefix. Invalid.
+            if (statement instanceof XMLNamespaceDeclarationNode) {
+                throw new RuntimeException("XML namespace declaration without prefix: : Prohibited in REPL");
+            }
+
+            // LocalTypeDefinitionStatement is passed as a statement.
+            // So, this must have failed as a module level statement. Invalid.
+            if (statement instanceof LocalTypeDefinitionStatementNode) {
+                throw new RuntimeException("Invalid statement: Prohibited in REPL");
+            }
+
+            // VariableDeclarationNode is passed as a statement.
+            // So, do not have the initializer. Invalid for now.
+            // TODO: Add a default initializer for every type
+            if (statement instanceof VariableDeclarationNode) {
+                throw new RuntimeException("Variable declarations without initializer: Prohibited in REPL");
+            }
+
+            return statement;
+        } catch (Exception e) {
+            throw new FailedTrialException(e);
+        }
+    }
+}
