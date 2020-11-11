@@ -50,7 +50,9 @@ public abstract class StatelessExecutor implements Executor {
         // Default values for all snippets
         List<Snippet<?>> importSnippets = new ArrayList<>();
         List<Snippet<?>> moduleDeclarationSnippets = new ArrayList<>();
+        List<Snippet<?>> variableDeclarationSnippets = new ArrayList<>();
         List<Snippet<?>> statementSnippets = new ArrayList<>();
+
         Snippet<?> expressionSnippet = ExpressionSnippet.fromNode(
                 NodeFactory.createNilLiteralNode(
                         NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
@@ -67,9 +69,10 @@ public abstract class StatelessExecutor implements Executor {
             if (snippet.isPersistent()) {
                 if (snippet.getKind() == SnippetKind.IMPORT_KIND) {
                     importSnippets.add(snippet);
-                } else if (snippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND
-                        || snippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
+                } else if (snippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
                     moduleDeclarationSnippets.add(snippet);
+                } else if (snippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
+                    variableDeclarationSnippets.add(snippet);
                 } else if (snippet.getKind() == SnippetKind.STATEMENT_KIND) {
                     statementSnippets.add(snippet);
                 }
@@ -80,7 +83,7 @@ public abstract class StatelessExecutor implements Executor {
         try {
             // Evaluate the wrapped source code
             String sourceCode = wrapper.wrap(
-                    importSnippets, moduleDeclarationSnippets,
+                    importSnippets, moduleDeclarationSnippets, variableDeclarationSnippets,
                     statementSnippets, expressionSnippet
             );
             ExecutorResult executorResult = evaluateSourceCode(sourceCode);

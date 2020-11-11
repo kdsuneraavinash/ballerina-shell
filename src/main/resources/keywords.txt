@@ -1,3 +1,5 @@
+/exit
+/about
 if
 else
 iterator

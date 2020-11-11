@@ -36,11 +36,13 @@ public class TemplateWrapper implements Wrapper {
     @Override
     public String wrap(Collection<Snippet<?>> imports,
                        Collection<Snippet<?>> moduleDeclarations,
+                       Collection<Snippet<?>> variableDeclarationSnippets,
                        Collection<Snippet<?>> statements, Snippet<?> expression) {
         String sourceCodeTemplate = readTemplate();
         return String.format(sourceCodeTemplate,
                 toCodeLines(imports),
                 toCodeLines(moduleDeclarations),
+                toCodeLines(variableDeclarationSnippets),
                 toCodeLines(statements),
                 expression.toSourceCode());
     }

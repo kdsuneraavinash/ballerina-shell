@@ -14,4 +14,5 @@ module io.ballerina.shell {
     exports io.ballerina.shell.postprocessor;
 
     exports org.ballerina.repl;
+    exports org.ballerina.repl.exceptions;
 }

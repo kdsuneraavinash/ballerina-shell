@@ -1,4 +1,16 @@
 #!/bin/bash
 
-./gradlew fatJar -q || exit
-java -jar build/libs/ballerina-shell-0.0.1-SNAPSHOT.jar "$*"
+# Save terminal state
+#tput smcup
+clear
+
+# Build and run
+./gradlew fatJar -q && java -jar build/libs/ballerina-shell-0.0.1-SNAPSHOT.jar "$*"
+
+# Pause till user input
+echo
+read -n 1 -s -r -p "Press any key to continue..."
+clear
+
+# Restore terminal state
+#tput rmcup

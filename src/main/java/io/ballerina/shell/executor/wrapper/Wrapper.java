@@ -29,13 +29,15 @@ public interface Wrapper {
     /**
      * Wraps the snippets.
      *
-     * @param imports            Import statement snippets.
-     * @param moduleDeclarations Module level declaration snippets.
-     * @param statements         Statement snippets to wrapped in a function body.
-     * @param expression         Expression statement that is evaluated.
+     * @param imports                     Import statement snippets.
+     * @param moduleDeclarations          Module level declaration snippets.
+     * @param variableDeclarationSnippets Variable declaration snippets.
+     * @param statements                  Statement snippets to wrapped in a function body.
+     * @param expression                  Expression statement that is evaluated.
      * @return Source code corresponding to the wrapped snippets.
      */
     String wrap(Collection<Snippet<?>> imports,
                 Collection<Snippet<?>> moduleDeclarations,
+                Collection<Snippet<?>> variableDeclarationSnippets,
                 Collection<Snippet<?>> statements, Snippet<?> expression);
 }

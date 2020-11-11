@@ -1,23 +1,35 @@
 import ballerina/io;
+
+// Imports here
 %s
+
+// Module member declaration here
 %s
+
+// Variable declarations here
+%s
+
 function stmts() returns error? {
+// If statement here
 %s
 }
-function do_it() returns string|error {
+
+function run() returns string|error {
     check stmts();
-    any|error expr = %s;
+    any|error expr = %s; // If expression here
     any value = checkpanic expr;
-    if (expr is ()) {
-        return io:sprintf("%%s", value);
+    if value == () {
+        return "";
     }
-    return io:sprintf("%%s\n", value);
+    string output = io:sprintf("%%s\n", value);
+    return output;
 }
+
 public function main() {
-    string|error result = trap do_it();
+    string|error result = trap run();
     if (result is string) {
         io:println(result);
     } else {
-        io:println("Error occurred: ", result.message());
+        io:println("Exception occurred: ", result.message());
     }
 }
