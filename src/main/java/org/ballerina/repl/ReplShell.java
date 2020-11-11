@@ -21,6 +21,7 @@ import io.ballerina.shell.BallerinaShell;
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
+import org.ballerina.repl.exceptions.ReplToggleDebugException;
 import org.jline.reader.Completer;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -54,14 +55,16 @@ public class ReplShell {
     private static final String SPECIAL_DELIMITER = "\\A";
     private static final String VERSION = "0.0.1";
 
+    private boolean debugMode;
     private final Terminal terminal;
     private final LineReader lineReader;
     private final BallerinaShell ballerinaShell;
 
-    public ReplShell(LineReader lineReader) {
+    public ReplShell(LineReader lineReader, boolean debugMode) {
         this.terminal = lineReader.getTerminal();
         this.lineReader = lineReader;
         this.ballerinaShell = new BallerinaShell();
+        this.debugMode = debugMode;
     }
 
     /**
@@ -87,6 +90,9 @@ public class ReplShell {
             } catch (ReplExitException e) {
                 terminal.writer().println(REPL_EXIT_MESSAGE);
                 break;
+            } catch (ReplToggleDebugException e) {
+                debugMode = !debugMode;
+                changeDiagnosticOutputMode(terminal, debugMode);
             } catch (UserInterruptException | EndOfFileException | ReplHandledException ignored) {
                 // ignore
             } catch (Exception e) {
@@ -125,10 +131,7 @@ public class ReplShell {
                 && args[0].equalsIgnoreCase(DEBUG_KEYWORD);
 
         Terminal terminal = TerminalBuilder.terminal();
-        if (outputDiagnostics) {
-            ShellDiagnosticProvider.getInstance().setWriter(new ReplDiagnosticWriter(terminal));
-            ShellDiagnosticProvider.sendMessage("Diagnostic output mode is ON.");
-        }
+        changeDiagnosticOutputMode(terminal, outputDiagnostics);
 
         DefaultParser parser = new DefaultParser();
         parser.setEofOnUnclosedBracket(DefaultParser.Bracket.CURLY,
@@ -147,7 +150,7 @@ public class ReplShell {
                 .option(LineReader.Option.INSERT_BRACKET, true)
                 .build();
 
-        ReplShell replShell = new ReplShell(lineReader);
+        ReplShell replShell = new ReplShell(lineReader, outputDiagnostics);
         replShell.execute();
     }
 
@@ -163,5 +166,15 @@ public class ReplShell {
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         Scanner scanner = new Scanner(reader).useDelimiter(SPECIAL_DELIMITER);
         return scanner.hasNext() ? scanner.next() : "";
+    }
+
+    private static void changeDiagnosticOutputMode(Terminal terminal, boolean turnOn) {
+        if (turnOn) {
+            ShellDiagnosticProvider.getInstance().setWriter(new ReplDiagnosticWriter(terminal));
+            ShellDiagnosticProvider.sendMessage("Diagnostic output mode set to ON.");
+        } else {
+            ShellDiagnosticProvider.sendMessage("Diagnostic output mode set to OFF.");
+            ShellDiagnosticProvider.getInstance().setWriter(null);
+        }
     }
 }

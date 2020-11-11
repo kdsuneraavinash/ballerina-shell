@@ -20,6 +20,7 @@ package org.ballerina.repl;
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
+import org.ballerina.repl.exceptions.ReplToggleDebugException;
 
 import java.io.PrintWriter;
 
@@ -32,6 +33,7 @@ public class ReplCommandHandler {
     private static final String ABOUT_FILE = "about.txt";
     private static final String EXIT_COMMAND = "/exit";
     private static final String ABOUT_COMMAND = "/about";
+    private static final String TOGGLE_DEBUG = "/debug";
     private static final String EMPTY_LINE = "";
 
     /**
@@ -42,10 +44,12 @@ public class ReplCommandHandler {
      *
      * @param command Command to parse.
      * @param output  Output writer to send output to.
-     * @throws ReplExitException    to signify to exit the program.
-     * @throws ReplHandledException to signify that the command was handled.
+     * @throws ReplExitException        to signify to exit the program.
+     * @throws ReplHandledException     to signify that the command was handled.
+     * @throws ReplToggleDebugException to signify to change the debug mode.
      */
-    public static void handle(String command, PrintWriter output) throws ReplExitException, ReplHandledException {
+    public static void handle(String command, PrintWriter output)
+            throws ReplExitException, ReplHandledException, ReplToggleDebugException {
         switch (command.toLowerCase().trim()) {
             case EXIT_COMMAND:
                 throw new ReplExitException();
@@ -55,6 +59,8 @@ public class ReplCommandHandler {
                 throw new ReplHandledException();
             case EMPTY_LINE:
                 throw new ReplHandledException();
+            case TOGGLE_DEBUG:
+                throw new ReplToggleDebugException();
             default:
                 ShellDiagnosticProvider.sendMessage("Command not identified as internal command.");
         }

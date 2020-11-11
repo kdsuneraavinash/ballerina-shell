@@ -86,5 +86,6 @@ public class BallerinaShell {
                 return;
             }
         }
+        shellResultController.completeExecutionSession();
     }
 }
