@@ -25,8 +25,18 @@ function run() returns string|error {
     return output;
 }
 
+function restore() {
+    // Restore variables here
+}
+
+function dump() {
+    // Dump variables here
+}
+
 public function main() {
+    restore();
     string|error result = trap run();
+    dump();
     if (result is string) {
         io:println(result);
     } else {

@@ -17,6 +17,7 @@
  */
 package io.ballerina.shell.executor;
 
+import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.process.ProcessInvoker;
 import io.ballerina.shell.executor.process.ShellProcessInvoker;
 import io.ballerina.shell.executor.wrapper.Wrapper;
@@ -40,6 +41,8 @@ public class ProcessExecutor extends StatelessExecutor {
         super(wrapper);
         String command = String.format("ballerina run %s", TEMP_FILE);
         processInvoker = new ShellProcessInvoker(command);
+        ShellDiagnosticProvider.sendMessage("Using process executor with shell process invoker.");
+        ShellDiagnosticProvider.sendMessage("Shell command invocation used: " + command);
     }
 
     @Override

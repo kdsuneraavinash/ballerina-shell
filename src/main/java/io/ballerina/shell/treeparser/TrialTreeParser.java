@@ -21,6 +21,7 @@ import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
+import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.treeparser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.treeparser.trials.ExpressionTrial;
 import io.ballerina.shell.treeparser.trials.FailedTrialException;
@@ -35,20 +36,29 @@ import io.ballerina.shell.treeparser.trials.TreeParserTrial;
  * This continues until the correct type can be determined.
  */
 public class TrialTreeParser implements TreeParser {
+    private static final TreeParserTrial[] TREE_PARSER_TRIALS = {
+            new ImportDeclarationTrial(),
+            new ExpressionTrial(),
+            new StatementTrial(),
+            new ModuleMemberTrial(),
+            new EmptyExpressionTrial(),
+    };
+
+    public TrialTreeParser() {
+        ShellDiagnosticProvider.sendMessage("Using trial parser to parse tree.");
+        StringBuilder message = new StringBuilder();
+        message.append("Attached ").append(TREE_PARSER_TRIALS.length).append(" tree parser trials: ");
+        for (TreeParserTrial treeParserTrial : TREE_PARSER_TRIALS) {
+            message.append(treeParserTrial.getClass().getSimpleName()).append(" ");
+        }
+        ShellDiagnosticProvider.sendMessage(message.toString());
+    }
 
     @Override
     public Node parse(String source) {
         assert source.endsWith(";");
 
-        TreeParserTrial[] treeParserTrials = {
-                new ImportDeclarationTrial(),
-                new ExpressionTrial(),
-                new StatementTrial(),
-                new ModuleMemberTrial(),
-                new EmptyExpressionTrial(),
-        };
-
-        for (TreeParserTrial treeParserTrial : treeParserTrials) {
+        for (TreeParserTrial treeParserTrial : TREE_PARSER_TRIALS) {
             try {
                 return treeParserTrial.tryParse(source);
             } catch (FailedTrialException ignored) {

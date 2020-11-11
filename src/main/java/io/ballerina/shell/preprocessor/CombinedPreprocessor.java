@@ -18,6 +18,8 @@
 
 package io.ballerina.shell.preprocessor;
 
+import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +30,13 @@ public class CombinedPreprocessor implements Preprocessor {
     private final Preprocessor[] preprocessors;
 
     public CombinedPreprocessor(Preprocessor... preprocessors) {
+        StringBuilder message = new StringBuilder();
+        message.append("Attached ").append(preprocessors.length).append(" preprocessors: ");
+        for (Preprocessor preprocessor : preprocessors) {
+            message.append(preprocessor.getClass().getSimpleName()).append(" ");
+        }
+        ShellDiagnosticProvider.sendMessage(message.toString());
+
         this.preprocessors = preprocessors;
     }
 
