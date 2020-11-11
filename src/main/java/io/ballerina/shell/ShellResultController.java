@@ -28,4 +28,11 @@ public interface ShellResultController {
      * @param ballerinaShellResultPart current shell result.
      */
     void addBallerinaShellResult(BallerinaShellResult ballerinaShellResultPart);
+
+    /**
+     * Ends a execution session.
+     * A session contains one user line and one or more statements.
+     * This will be not called if there was an error in execution.
+     */
+    void completeExecutionSession();
 }

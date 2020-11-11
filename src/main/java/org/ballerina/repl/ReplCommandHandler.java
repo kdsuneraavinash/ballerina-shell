@@ -32,6 +32,7 @@ public class ReplCommandHandler {
     private static final String ABOUT_FILE = "about.txt";
     private static final String EXIT_COMMAND = "/exit";
     private static final String ABOUT_COMMAND = "/about";
+    private static final String EMPTY_LINE = "";
 
     /**
      * This would handle the command and if identified as a valid command,
@@ -51,6 +52,8 @@ public class ReplCommandHandler {
             case ABOUT_COMMAND:
                 String aboutContent = ReplShell.readFile(ABOUT_FILE);
                 output.println(aboutContent);
+                throw new ReplHandledException();
+            case EMPTY_LINE:
                 throw new ReplHandledException();
             default:
                 ShellDiagnosticProvider.sendMessage("Command not identified as internal command.");

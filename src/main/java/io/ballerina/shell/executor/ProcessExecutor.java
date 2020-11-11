@@ -34,12 +34,13 @@ import java.util.List;
  * This would directly call the ballerina command.
  */
 public class ProcessExecutor extends StatelessExecutor {
-    public static final String TEMP_FILE = "._main_exec.bal";
+    private static final String BALLERINA_COMMAND = "ballerina run %s";
+    private static final String TEMP_FILE = "main.bal";
     private final ProcessInvoker processInvoker;
 
     public ProcessExecutor(Wrapper wrapper) {
         super(wrapper);
-        String command = String.format("ballerina run %s", TEMP_FILE);
+        String command = String.format(BALLERINA_COMMAND, TEMP_FILE);
         processInvoker = new ShellProcessInvoker(command);
         ShellDiagnosticProvider.sendMessage("Using process executor with shell process invoker.");
         ShellDiagnosticProvider.sendMessage("Shell command invocation used: " + command);

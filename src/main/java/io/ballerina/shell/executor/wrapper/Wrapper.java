@@ -84,10 +84,17 @@ public abstract class Wrapper {
         List<VariableDefinitionSnippet> variableDeclarationSnippets = new ArrayList<>();
         List<StatementSnippet> statementSnippets = new ArrayList<>();
         if (expressionSnippet == null) {
+            // Default expression is a colored OK message
             expressionSnippet = ExpressionSnippet.fromNode(
-                    NodeFactory.createNilLiteralNode(
-                            NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
-                            NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)));
+                    NodeFactory.createBasicLiteralNode(
+                            SyntaxKind.STRING_LITERAL,
+                            NodeFactory.createLiteralValueToken(
+                                    SyntaxKind.STRING_LITERAL_TOKEN,
+                                    "\"\u001b[30;1mOK\u001b[0m\"",
+                                    NodeFactory.createEmptyMinutiaeList(),
+                                    NodeFactory.createEmptyMinutiaeList()
+                            )
+                    ));
         }
 
         // Add snippets to the relevant category.

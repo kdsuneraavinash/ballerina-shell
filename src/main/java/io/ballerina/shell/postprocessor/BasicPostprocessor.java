@@ -33,16 +33,27 @@ public class BasicPostprocessor implements Postprocessor {
     public String process(ExecutorResult executorResult) {
         if (executorResult.isError()) {
             Scanner outputScanner = new Scanner(executorResult.getOutput());
+            StringBuilder original = new StringBuilder();
             StringBuilder formatted = new StringBuilder();
+
+            boolean foundAnyLogs = false;
+            formatted.append("Compilation failed (Error Logs):\n");
 
             while (outputScanner.hasNextLine()) {
                 String line = outputScanner.nextLine();
+                original.append(line).append("\n");
                 for (String prefix : WHITE_LISTED_STD_ERR_PREFIXES) {
                     if (line.startsWith(prefix)) {
                         formatted.append(line).append("\n");
+                        foundAnyLogs = true;
                         break;
                     }
                 }
+            }
+            if (!foundAnyLogs) {
+                // Oh no; no error logs but failed
+                // Restore original logs, dont care if there are compiler/run messages
+                return original.toString();
             }
 
             return formatted.toString();

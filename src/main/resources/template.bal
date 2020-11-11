@@ -18,10 +18,7 @@ function run() returns string|error {
     check stmts();
     any|error expr = %s; // If expression here
     any value = checkpanic expr;
-    if value == () {
-        return "";
-    }
-    string output = io:sprintf("%%s\n", value);
+    string output = io:sprintf("%%s", value);
     return output;
 }
 

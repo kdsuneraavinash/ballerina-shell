@@ -108,5 +108,5 @@ gradle-app.setting
 
 # End of https://www.toptal.com/developers/gitignore/api/java,gradle,intellij
 
-._main_exec.bal
+main.bal
 

@@ -40,6 +40,11 @@ public class ReplResultController implements ShellResultController {
         printShellResult(ballerinaShellResultPart);
     }
 
+    @Override
+    public void completeExecutionSession() {
+        terminal.writer().println();
+    }
+
     /**
      * Prints a shell result to the terminal.
      * Errors will be colorized.
