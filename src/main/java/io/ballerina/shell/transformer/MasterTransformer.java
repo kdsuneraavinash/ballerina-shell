@@ -20,16 +20,13 @@ package io.ballerina.shell.transformer;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.snippet.Snippet;
 
-import java.util.List;
-
 /**
  * A transformer to apply all transformers.
  * Applies, {@code SyntaxTreeTransformer}.
  */
-public class MasterTransformer implements Transformer<Node, List<Snippet<?>>> {
+public class MasterTransformer implements Transformer<Node, Snippet<?>> {
     @Override
-    public List<Snippet<?>> transform(Node value) {
-        Snippet<?> snippet = new SyntaxTreeTransformer().transform(value);
-        return List.of(snippet);
+    public Snippet<?> transform(Node value) {
+        return new SyntaxTreeTransformer().transform(value);
     }
 }

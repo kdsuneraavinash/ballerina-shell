@@ -17,25 +17,31 @@
  */
 package io.ballerina.shell.snippet;
 
-import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
-
 /**
- * Snippet that represent a import statement.
- * TODO: How to defer unused imports until they are used?
+ * Kind determines the subtype of the snippet.
+ * This can be used to cast to the subtype.
  */
-public class ImportSnippet extends Snippet<ImportDeclarationNode> {
-    protected ImportSnippet(ImportDeclarationNode node, SnippetSubKind subKind) {
-        super(node, subKind);
-        assert subKind.getKind() == SnippetKind.IMPORT_KIND;
+public enum SnippetKind {
+    IMPORT_KIND(true),
+    MODULE_MEMBER_DECLARATION_KIND(true),
+    VARIABLE_DEFINITION_KIND(true),
+    STATEMENT_KIND(true),
+    EXPRESSION_KIND(false),
+    ERRONEOUS_KIND(false);
+
+    private final boolean isPersistent;
+
+    SnippetKind(boolean isPersistent) {
+        this.isPersistent = isPersistent;
     }
 
     /**
-     * Create a import snippet from the given node.
+     * Whether the kind is a persistent type.
+     * Persistent snippets remain in memory even after their execution.
      *
-     * @param node Root node to create snippet from.
-     * @return Snippet that contains the node.
+     * @return Whether the snippet is persistent..
      */
-    public static ImportSnippet fromNode(ImportDeclarationNode node) {
-        return new ImportSnippet(node, SnippetSubKind.IMPORT);
+    public boolean isPersistent() {
+        return isPersistent;
     }
 }

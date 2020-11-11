@@ -37,41 +37,12 @@ import java.util.Objects;
  * @param <T> Type of the node that corresponds to the snippet.
  */
 public abstract class Snippet<T extends Node> {
-    /**
-     * Kind determines the subtype of the snippet.
-     * This can be used to cast to the subtype.
-     */
-    public enum SnippetKind {
-        IMPORT_KIND(true),
-        MODULE_MEMBER_DECLARATION_KIND(true),
-        VARIABLE_DEFINITION_KIND(true),
-        STATEMENT_KIND(true),
-        EXPRESSION_KIND(false),
-        ERRONEOUS_KIND(false);
-
-        private final boolean isPersistent;
-
-        SnippetKind(boolean isPersistent) {
-            this.isPersistent = isPersistent;
-        }
-
-        /**
-         * Whether the kind is a persistent type.
-         * Persistent snippets remain in memory even after their execution.
-         *
-         * @return Whether the snippet is persistent..
-         */
-        public boolean isPersistent() {
-            return isPersistent;
-        }
-    }
-
     protected final T node;
-    protected final SnippetKind kind;
+    protected final SnippetSubKind subKind;
 
-    public Snippet(T node, SnippetKind kind) {
+    protected Snippet(T node, SnippetSubKind subKind) {
         this.node = Objects.requireNonNull(node);
-        this.kind = kind;
+        this.subKind = subKind;
     }
 
     /**
@@ -80,7 +51,7 @@ public abstract class Snippet<T extends Node> {
      * @return kind of the snippet.
      */
     public SnippetKind getKind() {
-        return kind;
+        return subKind.getKind();
     }
 
     /**
@@ -98,6 +69,38 @@ public abstract class Snippet<T extends Node> {
      * @return Whether the snippet is persisted.
      */
     public boolean isPersistent() {
-        return kind.isPersistent();
+        return getKind().isPersistent();
+    }
+
+    /**
+     * Ignored snippets are snippets that are handled by
+     * another kind.
+     *
+     * @return Whether the sub kind is ignored.
+     */
+    public boolean isIgnored() {
+        return subKind.isIgnored();
+    }
+
+    /**
+     * Executable snippets must be evaluated as soon as possible.
+     * If a snippet is not executable, its execution can be deferred.
+     *
+     * @return Whether the snippet is executable.
+     */
+    public boolean isExecutable() {
+        return subKind.isExecutable();
+    }
+
+    /**
+     * Valid snippets are all the snippets that are not erroneous and not ignored.
+     *
+     * @return Whether the snippet is valid.
+     */
+    public boolean isValid() {
+        if (getKind() == SnippetKind.ERRONEOUS_KIND) {
+            throw new RuntimeException(subKind.getErrorMessage());
+        }
+        return !isIgnored();
     }
 }

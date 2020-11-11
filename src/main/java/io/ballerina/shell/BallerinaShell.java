@@ -55,8 +55,8 @@ public class BallerinaShell {
     }
 
     /**
-     * Base evaluation function.
-     * Evaluates a input line.
+     * Base evaluation function. Evaluates a input line.
+     * If the evaluation fails for one statement, the this will stop execution.
      *
      * @param input                 Input line from user.
      * @param shellResultController Shell result object which contain
@@ -72,18 +72,19 @@ public class BallerinaShell {
                     "Root node of the source %s is of type %s.",
                     rootNode.toSourceCode(), rootNode.getClass().getSimpleName());
 
-            List<Snippet<?>> snippets = transformer.transform(rootNode);
+            Snippet<?> snippet = transformer.transform(rootNode);
 
-            for (Snippet<?> snippet : snippets) {
-                ShellDiagnosticProvider.sendMessage(
-                        "Identified code %s as a %s snippet.",
-                        snippet.toSourceCode(), snippet.getKind().toString());
-            }
+            ShellDiagnosticProvider.sendMessage(
+                    "Identified code %s as a %s snippet.",
+                    snippet.toSourceCode(), snippet.getKind().toString());
 
-            ExecutorResult executorResult = executor.execute(snippets);
+            ExecutorResult executorResult = executor.execute(snippet);
             String output = postprocessor.process(executorResult);
             BallerinaShellResult ballerinaShellResultPart = new BallerinaShellResult(output, executorResult.isError());
             shellResultController.addBallerinaShellResult(ballerinaShellResultPart);
+            if (executorResult.isError()) {
+                return;
+            }
         }
     }
 }

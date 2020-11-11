@@ -18,14 +18,38 @@
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
+import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 
 /**
  * These will be variable declarations.
  * Currently only module level variable declarations are accepted.
  * TODO: Move variable value declaration into a statement snippet.
  */
-public class VariableDefinitionSnippet extends Snippet<ModuleVariableDeclarationNode> {
-    public VariableDefinitionSnippet(ModuleVariableDeclarationNode node) {
-        super(node, SnippetKind.VARIABLE_DEFINITION_KIND);
+public class VariableDefinitionSnippet extends Snippet<Node> {
+    public VariableDefinitionSnippet(Node node, SnippetSubKind subKind) {
+        super(node, subKind);
+    }
+
+    /**
+     * Create a var definition snippet from the given node.
+     *
+     * @param node Root node to create snippet from.
+     * @return Snippet that contains the node.
+     */
+    public static VariableDefinitionSnippet fromNode(Node node) {
+        if (node instanceof ModuleVariableDeclarationNode) {
+            if (((ModuleVariableDeclarationNode) node).initializer().isEmpty()) {
+                return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION_WITHOUT_VALUE);
+            }
+            return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION);
+        } else if (node instanceof VariableDeclarationNode) {
+            if (((VariableDeclarationNode) node).initializer().isEmpty()) {
+                return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION_WITHOUT_VALUE);
+            }
+            return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION);
+        } else {
+            throw new IllegalArgumentException("Node is of unexpected type");
+        }
     }
 }

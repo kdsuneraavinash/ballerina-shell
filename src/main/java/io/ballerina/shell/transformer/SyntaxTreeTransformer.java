@@ -23,7 +23,8 @@ import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.StatementNode;
-import io.ballerina.shell.snippet.ErroneousSnippet;
+import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
+import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.ImportSnippet;
 import io.ballerina.shell.snippet.ModuleMemberDeclarationSnippet;
@@ -36,24 +37,45 @@ import io.ballerina.shell.snippet.VariableDefinitionSnippet;
  * Transforms the syntax tree into the corresponding snippet.
  * Priority is as {@code ImportSnippet}, {@code VariableDefinitionSnippet},
  * {@code ExpressionSnippet}, {@code ModuleMemberDeclarationSnippet} and {@code StatementSnippet}.
+ * This will throw and error if the resultant snippet is an erroneous snippet.
  */
 public class SyntaxTreeTransformer implements Transformer<Node, Snippet<?>> {
     @Override
     public Snippet<?> transform(Node value) {
+        Snippet<?> snippet;
+
         if (value instanceof ImportDeclarationNode) {
-            return new ImportSnippet((ImportDeclarationNode) value);
-        } else if (value instanceof ModuleVariableDeclarationNode) {
-            // VariableDeclarationNode is also here. But they are currently rejected from parser.
-            // TODO: Accept VariableDeclarationNode as well.
-            return new VariableDefinitionSnippet((ModuleVariableDeclarationNode) value);
-        } else if (value instanceof ExpressionNode) {
-            return new ExpressionSnippet((ExpressionNode) value);
-        } else if (value instanceof ModuleMemberDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(((ModuleMemberDeclarationNode) value));
-        } else if (value instanceof StatementNode) {
-            return new StatementSnippet((StatementNode) value);
-        } else {
-            return new ErroneousSnippet(value);
+            snippet = ImportSnippet.fromNode((ImportDeclarationNode) value);
+            if (snippet.isValid()) {
+                return snippet;
+            }
         }
+        if (value instanceof ModuleVariableDeclarationNode || value instanceof VariableDeclarationNode) {
+            snippet = VariableDefinitionSnippet.fromNode(value);
+            if (snippet.isValid()) {
+                return snippet;
+            }
+        }
+        if (value instanceof ExpressionNode) {
+            snippet = ExpressionSnippet.fromNode((ExpressionNode) value);
+            if (snippet.isValid()) {
+                return snippet;
+            }
+        }
+        if (value instanceof ModuleMemberDeclarationNode) {
+            snippet = ModuleMemberDeclarationSnippet.fromNode((ModuleMemberDeclarationNode) value);
+            if (snippet.isValid()) {
+                return snippet;
+            }
+        }
+        if (value instanceof StatementNode) {
+            snippet = StatementSnippet.fromNode((StatementNode) value);
+            if (snippet.isValid()) {
+                return snippet;
+            }
+        }
+
+        ShellDiagnosticProvider.sendMessage("Snippet parsing failed for code " + value.toSourceCode());
+        throw new RuntimeException("Invalid syntax. Unknown snippet type.");
     }
 }

@@ -24,7 +24,18 @@ import io.ballerina.compiler.syntax.tree.Node;
  * specific kind could not be determined.
  */
 public class ErroneousSnippet extends Snippet<Node> {
-    public ErroneousSnippet(Node node) {
-        super(node, SnippetKind.ERRONEOUS_KIND);
+    protected ErroneousSnippet(Node node, SnippetSubKind subKind) {
+        super(node, subKind);
+        assert subKind.getKind() == SnippetKind.ERRONEOUS_KIND;
+    }
+
+    /**
+     * Create a error snippet from the given node.
+     *
+     * @param node Root node to create snippet from.
+     * @return Snippet that contains the node.
+     */
+    public static ErroneousSnippet fromNode(Node node) {
+        return new ErroneousSnippet(node, SnippetSubKind.ERROR);
     }
 }

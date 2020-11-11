@@ -71,6 +71,7 @@ public class ReplShell {
                 terminal.writer().println(REPL_EXIT_MESSAGE);
                 break;
             } catch (Exception e) {
+                ShellDiagnosticProvider.sendMessage(e.toString());
                 String message = new AttributedStringBuilder()
                         .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
                         .append((e.getMessage()))

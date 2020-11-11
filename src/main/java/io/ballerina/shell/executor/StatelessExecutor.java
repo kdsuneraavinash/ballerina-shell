@@ -22,6 +22,7 @@ import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.shell.executor.wrapper.Wrapper;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,35 +46,31 @@ public abstract class StatelessExecutor implements Executor {
     }
 
     @Override
-    public ExecutorResult execute(List<Snippet<?>> newSnippets) {
-        assert !newSnippets.isEmpty();
-
+    public ExecutorResult execute(Snippet<?> newSnippet) {
         // Default values for all snippets
         List<Snippet<?>> importSnippets = new ArrayList<>();
         List<Snippet<?>> moduleDeclarationSnippets = new ArrayList<>();
         List<Snippet<?>> statementSnippets = new ArrayList<>();
-        Snippet<?> expressionSnippet = new ExpressionSnippet(
+        Snippet<?> expressionSnippet = ExpressionSnippet.fromNode(
                 NodeFactory.createNilLiteralNode(
                         NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
                         NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)));
 
-        // Add snippets to process
-        for (Snippet<?> newSnippet : newSnippets) {
-            snippets.push(newSnippet);
-            if (newSnippet instanceof ExpressionSnippet) {
-                expressionSnippet = newSnippet;
-            }
+        // Add snippet to process
+        snippets.push(newSnippet);
+        if (newSnippet instanceof ExpressionSnippet) {
+            expressionSnippet = newSnippet;
         }
 
         // Add snippets to the relevant category.
         for (Snippet<?> snippet : snippets) {
             if (snippet.isPersistent()) {
-                if (snippet.getKind() == Snippet.SnippetKind.IMPORT_KIND) {
+                if (snippet.getKind() == SnippetKind.IMPORT_KIND) {
                     importSnippets.add(snippet);
-                } else if (snippet.getKind() == Snippet.SnippetKind.MODULE_MEMBER_DECLARATION_KIND
-                        || snippet.getKind() == Snippet.SnippetKind.VARIABLE_DEFINITION_KIND) {
+                } else if (snippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND
+                        || snippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
                     moduleDeclarationSnippets.add(snippet);
-                } else if (snippet.getKind() == Snippet.SnippetKind.STATEMENT_KIND) {
+                } else if (snippet.getKind() == SnippetKind.STATEMENT_KIND) {
                     statementSnippets.add(snippet);
                 }
             }
@@ -94,10 +91,8 @@ public abstract class StatelessExecutor implements Executor {
             throw new RuntimeException(e);
         } finally {
             if (isExecutionError) {
-                // Remove snippets from the stack if error
-                for (int i = 0; i < newSnippets.size(); i++) {
-                    snippets.pop();
-                }
+                // Remove snippet from the stack if error
+                snippets.pop();
             }
         }
     }

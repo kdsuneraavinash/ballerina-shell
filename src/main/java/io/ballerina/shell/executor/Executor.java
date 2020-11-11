@@ -19,8 +19,6 @@ package io.ballerina.shell.executor;
 
 import io.ballerina.shell.snippet.Snippet;
 
-import java.util.List;
-
 /**
  * Executes a list of snippets.
  */
@@ -30,8 +28,8 @@ public interface Executor {
      * Snippets parameter should only include newly added snippets.
      * Old snippets should be managed as necessary by the implementation.
      *
-     * @param newSnippets New snippets to execute.
+     * @param newSnippet New snippet to execute.
      * @return Execution output lines.
      */
-    ExecutorResult execute(List<Snippet<?>> newSnippets);
+    ExecutorResult execute(Snippet<?> newSnippet);
 }

@@ -18,6 +18,9 @@
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.ExpressionNode;
+import io.ballerina.compiler.syntax.tree.ServiceConstructorExpressionNode;
+import io.ballerina.compiler.syntax.tree.TableConstructorExpressionNode;
+import io.ballerina.compiler.syntax.tree.TypeTestExpressionNode;
 
 /**
  * These are expressions that are executable but are not persistent.
@@ -26,7 +29,26 @@ import io.ballerina.compiler.syntax.tree.ExpressionNode;
  * (If the expression is a Expression Statement, the semicolon will be stripped.)
  */
 public class ExpressionSnippet extends Snippet<ExpressionNode> {
-    public ExpressionSnippet(ExpressionNode node) {
-        super(node, SnippetKind.EXPRESSION_KIND);
+    private ExpressionSnippet(ExpressionNode node, SnippetSubKind subKind) {
+        super(node, subKind);
+        assert subKind.getKind() == SnippetKind.EXPRESSION_KIND;
+    }
+
+    /**
+     * Create a expression snippet from the given node.
+     *
+     * @param node Root node to create snippet from.
+     * @return Snippet that contains the node.
+     */
+    public static ExpressionSnippet fromNode(ExpressionNode node) {
+        if (node instanceof TypeTestExpressionNode) {
+            return new ExpressionSnippet(node, SnippetSubKind.TYPE_TEST_EXPRESSION);
+        } else if (node instanceof TableConstructorExpressionNode) {
+            return new ExpressionSnippet(node, SnippetSubKind.TABLE_CONSTRUCTOR_EXPRESSION);
+        } else if (node instanceof ServiceConstructorExpressionNode) {
+            return new ExpressionSnippet(node, SnippetSubKind.SERVICE_CONSTRUCTOR_EXPRESSION);
+        } else {
+            return new ExpressionSnippet(node, SnippetSubKind.OTHER_EXPRESSION);
+        }
     }
 }
