@@ -17,15 +17,40 @@
  */
 package io.ballerina.shell.executor.wrapper;
 
+import io.ballerina.compiler.syntax.tree.NodeFactory;
+import io.ballerina.compiler.syntax.tree.SyntaxKind;
+import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.snippet.ExpressionSnippet;
+import io.ballerina.shell.snippet.ImportSnippet;
+import io.ballerina.shell.snippet.ModuleMemberDeclarationSnippet;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.StatementSnippet;
+import io.ballerina.shell.snippet.VariableDefinitionSnippet;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Scanner;
 
 /**
  * Wraps the snippets in a code segment and
  * generate the corresponding syntax tree.
  */
-public interface Wrapper {
+public abstract class Wrapper {
+    private static final String SPECIAL_DELIMITER = "\\A";
+
+    private final String templateFile;
+
+    protected Wrapper(String templateFile) {
+        ShellDiagnosticProvider.sendMessage("Wrapper used with %s template file and %s wrapper.",
+                templateFile, this.getClass().getSimpleName());
+        this.templateFile = templateFile;
+    }
+
     /**
      * Wraps the snippets.
      *
@@ -36,8 +61,66 @@ public interface Wrapper {
      * @param expression                  Expression statement that is evaluated.
      * @return Source code corresponding to the wrapped snippets.
      */
-    String wrap(Collection<Snippet<?>> imports,
-                Collection<Snippet<?>> moduleDeclarations,
-                Collection<Snippet<?>> variableDeclarationSnippets,
-                Collection<Snippet<?>> statements, Snippet<?> expression);
+    public abstract String wrap(Collection<ImportSnippet> imports,
+                                Collection<ModuleMemberDeclarationSnippet> moduleDeclarations,
+                                Collection<VariableDefinitionSnippet> variableDeclarationSnippets,
+                                Collection<StatementSnippet> statements, ExpressionSnippet expression);
+
+    /**
+     * Wraps the given snippets.
+     * Here the expression snippets should also be in the snippets collection.
+     * Expression snippet should be the most recent expression snippet.
+     * (The snippet that was immediately given)
+     * If there are no snippets or the most recent snippet is of other type pass null.
+     *
+     * @param snippets          All the snippets in code.
+     * @param expressionSnippet Most recent expression snippet. (May be null)
+     * @return Source code corresponding to the wrapped snippets.
+     */
+    public String wrap(Collection<Snippet<?>> snippets, ExpressionSnippet expressionSnippet) {
+        // Default values for all snippets
+        List<ImportSnippet> importSnippets = new ArrayList<>();
+        List<ModuleMemberDeclarationSnippet> moduleDeclarationSnippets = new ArrayList<>();
+        List<VariableDefinitionSnippet> variableDeclarationSnippets = new ArrayList<>();
+        List<StatementSnippet> statementSnippets = new ArrayList<>();
+        if (expressionSnippet == null) {
+            expressionSnippet = ExpressionSnippet.fromNode(
+                    NodeFactory.createNilLiteralNode(
+                            NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
+                            NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)));
+        }
+
+        // Add snippets to the relevant category.
+        for (Snippet<?> snippet : snippets) {
+            if (snippet.isPersistent()) {
+                if (snippet instanceof ImportSnippet) {
+                    importSnippets.add((ImportSnippet) snippet);
+                } else if (snippet instanceof ModuleMemberDeclarationSnippet) {
+                    moduleDeclarationSnippets.add((ModuleMemberDeclarationSnippet) snippet);
+                } else if (snippet instanceof VariableDefinitionSnippet) {
+                    variableDeclarationSnippets.add((VariableDefinitionSnippet) snippet);
+                } else if (snippet instanceof StatementSnippet) {
+                    statementSnippets.add((StatementSnippet) snippet);
+                }
+            }
+        }
+
+        return wrap(importSnippets, moduleDeclarationSnippets, variableDeclarationSnippets,
+                statementSnippets, expressionSnippet
+        );
+    }
+
+    /**
+     * Read the template for the code gen.
+     *
+     * @return Read the template from a resource file.
+     */
+    protected String readTemplate() {
+        ClassLoader classLoader = getClass().getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(templateFile);
+        Objects.requireNonNull(inputStream, "File open failed");
+        InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        Scanner scanner = new Scanner(reader).useDelimiter(SPECIAL_DELIMITER);
+        return scanner.hasNext() ? scanner.next() : "";
+    }
 }

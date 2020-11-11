@@ -29,10 +29,10 @@ import java.util.Collection;
 /**
  * Wrapper to wrap snippets with a code template.
  */
-public class TemplateWrapper extends Wrapper {
-    private static final String TEMPLATE_FILE = "template.bal";
+public class CodeGenWrapper extends Wrapper {
+    private static final String TEMPLATE_FILE = "template-gen.bal";
 
-    public TemplateWrapper() {
+    public CodeGenWrapper() {
         super(TEMPLATE_FILE);
     }
 

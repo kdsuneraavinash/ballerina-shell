@@ -17,15 +17,10 @@
  */
 package io.ballerina.shell.executor;
 
-import io.ballerina.compiler.syntax.tree.NodeFactory;
-import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.shell.executor.wrapper.Wrapper;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
 
 /**
@@ -47,45 +42,17 @@ public abstract class StatelessExecutor implements Executor {
 
     @Override
     public ExecutorResult execute(Snippet<?> newSnippet) {
-        // Default values for all snippets
-        List<Snippet<?>> importSnippets = new ArrayList<>();
-        List<Snippet<?>> moduleDeclarationSnippets = new ArrayList<>();
-        List<Snippet<?>> variableDeclarationSnippets = new ArrayList<>();
-        List<Snippet<?>> statementSnippets = new ArrayList<>();
-
-        Snippet<?> expressionSnippet = ExpressionSnippet.fromNode(
-                NodeFactory.createNilLiteralNode(
-                        NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
-                        NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)));
-
         // Add snippet to process
+        ExpressionSnippet expressionSnippet = null;
         snippets.push(newSnippet);
         if (newSnippet instanceof ExpressionSnippet) {
-            expressionSnippet = newSnippet;
-        }
-
-        // Add snippets to the relevant category.
-        for (Snippet<?> snippet : snippets) {
-            if (snippet.isPersistent()) {
-                if (snippet.getKind() == SnippetKind.IMPORT_KIND) {
-                    importSnippets.add(snippet);
-                } else if (snippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
-                    moduleDeclarationSnippets.add(snippet);
-                } else if (snippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
-                    variableDeclarationSnippets.add(snippet);
-                } else if (snippet.getKind() == SnippetKind.STATEMENT_KIND) {
-                    statementSnippets.add(snippet);
-                }
-            }
+            expressionSnippet = (ExpressionSnippet) newSnippet;
         }
 
         boolean isExecutionError = false;
         try {
             // Evaluate the wrapped source code
-            String sourceCode = wrapper.wrap(
-                    importSnippets, moduleDeclarationSnippets, variableDeclarationSnippets,
-                    statementSnippets, expressionSnippet
-            );
+            String sourceCode = wrapper.wrap(snippets, expressionSnippet);
             ExecutorResult executorResult = evaluateSourceCode(sourceCode);
             isExecutionError = executorResult.isError();
             return executorResult;
@@ -93,8 +60,8 @@ public abstract class StatelessExecutor implements Executor {
             isExecutionError = true;
             throw new RuntimeException(e);
         } finally {
+            // Remove snippet from the stack if error
             if (isExecutionError) {
-                // Remove snippet from the stack if error
                 snippets.pop();
             }
         }
