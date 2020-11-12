@@ -5,6 +5,7 @@ module io.ballerina.shell {
     requires org.jline;
     requires com.github.mustachejava;
     requires com.google.gson;
+    requires commons.cli;
 
     exports io.ballerina.shell;
     exports io.ballerina.shell.executor;

@@ -15,26 +15,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.ballerina.repl;
 
 import io.ballerina.shell.BallerinaShell;
+import io.ballerina.shell.ExecutorFailedException;
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
 import org.ballerina.repl.exceptions.ReplToggleDebugException;
-import org.jline.reader.Completer;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
-import org.jline.reader.impl.DefaultHighlighter;
-import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -44,27 +40,25 @@ import java.util.Objects;
 import java.util.Scanner;
 
 /**
- * Ballerina base shell REPL.
- * Executes a interactive shell to let the user interact with Ballerina Shell.
+ * REPL shell terminal executor. Launches the terminal.
  */
 public class ReplShell {
     private static final String REPL_HEADER = "header.txt";
     private static final String REPL_PROMPT = "=$ ";
     private static final String REPL_EXIT_MESSAGE = "Bye!!";
-    private static final String DEBUG_KEYWORD = "debug";
     private static final String SPECIAL_DELIMITER = "\\A";
     private static final String VERSION = "0.0.1";
 
-    private boolean debugMode;
     private final Terminal terminal;
     private final LineReader lineReader;
     private final BallerinaShell ballerinaShell;
+    private final ReplConfiguration configuration;
 
-    public ReplShell(LineReader lineReader, boolean debugMode) {
+    public ReplShell(LineReader lineReader, ReplConfiguration configuration) {
         this.terminal = lineReader.getTerminal();
         this.lineReader = lineReader;
-        this.ballerinaShell = new BallerinaShell();
-        this.debugMode = debugMode;
+        this.configuration = configuration;
+        this.ballerinaShell = new BallerinaShell(configuration.getExecutor());
     }
 
     /**
@@ -84,15 +78,18 @@ public class ReplShell {
                 String line = readInput(lineReader, previousDuration);
                 ReplCommandHandler.handle(line, terminal.writer());
                 Instant start = Instant.now();
-                ballerinaShell.evaluate(line.trim(), replResultController);
-                Instant end = Instant.now();
-                previousDuration = Duration.between(start, end);
+                try {
+                    ballerinaShell.evaluate(line.trim(), replResultController);
+                } catch (ExecutorFailedException ignored) {
+                } finally {
+                    Instant end = Instant.now();
+                    previousDuration = Duration.between(start, end);
+                }
             } catch (ReplExitException e) {
                 terminal.writer().println(REPL_EXIT_MESSAGE);
                 break;
             } catch (ReplToggleDebugException e) {
-                debugMode = !debugMode;
-                changeDiagnosticOutputMode(terminal, debugMode);
+                configuration.toggleDiagnosticOutputMode();
             } catch (UserInterruptException | EndOfFileException | ReplHandledException ignored) {
                 // ignore
             } catch (Exception e) {
@@ -101,9 +98,7 @@ public class ReplShell {
                         .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
                         .append((e.getMessage())).toAnsi();
                 terminal.writer().println(message);
-                if (debugMode) {
-                    e.printStackTrace(terminal.writer());
-                }
+                configuration.printStackTrace(e);
                 terminal.writer().flush();
             }
         }
@@ -123,60 +118,16 @@ public class ReplShell {
     }
 
     /**
-     * Read the optional args and launch the REPL.
-     *
-     * @param args Optional arguments.
-     * @throws IOException If terminal initialization failed.
-     */
-    public static void main(String[] args) throws IOException {
-        boolean outputDiagnostics = args.length > 0
-                && args[0].equalsIgnoreCase(DEBUG_KEYWORD);
-
-        Terminal terminal = TerminalBuilder.terminal();
-        changeDiagnosticOutputMode(terminal, outputDiagnostics);
-
-        DefaultParser parser = new DefaultParser();
-        parser.setEofOnUnclosedBracket(DefaultParser.Bracket.CURLY,
-                DefaultParser.Bracket.ROUND, DefaultParser.Bracket.SQUARE);
-        Completer completer = new ReplKeywordCompleter();
-        DefaultHighlighter highlighter = new DefaultHighlighter();
-
-        LineReader lineReader = LineReaderBuilder.builder()
-                .appName("Ballerina Shell REPL")
-                .terminal(terminal)
-                .completer(completer)
-                .highlighter(highlighter)
-                .parser(parser)
-                .variable(LineReader.SECONDARY_PROMPT_PATTERN, "%M%P > ")
-                .variable(LineReader.INDENTATION, 2)
-                .option(LineReader.Option.INSERT_BRACKET, true)
-                .build();
-
-        ReplShell replShell = new ReplShell(lineReader, outputDiagnostics);
-        replShell.execute();
-    }
-
-    /**
      * Reads the header file content from the resources.
      *
-     * @return Header text.
+     * @return Read text.
      */
     public static String readFile(String path) {
-        ClassLoader classLoader = ReplShell.class.getClassLoader();
+        ClassLoader classLoader = ReplShellExecutor.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(path);
         Objects.requireNonNull(inputStream, "File does not exist: " + path);
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         Scanner scanner = new Scanner(reader).useDelimiter(SPECIAL_DELIMITER);
         return scanner.hasNext() ? scanner.next() : "";
-    }
-
-    private static void changeDiagnosticOutputMode(Terminal terminal, boolean turnOn) {
-        if (turnOn) {
-            ShellDiagnosticProvider.getInstance().setWriter(new ReplDiagnosticWriter(terminal));
-            ShellDiagnosticProvider.sendMessage("Diagnostic output mode set to ON.");
-        } else {
-            ShellDiagnosticProvider.sendMessage("Diagnostic output mode set to OFF.");
-            ShellDiagnosticProvider.getInstance().setWriter(null);
-        }
     }
 }

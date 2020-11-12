@@ -21,7 +21,6 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.ExecutorResult;
-import io.ballerina.shell.executor.SourceGenExecutor;
 import io.ballerina.shell.postprocessor.BasicPostprocessor;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.preprocessor.CombinedPreprocessor;
@@ -44,11 +43,11 @@ public class BallerinaShell {
     private final Executor executor;
     private final Postprocessor postprocessor;
 
-    public BallerinaShell() {
+    public BallerinaShell(Executor executor) {
         this.preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
         this.parser = new TrialTreeParser();
         this.transformer = new MasterTransformer();
-        this.executor = new SourceGenExecutor();
+        this.executor = executor;
         this.postprocessor = new BasicPostprocessor();
     }
 
@@ -60,7 +59,7 @@ public class BallerinaShell {
      * @param shellResultController Shell result object which contain
      *                              the results of the shell after the execution is done.
      */
-    public void evaluate(String input, ShellResultController shellResultController) {
+    public void evaluate(String input, ShellResultController shellResultController) throws ExecutorFailedException {
         List<String> source = preprocessor.preprocess(input);
         for (String sourceLine : source) {
             ShellDiagnosticProvider.sendMessage("Executing source line %s.", sourceLine);
@@ -81,7 +80,7 @@ public class BallerinaShell {
             BallerinaShellResult ballerinaShellResultPart = new BallerinaShellResult(output, executorResult.isError());
             shellResultController.addBallerinaShellResult(ballerinaShellResultPart);
             if (executorResult.isError()) {
-                return;
+                throw new ExecutorFailedException();
             }
         }
         shellResultController.completeExecutionSession();

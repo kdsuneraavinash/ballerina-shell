@@ -50,6 +50,10 @@ public abstract class StatefulExecutor implements Executor {
             List<Snippet<?>> snippets = getSnippetsForExecution(newSnippet);
             String sourceCode = wrapper.wrap(snippets, expressionSnippet);
             ExecutorResult result = evaluateSourceCode(sourceCode);
+            if (result.isError()) {
+                executionFailed(newSnippet);
+                return result;
+            }
             executionSuccessful(newSnippet);
             return result;
         } catch (Exception e) {
