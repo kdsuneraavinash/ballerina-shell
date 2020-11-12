@@ -33,67 +33,60 @@ public enum SnippetSubKind {
     TYPE_DEFINITION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
     SERVICE_DECLARATION("Services cannot be declared in REPL"), // Error
     CONSTANT_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
-    MODULE_VARIABLE_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND, false, true), // Ignored
+    MODULE_VARIABLE_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND, true), // Ignored
     ANNOTATION_DECLARATION("Defining annotations in REPL are not currently supported"), // Error
     MODULE_XML_NAMESPACE_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
     ENUM_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
     CLASS_DEFINITION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
 
-    ASSIGNMENT_STATEMENT_SUBKIND(SnippetKind.STATEMENT_KIND, true),
-    COMPOUND_ASSIGNMENT_STATEMENT_SUBKIND(SnippetKind.STATEMENT_KIND, true),
-    VARIABLE_DECLARATION_STATEMENT(SnippetKind.STATEMENT_KIND, true, true), // Ignored
-    BLOCK_STATEMENT(SnippetKind.STATEMENT_KIND, true),
+    ASSIGNMENT_STATEMENT_SUBKIND(SnippetKind.STATEMENT_KIND),
+    COMPOUND_ASSIGNMENT_STATEMENT_SUBKIND(SnippetKind.STATEMENT_KIND),
+    VARIABLE_DECLARATION_STATEMENT(SnippetKind.STATEMENT_KIND, true), // Ignored
+    BLOCK_STATEMENT(SnippetKind.STATEMENT_KIND),
     BREAK_STATEMENT("Break cannot be used outside of a loop."), // Error
     FAIL_STATEMENT("Fail statements must appear inside a function."), // Error
-    EXPRESSION_STATEMENT(SnippetKind.STATEMENT_KIND, true, true), // Ignored
+    EXPRESSION_STATEMENT(SnippetKind.STATEMENT_KIND, true), // Ignored
     CONTINUE_STATEMENT("Continue cannot be used outside of a loop."), // Error
-    IF_ELSE_STATEMENT(SnippetKind.STATEMENT_KIND, true),
-    WHILE_STATEMENT(SnippetKind.STATEMENT_KIND, true),
-    PANIC_STATEMENT(SnippetKind.STATEMENT_KIND, true),
+    IF_ELSE_STATEMENT(SnippetKind.STATEMENT_KIND),
+    WHILE_STATEMENT(SnippetKind.STATEMENT_KIND),
+    PANIC_STATEMENT(SnippetKind.STATEMENT_KIND),
     RETURN_STATEMENT("Return cannot exist outside of a function."), // Error
-    LOCAL_TYPE_DEFINITION_STATEMENT(SnippetKind.STATEMENT_KIND, false, true), // Ignored
-    LOCK_STATEMENT(SnippetKind.STATEMENT_KIND, true),
-    FORK_STATEMENT(SnippetKind.STATEMENT_KIND, true),
-    FOR_EACH_STATEMENT(SnippetKind.STATEMENT_KIND, true),
-    XML_NAMESPACE_DECLARATION_STATEMENT(SnippetKind.STATEMENT_KIND, false, true), // Ignored
-    TRANSACTION_STATEMENT(SnippetKind.STATEMENT_KIND, true),
+    LOCAL_TYPE_DEFINITION_STATEMENT(SnippetKind.STATEMENT_KIND, true), // Ignored
+    LOCK_STATEMENT(SnippetKind.STATEMENT_KIND),
+    FORK_STATEMENT(SnippetKind.STATEMENT_KIND),
+    FOR_EACH_STATEMENT(SnippetKind.STATEMENT_KIND),
+    XML_NAMESPACE_DECLARATION_STATEMENT(SnippetKind.STATEMENT_KIND, true), // Ignored
+    TRANSACTION_STATEMENT(SnippetKind.STATEMENT_KIND),
     ROLLBACK_STATEMENT("Rollback cannot be used outside of a transaction block."), // Error
-    RETRY_STATEMENT(SnippetKind.STATEMENT_KIND, true),
-    MATCH_STATEMENT(SnippetKind.STATEMENT_KIND, true),
-    DO_STATEMENT(SnippetKind.STATEMENT_KIND, true),
+    RETRY_STATEMENT(SnippetKind.STATEMENT_KIND),
+    MATCH_STATEMENT(SnippetKind.STATEMENT_KIND),
+    DO_STATEMENT(SnippetKind.STATEMENT_KIND),
 
-    TYPE_TEST_EXPRESSION(SnippetKind.EXPRESSION_KIND, true), // Issue
+    TYPE_TEST_EXPRESSION(SnippetKind.EXPRESSION_KIND), // Issue
     TABLE_CONSTRUCTOR_EXPRESSION("Table expressions are disallowed"), // Issue
     SERVICE_CONSTRUCTOR_EXPRESSION("Service constructors are disallowed"), // Issue
-    OTHER_EXPRESSION(SnippetKind.EXPRESSION_KIND, true),
+    OTHER_EXPRESSION(SnippetKind.EXPRESSION_KIND),
 
     ERROR("Unidentified statement? "); // Error
 
     private final SnippetKind kind;
     private final boolean ignored;
-    private final boolean isExecutable;
     private final String errorMessage;
 
-    SnippetSubKind(SnippetKind kind, boolean isExecutable, boolean ignored) {
+    SnippetSubKind(SnippetKind kind, boolean ignored) {
         this.kind = kind;
-        this.isExecutable = isExecutable;
         this.ignored = ignored;
         this.errorMessage = null;
     }
 
     SnippetSubKind(String errorMessage) {
         this.kind = SnippetKind.ERRONEOUS_KIND;
-        this.isExecutable = false;
         this.ignored = true;
         this.errorMessage = errorMessage;
     }
 
-    SnippetSubKind(SnippetKind kind, boolean isExecutable) {
-        this(kind, isExecutable, false);
-    }
-
     SnippetSubKind(SnippetKind kind) {
-        this(kind, false, false);
+        this(kind, false);
     }
 
     /**
@@ -116,16 +109,6 @@ public enum SnippetSubKind {
      */
     public SnippetKind getKind() {
         return kind;
-    }
-
-    /**
-     * Executable sub kinds must be evaluated as soon as possible.
-     * If a sub kind is not executable, its execution can be deferred.
-     *
-     * @return Whether the sub kind is executable.
-     */
-    public boolean isExecutable() {
-        return isExecutable;
     }
 
     /**

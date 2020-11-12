@@ -15,17 +15,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.snippet;
+package io.ballerina.shell.executor.desugar;
+
+import io.ballerina.shell.snippet.Snippet;
+
+import java.util.List;
 
 /**
- * Kind determines the subtype of the snippet.
- * This can be used to cast to the subtype.
+ * Desugar process will normalize a snippet into a
+ * list of (same type or different type) snippets/type.
+ *
+ * @param <P> Snippet type that will get desugared.
+ * @param <Q> Converted type.
  */
-public enum SnippetKind {
-    IMPORT_KIND,
-    MODULE_MEMBER_DECLARATION_KIND,
-    VARIABLE_DEFINITION_KIND,
-    STATEMENT_KIND,
-    EXPRESSION_KIND,
-    ERRONEOUS_KIND
+public interface Desugar<P extends Snippet<?>, Q> {
+    /**
+     * Converts a snippets to a list of snippets.
+     * The resultant snippets should be effectively same as the input.
+     *
+     * @param snippet Snippet to convert.
+     * @return List of resultant objects.
+     */
+    List<Q> desugar(P snippet);
 }

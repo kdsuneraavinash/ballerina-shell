@@ -58,7 +58,7 @@ public abstract class StatelessExecutor implements Executor {
             return executorResult;
         } catch (Exception e) {
             isExecutionError = true;
-            throw new RuntimeException(e);
+            throw new RuntimeException("Code evaluation failed!", e);
         } finally {
             // Remove snippet from the stack if error
             if (isExecutionError) {

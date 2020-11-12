@@ -17,6 +17,7 @@
  */
 package io.ballerina.shell.snippet;
 
+import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
@@ -27,8 +28,13 @@ import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
  * TODO: Move variable value declaration into a statement snippet.
  */
 public class VariableDefinitionSnippet extends Snippet<Node> {
-    public VariableDefinitionSnippet(Node node, SnippetSubKind subKind) {
-        super(node, subKind);
+    private final Node node;
+
+    public VariableDefinitionSnippet(Node node, ExpressionNode initializer) {
+        super(node, initializer == null
+                ? SnippetSubKind.VARIABLE_DEFINITION_WITHOUT_VALUE
+                : SnippetSubKind.VARIABLE_DEFINITION);
+        this.node = node;
     }
 
     /**
@@ -39,17 +45,26 @@ public class VariableDefinitionSnippet extends Snippet<Node> {
      */
     public static VariableDefinitionSnippet fromNode(Node node) {
         if (node instanceof ModuleVariableDeclarationNode) {
-            if (((ModuleVariableDeclarationNode) node).initializer().isEmpty()) {
-                return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION_WITHOUT_VALUE);
-            }
-            return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION);
+            ModuleVariableDeclarationNode declarationNode = (ModuleVariableDeclarationNode) node;
+            return new VariableDefinitionSnippet(node,
+                    declarationNode.initializer().orElse(null));
+
         } else if (node instanceof VariableDeclarationNode) {
-            if (((VariableDeclarationNode) node).initializer().isEmpty()) {
-                return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION_WITHOUT_VALUE);
-            }
-            return new VariableDefinitionSnippet(node, SnippetSubKind.VARIABLE_DEFINITION);
+            VariableDeclarationNode declarationNode = (VariableDeclarationNode) node;
+            return new VariableDefinitionSnippet(node,
+                    declarationNode.initializer().orElse(null));
+
         } else {
             throw new IllegalArgumentException("Node is of unexpected type");
         }
+    }
+
+    /**
+     * Gets the variable definition node associated with this snippet.
+     *
+     * @return Var definition node.
+     */
+    public Node getVariableNode() {
+        return node;
     }
 }

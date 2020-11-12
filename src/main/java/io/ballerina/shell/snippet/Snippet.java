@@ -37,11 +37,17 @@ import java.util.Objects;
  * @param <T> Type of the node that corresponds to the snippet.
  */
 public abstract class Snippet<T extends Node> {
-    protected final T node;
     protected final SnippetSubKind subKind;
+    protected final String sourceCode;
 
     protected Snippet(T node, SnippetSubKind subKind) {
-        this.node = Objects.requireNonNull(node);
+        Objects.requireNonNull(node);
+        this.sourceCode = node.toSourceCode();
+        this.subKind = subKind;
+    }
+
+    protected Snippet(String sourceCode, SnippetSubKind subKind) {
+        this.sourceCode = sourceCode;
         this.subKind = subKind;
     }
 
@@ -60,16 +66,7 @@ public abstract class Snippet<T extends Node> {
      * @return Source code corresponding to snippet.
      */
     public String toSourceCode() {
-        return node.toSourceCode();
-    }
-
-    /**
-     * Persisted property associated with the snippet kind.
-     *
-     * @return Whether the snippet is persisted.
-     */
-    public boolean isPersistent() {
-        return getKind().isPersistent();
+        return sourceCode;
     }
 
     /**
@@ -80,16 +77,6 @@ public abstract class Snippet<T extends Node> {
      */
     public boolean isIgnored() {
         return subKind.isIgnored();
-    }
-
-    /**
-     * Executable snippets must be evaluated as soon as possible.
-     * If a snippet is not executable, its execution can be deferred.
-     *
-     * @return Whether the snippet is executable.
-     */
-    public boolean isExecutable() {
-        return subKind.isExecutable();
     }
 
     /**

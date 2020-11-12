@@ -3,6 +3,8 @@ module io.ballerina.shell {
     requires io.ballerina.parser;
     requires io.ballerina.tools.api;
     requires org.jline;
+    requires com.github.mustachejava;
+    requires com.google.gson;
 
     exports io.ballerina.shell;
     exports io.ballerina.shell.executor;
@@ -11,6 +13,7 @@ module io.ballerina.shell {
     exports io.ballerina.shell.transformer;
     exports io.ballerina.shell.treeparser;
     exports io.ballerina.shell.executor.wrapper;
+    exports io.ballerina.shell.executor.desugar;
     exports io.ballerina.shell.postprocessor;
 
     exports org.ballerina.repl;

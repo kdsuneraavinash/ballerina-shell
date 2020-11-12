@@ -20,7 +20,7 @@ package io.ballerina.shell.executor;
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.process.ProcessInvoker;
 import io.ballerina.shell.executor.process.ShellProcessInvoker;
-import io.ballerina.shell.executor.wrapper.Wrapper;
+import io.ballerina.shell.executor.wrapper.TemplateWrapper;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -33,16 +33,16 @@ import java.util.List;
  * Ballerina must be installed and on path to use this executor.
  * This would directly call the ballerina command.
  */
-public class ProcessExecutor extends StatelessExecutor {
+public class TemplateExecutor extends StatelessExecutor {
     private static final String BALLERINA_COMMAND = "ballerina run %s";
     private static final String TEMP_FILE = "main.bal";
     private final ProcessInvoker processInvoker;
 
-    public ProcessExecutor(Wrapper wrapper) {
-        super(wrapper);
+    public TemplateExecutor() {
+        super(new TemplateWrapper());
         String command = String.format(BALLERINA_COMMAND, TEMP_FILE);
         processInvoker = new ShellProcessInvoker(command);
-        ShellDiagnosticProvider.sendMessage("Using process executor with shell process invoker.");
+        ShellDiagnosticProvider.sendMessage("Using template executor with shell process invoker.");
         ShellDiagnosticProvider.sendMessage("Shell command invocation used: " + command);
     }
 

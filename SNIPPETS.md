@@ -201,7 +201,7 @@ public function main(){
 #### Importing may result in an error
 
 ```python
->> import ballerina/io;
+>> import bals/io;
 unused import module 'ballerina/io'
 ```
 

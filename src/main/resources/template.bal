@@ -37,6 +37,6 @@ public function main() {
     if (result is string) {
         io:println(result);
     } else {
-        io:println("Exception occurred: ", result.message());
+        io:println("\u{001b}[33;1mException occurred: ", result.message(), "\u{001b}[0m");
     }
 }

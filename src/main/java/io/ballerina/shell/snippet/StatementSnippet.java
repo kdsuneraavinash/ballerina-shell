@@ -50,6 +50,22 @@ public class StatementSnippet extends Snippet<StatementNode> {
         super(node, subKind);
     }
 
+    protected StatementSnippet(String sourceCode, SnippetSubKind subKind) {
+        super(sourceCode, subKind);
+    }
+
+    /**
+     * Create an assignment snippet from given source code.
+     * The code must be a assignment snippet verified by the callee.
+     * No additional check will be done from this method.
+     *
+     * @param sourceCode Code corresponding to the assignment.
+     * @return Snippet that contains the code.
+     */
+    public static StatementSnippet fromCodeOfAssignment(String sourceCode) {
+        return new StatementSnippet(sourceCode, SnippetSubKind.ASSIGNMENT_STATEMENT_SUBKIND);
+    }
+
 
     /**
      * Create a statement snippet from the given node.

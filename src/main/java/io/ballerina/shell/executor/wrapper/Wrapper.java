@@ -99,16 +99,14 @@ public abstract class Wrapper {
 
         // Add snippets to the relevant category.
         for (Snippet<?> snippet : snippets) {
-            if (snippet.isPersistent()) {
-                if (snippet instanceof ImportSnippet) {
-                    importSnippets.add((ImportSnippet) snippet);
-                } else if (snippet instanceof ModuleMemberDeclarationSnippet) {
-                    moduleDeclarationSnippets.add((ModuleMemberDeclarationSnippet) snippet);
-                } else if (snippet instanceof VariableDefinitionSnippet) {
-                    variableDeclarationSnippets.add((VariableDefinitionSnippet) snippet);
-                } else if (snippet instanceof StatementSnippet) {
-                    statementSnippets.add((StatementSnippet) snippet);
-                }
+            if (snippet instanceof ImportSnippet) {
+                importSnippets.add((ImportSnippet) snippet);
+            } else if (snippet instanceof ModuleMemberDeclarationSnippet) {
+                moduleDeclarationSnippets.add((ModuleMemberDeclarationSnippet) snippet);
+            } else if (snippet instanceof VariableDefinitionSnippet) {
+                variableDeclarationSnippets.add((VariableDefinitionSnippet) snippet);
+            } else if (snippet instanceof StatementSnippet) {
+                statementSnippets.add((StatementSnippet) snippet);
             }
         }
 

@@ -21,8 +21,7 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.ExecutorResult;
-import io.ballerina.shell.executor.ProcessExecutor;
-import io.ballerina.shell.executor.wrapper.TemplateWrapper;
+import io.ballerina.shell.executor.SourceGenExecutor;
 import io.ballerina.shell.postprocessor.BasicPostprocessor;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.preprocessor.CombinedPreprocessor;
@@ -49,8 +48,7 @@ public class BallerinaShell {
         this.preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
         this.parser = new TrialTreeParser();
         this.transformer = new MasterTransformer();
-        this.executor = new ProcessExecutor(new TemplateWrapper());
-        // this.executor = new ProjectApiExecutor(new TemplateWrapper());
+        this.executor = new SourceGenExecutor();
         this.postprocessor = new BasicPostprocessor();
     }
 

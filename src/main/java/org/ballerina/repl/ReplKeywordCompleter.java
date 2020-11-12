@@ -49,11 +49,15 @@ public class ReplKeywordCompleter extends StringsCompleter {
         InputStream inputStream = classLoader.getResourceAsStream(KEYWORDS_FILE);
         Objects.requireNonNull(inputStream, "Keyword file does not exist.");
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-        Scanner scanner = new Scanner(reader);
+        Scanner scanner = new Scanner(reader).useDelimiter(",");
 
         List<String> keywords = new ArrayList<>();
-        while (scanner.hasNextLine()) {
-            keywords.add(scanner.nextLine().trim());
+        while (scanner.hasNext()) {
+            String keyword = scanner.next().trim();
+            if (keyword.isBlank()) {
+                continue;
+            }
+            keywords.add(keyword);
         }
 
         ShellDiagnosticProvider.sendMessage("Keyword completer attached! Keywords found: %s.",
