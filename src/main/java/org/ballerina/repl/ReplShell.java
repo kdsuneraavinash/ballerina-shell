@@ -99,9 +99,11 @@ public class ReplShell {
                 ShellDiagnosticProvider.sendMessage(e.toString());
                 String message = new AttributedStringBuilder()
                         .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
-                        .append((e.getMessage()))
-                        .toAnsi();
+                        .append((e.getMessage())).toAnsi();
                 terminal.writer().println(message);
+                if (debugMode) {
+                    e.printStackTrace(terminal.writer());
+                }
                 terminal.writer().flush();
             }
         }

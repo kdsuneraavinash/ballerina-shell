@@ -64,8 +64,11 @@ public final class ShellDiagnosticProvider {
      * @param arguments       Values to populate the template.
      */
     public void sendMessage(Class<?> provider, String messageTemplate, String... arguments) {
-        ShellDiagnosticMessage diagnosticMessage = new ShellDiagnosticMessage(provider,
-                String.format(messageTemplate, (Object[]) arguments));
+        String message = messageTemplate;
+        if (arguments.length != 0) {
+            message = String.format(messageTemplate, (Object[]) arguments);
+        }
+        ShellDiagnosticMessage diagnosticMessage = new ShellDiagnosticMessage(provider, message);
         diagnosticWriter.write(diagnosticMessage.toString());
     }
 

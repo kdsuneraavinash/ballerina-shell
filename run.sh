@@ -2,10 +2,9 @@
 
 # Save terminal state
 #tput smcup
-clear
 
 # Build and run
-./gradlew fatJar -q && java -jar build/libs/ballerina-shell-0.0.1-SNAPSHOT.jar "$*"
+./gradlew fatJar -q && clear && java -jar build/libs/ballerina-shell-0.0.1-SNAPSHOT.jar "$*"
 
 # Pause till user input
 echo

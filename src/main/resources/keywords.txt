@@ -1,5 +1,6 @@
 /exit
 /about
+/debug
 if
 else
 iterator
