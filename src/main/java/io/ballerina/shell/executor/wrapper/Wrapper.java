@@ -19,7 +19,7 @@ package io.ballerina.shell.executor.wrapper;
 
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.ImportSnippet;
 import io.ballerina.shell.snippet.ModuleMemberDeclarationSnippet;

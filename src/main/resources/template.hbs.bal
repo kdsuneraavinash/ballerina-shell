@@ -176,10 +176,12 @@ function restore() {
 
 function dump(string filename) {
     // Dump variables here
-    json repr = json_repr({
-    // Variables here
-    {{{joinedVariables}}}
-    });
+    json repr = {
+        vars: json_repr({
+            // Variables here
+             {{{joinedVariables}}}
+        })
+    };
     var result = write(repr, filename);
 }
 

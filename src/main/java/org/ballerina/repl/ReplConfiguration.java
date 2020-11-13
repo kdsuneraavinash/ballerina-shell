@@ -17,7 +17,7 @@
  */
 package org.ballerina.repl;
 
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.SourceGenExecutor;
 import io.ballerina.shell.executor.TemplateExecutor;

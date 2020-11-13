@@ -17,7 +17,7 @@
  */
 package io.ballerina.shell.executor;
 
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.process.ProcessInvoker;
 import io.ballerina.shell.executor.process.ShellProcessInvoker;
 import io.ballerina.shell.executor.wrapper.TemplateWrapper;

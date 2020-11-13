@@ -18,7 +18,7 @@
 
 package io.ballerina.shell.preprocessor;
 
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 import java.util.ArrayList;
 import java.util.List;

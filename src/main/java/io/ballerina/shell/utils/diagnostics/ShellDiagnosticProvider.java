@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.diagnostics;
+package io.ballerina.shell.utils.diagnostics;
 
 import java.util.Objects;
 

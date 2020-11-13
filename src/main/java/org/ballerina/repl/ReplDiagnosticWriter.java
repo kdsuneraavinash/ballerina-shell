@@ -17,7 +17,7 @@
  */
 package org.ballerina.repl;
 
-import io.ballerina.shell.diagnostics.DiagnosticWriter;
+import io.ballerina.shell.utils.diagnostics.DiagnosticWriter;
 import org.jline.terminal.Terminal;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;

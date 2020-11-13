@@ -15,11 +15,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.diagnostics;
+
+package io.ballerina.shell.utils.diagnostics;
 
 /**
- * Interface of a callback to output diagnostics.
+ * Private statement structure to keep track of the
+ * provider and the message.
  */
-public interface DiagnosticWriter {
-    void write(String write);
+public class ShellDiagnosticMessage {
+    private final Class<?> provider;
+    private final String message;
+
+    protected ShellDiagnosticMessage(Class<?> provider, String message) {
+        this.provider = provider;
+        this.message = message;
+    }
+
+    @Override
+    public String toString() {
+        if (provider == null) {
+            return String.format("[DEBUG] %s", message);
+        }
+        return String.format("[DEBUG]:%s %s", provider.getSimpleName(), message);
+    }
 }

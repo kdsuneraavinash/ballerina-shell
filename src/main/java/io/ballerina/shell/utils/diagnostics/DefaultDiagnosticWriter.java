@@ -15,7 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.diagnostics;
+package io.ballerina.shell.utils.diagnostics;
 
 /**
  * Diagnostic writer that ignores the input.

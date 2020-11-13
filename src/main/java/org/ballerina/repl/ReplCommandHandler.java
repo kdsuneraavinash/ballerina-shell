@@ -17,7 +17,7 @@
  */
 package org.ballerina.repl;
 
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
 import org.ballerina.repl.exceptions.ReplToggleDebugException;

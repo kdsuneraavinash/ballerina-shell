@@ -24,7 +24,7 @@ import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.ImportSnippet;
 import io.ballerina.shell.snippet.ModuleMemberDeclarationSnippet;

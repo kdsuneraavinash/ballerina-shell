@@ -21,7 +21,7 @@ import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.treeparser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.treeparser.trials.ExpressionTrial;
 import io.ballerina.shell.treeparser.trials.FailedTrialException;

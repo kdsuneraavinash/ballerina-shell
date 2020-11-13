@@ -18,13 +18,14 @@
 package io.ballerina.shell.executor;
 
 import com.google.gson.Gson;
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.process.ProcessInvoker;
 import io.ballerina.shell.executor.process.ShellProcessInvoker;
 import io.ballerina.shell.executor.wrapper.SourceGenWrapper;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.StatementSnippet;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.timeit.TimeIt;
 
 import java.io.File;
 import java.io.FileReader;
@@ -32,7 +33,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
@@ -44,16 +44,13 @@ import java.util.Scanner;
  * This would generate the source code so that the ballerina code will dump its state.
  */
 public class SourceGenExecutor extends StatefulExecutor {
-    private static class ExecutorState extends HashMap<String, String> {
-    }
-
     private static final String BALLERINA_COMMAND = "ballerina run %s %s";
     private static final String GENERATED_FILE = "main.bal";
     private static final String DUMP_FILE = "state.dump";
     private final ProcessInvoker processInvoker;
     protected ArrayList<Snippet<?>> preservedSnippets;
     private final Gson gson;
-    private ExecutorState state;
+    private SourceGenExecutorState state;
 
     public SourceGenExecutor() {
         super(new SourceGenWrapper());
@@ -62,7 +59,7 @@ public class SourceGenExecutor extends StatefulExecutor {
         ShellDiagnosticProvider.sendMessage("Using source gen executor with shell process invoker.");
         ShellDiagnosticProvider.sendMessage("Shell command invocation used: " + command);
         preservedSnippets = new ArrayList<>();
-        state = new ExecutorState();
+        state = new SourceGenExecutorState();
         gson = new Gson();
     }
 
@@ -85,13 +82,17 @@ public class SourceGenExecutor extends StatefulExecutor {
         // Execute and return correct output.
         ExecutorResult result;
         try {
-            processInvoker.execute();
+            TimeIt.timeIt("Compilation and execution", () -> {
+                processInvoker.execute();
+                return null;
+            });
+
             List<String> standardStrings = processInvoker.isErrorExit()
                     ? processInvoker.getStandardError()
                     : processInvoker.getStandardOutput();
             String output = String.join("\n", standardStrings);
             result = new ExecutorResult(processInvoker.isErrorExit(), output);
-        } catch (InterruptedException | IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Ballerina process invocation failed.", e);
         }
 
@@ -106,8 +107,8 @@ public class SourceGenExecutor extends StatefulExecutor {
     @Override
     protected List<Snippet<?>> getSnippetsForExecution(Snippet<?> newSnippet) {
         List<Snippet<?>> generated = new ArrayList<>();
-        for (String identifier : state.keySet()) {
-            String sourceCode = String.format("%s = %s;", identifier, state.get(identifier));
+        for (String identifier : state.allVariables()) {
+            String sourceCode = String.format("%s = %s;", identifier, state.valueOfVariable(identifier));
             generated.add(StatementSnippet.fromCodeOfAssignment(sourceCode));
         }
         if (shouldPreserve(newSnippet)) {
@@ -118,7 +119,8 @@ public class SourceGenExecutor extends StatefulExecutor {
             generated.addAll(preservedSnippets);
             generated.add(newSnippet);
         }
-        ShellDiagnosticProvider.sendMessage("Has " + preservedSnippets.size() + " snippets");
+        ShellDiagnosticProvider.sendMessage("Evaluating a total number of %s snippets.",
+                String.valueOf(generated.size()));
         return generated;
     }
 
@@ -143,12 +145,12 @@ public class SourceGenExecutor extends StatefulExecutor {
      * @param stateFile State dump file reference.
      * @return State object of the ballerina execution.
      */
-    private ExecutorState getStateAfterwards(File stateFile) {
+    private SourceGenExecutorState getStateAfterwards(File stateFile) {
         // Read state data
         try (FileReader fileReader = new FileReader(stateFile, Charset.defaultCharset())) {
             Scanner scanner = new Scanner(fileReader);
             String data = scanner.nextLine();
-            ExecutorState newState = gson.fromJson(data, ExecutorState.class);
+            SourceGenExecutorState newState = gson.fromJson(data, SourceGenExecutorState.class);
             ShellDiagnosticProvider.sendMessage("New state: " + newState);
             return newState;
         } catch (IOException e) {

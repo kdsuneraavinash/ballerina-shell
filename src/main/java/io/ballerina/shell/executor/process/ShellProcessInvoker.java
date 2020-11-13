@@ -17,14 +17,12 @@
  */
 package io.ballerina.shell.executor.process;
 
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,7 +48,6 @@ public class ShellProcessInvoker implements ProcessInvoker {
         this.standardOutput.clear();
         this.standardError.clear();
 
-        Instant start = Instant.now();
         Runtime runtime = Runtime.getRuntime();
         Process process = runtime.exec(command);
         process.waitFor();
@@ -70,11 +67,6 @@ public class ShellProcessInvoker implements ProcessInvoker {
             while ((line = stdErrBuff.readLine()) != null) {
                 this.standardError.add(line);
             }
-            Instant end = Instant.now();
-
-            Duration duration = Duration.between(start, end);
-            ShellDiagnosticProvider.sendMessage(
-                    "Compilation and execution took %s ms.", String.valueOf(duration.toMillis()));
             if (isErrorExit()) {
                 ShellDiagnosticProvider.sendMessage(
                         "Execution failed with exit code %s.", String.valueOf(exitCode));

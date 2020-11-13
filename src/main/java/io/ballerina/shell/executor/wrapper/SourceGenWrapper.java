@@ -20,7 +20,7 @@ package io.ballerina.shell.executor.wrapper;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.desugar.Binding;
 import io.ballerina.shell.executor.desugar.BindingDesugar;
 import io.ballerina.shell.snippet.ExpressionSnippet;
@@ -66,7 +66,7 @@ public class SourceGenWrapper extends Wrapper {
         for (Binding binding : bindings) {
             context.addVariable(binding.getIdentifierName());
         }
-        ShellDiagnosticProvider.sendMessage("Found %s variable bindings", String.valueOf(bindings.size()));
+        ShellDiagnosticProvider.sendMessage("Found %s variable bindings.", String.valueOf(bindings.size()));
 
         context.imports = toCodeLines(imports);
         context.moduleDeclarations = toCodeLines(moduleDeclarations);

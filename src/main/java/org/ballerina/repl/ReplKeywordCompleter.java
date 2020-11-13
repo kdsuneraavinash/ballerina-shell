@@ -17,7 +17,7 @@
  */
 package org.ballerina.repl;
 
-import io.ballerina.shell.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import org.jline.reader.impl.completer.StringsCompleter;
 
 import java.io.InputStream;

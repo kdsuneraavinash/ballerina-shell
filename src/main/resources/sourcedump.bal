@@ -21,8 +21,6 @@
 // ========================== CONVERSION SCRIPT ===========================
 import ballerina/io;
 
-
-
 type everytype any|error;
 
 # Writes a JSON to the given file.
@@ -167,9 +165,11 @@ function dump(string filename) {
 
 public function main(string filename) {
     // Dump variables here
-    json repr = json_repr({
-    // Variables here
-    });
+    json repr = {
+        vars: json_repr({
+            // Variables here
+        })
+    };
     var result = write(repr, filename);
 }
 
