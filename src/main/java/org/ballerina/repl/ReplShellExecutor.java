@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.ballerina.repl;
 
 
@@ -24,6 +25,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.ballerina.repl.exceptions.ReplCmdHelpException;
+import org.ballerina.repl.terminal.ReplKeywordCompleter;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -47,7 +49,7 @@ public class ReplShellExecutor {
      * @param args Optional arguments.
      * @throws IOException If terminal initialization failed.
      */
-    public static void main(String[] args) throws IOException, ParseException {
+    public static void main(String[] args) throws IOException {
         Options options = ReplConfiguration.getCommandLineOptions();
         CommandLineParser commandLineParser = new org.apache.commons.cli.DefaultParser();
         HelpFormatter formatter = new HelpFormatter();

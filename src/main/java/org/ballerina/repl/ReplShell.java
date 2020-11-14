@@ -19,11 +19,16 @@
 package org.ballerina.repl;
 
 import io.ballerina.shell.BallerinaShell;
-import io.ballerina.shell.ExecutorFailedException;
+import io.ballerina.shell.postprocessor.BasicPostprocessor;
+import io.ballerina.shell.preprocessor.CombinedPreprocessor;
+import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
+import io.ballerina.shell.transformer.CombinedTransformer;
+import io.ballerina.shell.treeparser.TrialTreeParser;
 import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
 import org.ballerina.repl.exceptions.ReplToggleDebugException;
+import org.ballerina.repl.terminal.ReplCommandHandler;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.UserInterruptException;
@@ -58,7 +63,13 @@ public class ReplShell {
         this.terminal = lineReader.getTerminal();
         this.lineReader = lineReader;
         this.configuration = configuration;
-        this.ballerinaShell = new BallerinaShell(configuration.getExecutor());
+        this.ballerinaShell = new BallerinaShell(
+                new CombinedPreprocessor(new SeparatorPreprocessor()),
+                new TrialTreeParser(),
+                new CombinedTransformer(),
+                configuration.getExecutor(),
+                new BasicPostprocessor()
+        );
     }
 
     /**
@@ -80,7 +91,6 @@ public class ReplShell {
                 Instant start = Instant.now();
                 try {
                     ballerinaShell.evaluate(line.trim(), replResultController);
-                } catch (ExecutorFailedException ignored) {
                 } finally {
                     Instant end = Instant.now();
                     previousDuration = Duration.between(start, end);

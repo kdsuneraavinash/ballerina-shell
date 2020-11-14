@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor;
 
 import io.ballerina.shell.executor.wrapper.Wrapper;
@@ -38,7 +39,7 @@ public abstract class StatefulExecutor implements Executor {
     }
 
     @Override
-    public ExecutorResult execute(Snippet<?> newSnippet) {
+    public ExecutorResult execute(Snippet newSnippet) {
         try {
             // Add snippet to process
             ExpressionSnippet expressionSnippet = null;
@@ -47,7 +48,7 @@ public abstract class StatefulExecutor implements Executor {
             }
 
             // Evaluate the wrapped source code
-            List<Snippet<?>> snippets = getSnippetsForExecution(newSnippet);
+            List<Snippet> snippets = getSnippetsForExecution(newSnippet);
             String sourceCode = wrapper.wrap(snippets, expressionSnippet);
             ExecutorResult result = evaluateSourceCode(sourceCode);
             if (result.isError()) {
@@ -79,19 +80,19 @@ public abstract class StatefulExecutor implements Executor {
      * @param newSnippet Newly added snippet.
      * @return List of snippets to evaluate.
      */
-    protected abstract List<Snippet<?>> getSnippetsForExecution(Snippet<?> newSnippet);
+    protected abstract List<Snippet> getSnippetsForExecution(Snippet newSnippet);
 
     /**
      * Will be called if execution was successful.
      *
      * @param newSnippet New that was executed.
      */
-    protected abstract void executionSuccessful(Snippet<?> newSnippet);
+    protected abstract void executionSuccessful(Snippet newSnippet);
 
     /**
      * Will be called if execution errored.
      *
      * @param newSnippet New that was executed.
      */
-    protected abstract void executionFailed(Snippet<?> newSnippet);
+    protected abstract void executionFailed(Snippet newSnippet);
 }

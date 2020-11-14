@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor;
 
 import io.ballerina.shell.executor.wrapper.Wrapper;
@@ -32,7 +33,7 @@ import java.util.Stack;
  * randoms are involved.
  */
 public abstract class StatelessExecutor implements Executor {
-    protected final Stack<Snippet<?>> snippets;
+    protected final Stack<Snippet> snippets;
     protected final Wrapper wrapper;
 
     protected StatelessExecutor(Wrapper wrapper) {
@@ -41,7 +42,7 @@ public abstract class StatelessExecutor implements Executor {
     }
 
     @Override
-    public ExecutorResult execute(Snippet<?> newSnippet) {
+    public ExecutorResult execute(Snippet newSnippet) {
         // Add snippet to process
         ExpressionSnippet expressionSnippet = null;
         snippets.push(newSnippet);

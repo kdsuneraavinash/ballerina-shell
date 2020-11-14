@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.preprocessor;
 
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
 /**
  * String preprocessor interface.
  * Preprocessor processes a string into a list of strings,
- * (list may contain one or more strings) to be fed into the
+ * which may contain one or more strings to be fed into the
  * parser phase.
  */
 public interface Preprocessor {

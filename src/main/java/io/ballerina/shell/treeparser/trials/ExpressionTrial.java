@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.treeparser.trials;
 
 import io.ballerina.compiler.syntax.tree.FunctionBodyBlockNode;
@@ -37,7 +38,7 @@ import java.util.Objects;
  */
 public class ExpressionTrial implements TreeParserTrial {
     @Override
-    public Node tryParse(String source) throws FailedTrialException {
+    public Node tryParse(String source) throws ParserTrialFailedException {
         try {
             String sourceCode = String.format("function main(){return %s}", source);
 
@@ -58,11 +59,11 @@ public class ExpressionTrial implements TreeParserTrial {
             FunctionBodyBlockNode mainFunctionBody = (FunctionBodyBlockNode) mainFunction.functionBody();
             ReturnStatementNode returnStatement = (ReturnStatementNode) mainFunctionBody.statements().get(0);
             if (returnStatement.expression().isEmpty()) {
-                throw new Exception("Return statement not parsed");
+                throw new ParserTrialFailedException("Return statement not parsed");
             }
             return returnStatement.expression().get();
         } catch (Exception e) {
-            throw new FailedTrialException(e);
+            throw new ParserTrialFailedException(e);
         }
     }
 }

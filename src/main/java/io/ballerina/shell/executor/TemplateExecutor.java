@@ -15,18 +15,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor;
 
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.process.ProcessInvoker;
 import io.ballerina.shell.executor.process.ShellProcessInvoker;
 import io.ballerina.shell.executor.wrapper.TemplateWrapper;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.List;
 
 /**
  * An executor that will delegate the process to the external ballerina executable command.
@@ -58,12 +58,9 @@ public class TemplateExecutor extends StatelessExecutor {
         try {
             // Execute and return correct output.
             processInvoker.execute();
-            List<String> standardStrings = processInvoker.isErrorExit()
-                    ? processInvoker.getStandardError()
-                    : processInvoker.getStandardOutput();
-
-            String output = String.join("\n", standardStrings);
-            return new ExecutorResult(processInvoker.isErrorExit(), output);
+            String stdOutput = String.join("\n", processInvoker.getStandardOutput());
+            String stdError = String.join("\n", processInvoker.getStandardError());
+            return new ExecutorResult(processInvoker.isErrorExit(), stdError, stdOutput);
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         }

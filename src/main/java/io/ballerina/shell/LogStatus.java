@@ -16,18 +16,32 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.timeit;
+package io.ballerina.shell;
 
 /**
- * Interface for timed operations to run via {@code TimeIt}.
- *
- * @param <T> Return type for operation.
+ * Status of a line that is output for the terminal.
  */
-public interface TimedOperation<T> {
+public enum LogStatus {
     /**
-     * Runs a operation to be timed.
-     *
-     * @return The return value from operation.
+     * Error in the compiler.
      */
-    T run();
+    FATAL_ERROR,
+
+    /**
+     * Error log status.
+     * Compilation error from the compiler.
+     */
+    ERROR,
+
+    /**
+     * Warning log status.
+     * Compilation warning from the compiler.
+     */
+    WARNING,
+
+    /**
+     * Success log status.
+     * Output from the real compiled programme.
+     */
+    SUCCESS
 }

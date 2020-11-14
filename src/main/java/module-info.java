@@ -16,6 +16,7 @@ module io.ballerina.shell {
     exports io.ballerina.shell.executor.wrapper;
     exports io.ballerina.shell.executor.desugar;
     exports io.ballerina.shell.postprocessor;
+    exports io.ballerina.shell.exceptions;
 
     exports org.ballerina.repl;
     exports org.ballerina.repl.exceptions;

@@ -15,18 +15,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.transformer;
 
-import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 /**
  * A transformer to apply all transformers.
- * Applies, {@code SyntaxTreeTransformer}.
  */
-public class MasterTransformer implements Transformer<Node, Snippet<?>> {
+public class CombinedTransformer implements Transformer {
+    private final Transformer[] transformers;
+
+    /**
+     * Create a combined transformer by the given transformers.
+     *
+     * @param transformers All the transformers to combine.
+     */
+    public CombinedTransformer(Transformer... transformers) {
+        // Send a debug message of transformers
+        ShellDiagnosticProvider.sendMessage("Attached %s transformers.",
+                String.valueOf(transformers.length));
+
+        this.transformers = transformers;
+    }
+
     @Override
-    public Snippet<?> transform(Node value) {
-        return new SyntaxTreeTransformer().transform(value);
+    public Snippet transform(Snippet snippet) {
+        for (Transformer transformer : transformers) {
+            snippet = transformer.transform(snippet);
+        }
+        return snippet;
     }
 }

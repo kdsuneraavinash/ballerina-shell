@@ -15,12 +15,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor.wrapper;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.desugar.Binding;
 import io.ballerina.shell.executor.desugar.BindingDesugar;
 import io.ballerina.shell.snippet.ExpressionSnippet;
@@ -29,6 +29,7 @@ import io.ballerina.shell.snippet.ModuleMemberDeclarationSnippet;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.StatementSnippet;
 import io.ballerina.shell.snippet.VariableDefinitionSnippet;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -91,7 +92,7 @@ public class SourceGenWrapper extends Wrapper {
      * @param snippets Snippets.
      * @return Joined source code as a list.
      */
-    private <T extends Snippet<?>> List<String> toCodeLines(Collection<T> snippets) {
+    private <T extends Snippet> List<String> toCodeLines(Collection<T> snippets) {
         List<String> generated = new ArrayList<>();
         for (T snippet : snippets) {
             generated.add(snippet.toSourceCode());

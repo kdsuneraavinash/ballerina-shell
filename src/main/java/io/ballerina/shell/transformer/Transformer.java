@@ -17,19 +17,18 @@
  */
 package io.ballerina.shell.transformer;
 
+import io.ballerina.shell.snippet.Snippet;
+
 /**
- * Generic transformer interface to transform one type to another.
- * Used to transform the Syntax Tree before sending to the wrapper as snippets.
- *
- * @param <P> Transformer input type.
- * @param <Q> Transformer output type.
+ * Generic transformer interface to transform one snippet to another.
+ * Maybe used to decorate snippets, or remove snippet decorations.
  */
-public interface Transformer<P, Q> {
+public interface Transformer {
     /**
-     * Transforms a value to another type.
+     * Transforms a snippet to another snippet.
      *
-     * @param value Input value.
-     * @return Transformed value.
+     * @param snippet Input snippet.
+     * @return Transformed snippet.
      */
-    Q transform(P value);
+    Snippet transform(Snippet snippet);
 }

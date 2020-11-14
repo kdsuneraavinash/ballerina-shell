@@ -25,17 +25,20 @@ import java.util.List;
 
 /**
  * Combines several preprocessors into a single preprocessor.
+ * The strings would be processed by preprocessors in the order provided.
  */
 public class CombinedPreprocessor implements Preprocessor {
     private final Preprocessor[] preprocessors;
 
+    /**
+     * Create a combined preprocessor by the given preprocessors.
+     *
+     * @param preprocessors All the preprocessors to combine.
+     */
     public CombinedPreprocessor(Preprocessor... preprocessors) {
-        StringBuilder message = new StringBuilder();
-        message.append("Attached ").append(preprocessors.length).append(" preprocessors: ");
-        for (Preprocessor preprocessor : preprocessors) {
-            message.append(preprocessor.getClass().getSimpleName()).append(" ");
-        }
-        ShellDiagnosticProvider.sendMessage(message.toString());
+        // Send a debug message of preprocessors
+        ShellDiagnosticProvider.sendMessage("Attached %s preprocessors.",
+                String.valueOf(preprocessors.length));
 
         this.preprocessors = preprocessors;
     }

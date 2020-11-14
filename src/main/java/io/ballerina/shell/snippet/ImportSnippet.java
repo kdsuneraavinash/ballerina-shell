@@ -15,27 +15,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
+import io.ballerina.compiler.syntax.tree.Node;
 
 /**
  * Snippet that represent a import statement.
  * TODO: How to defer unused imports until they are used?
  */
-public class ImportSnippet extends Snippet<ImportDeclarationNode> {
-    protected ImportSnippet(ImportDeclarationNode node, SnippetSubKind subKind) {
-        super(node, subKind);
+public class ImportSnippet extends Snippet {
+    protected ImportSnippet(Node node, SnippetSubKind subKind) {
+        super(node.toSourceCode(), subKind);
         assert subKind.getKind() == SnippetKind.IMPORT_KIND;
     }
 
     /**
      * Create a import snippet from the given node.
+     * Returns null if snippet cannot be created.
      *
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public static ImportSnippet fromNode(ImportDeclarationNode node) {
-        return new ImportSnippet(node, SnippetSubKind.IMPORT);
+    public static ImportSnippet tryFromNode(Node node) {
+        if (node instanceof ImportDeclarationNode) {
+            return new ImportSnippet(node, SnippetSubKind.IMPORT);
+        }
+        return null;
     }
 }

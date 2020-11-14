@@ -38,7 +38,7 @@ public class TimeIt {
      * @param name      Name of the operation. This should be unique and identifiable.
      * @param operation Operation callback to run.
      */
-    public static <T> T timeIt(String name, TimedOperation<T> operation) throws Exception {
+    public static <T> T timeIt(String name, TimedOperation<T> operation) {
         Instant start = Instant.now();
         T result = operation.run();
         Instant end = Instant.now();

@@ -15,18 +15,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.treeparser;
 
-import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.compiler.syntax.tree.NodeFactory;
-import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.exceptions.ParserException;
 import io.ballerina.shell.treeparser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.treeparser.trials.ExpressionTrial;
-import io.ballerina.shell.treeparser.trials.FailedTrialException;
 import io.ballerina.shell.treeparser.trials.ImportDeclarationTrial;
 import io.ballerina.shell.treeparser.trials.ModuleMemberTrial;
+import io.ballerina.shell.treeparser.trials.ParserTrialFailedException;
 import io.ballerina.shell.treeparser.trials.StatementTrial;
 import io.ballerina.shell.treeparser.trials.TreeParserTrial;
 
@@ -44,41 +42,16 @@ public class TrialTreeParser implements TreeParser {
             new ImportDeclarationTrial(),
     };
 
-    public TrialTreeParser() {
-        ShellDiagnosticProvider.sendMessage("Using trial parser to parse tree.");
-        StringBuilder message = new StringBuilder();
-        message.append("Attached ").append(TREE_PARSER_TRIALS.length).append(" tree parser trials: ");
-        for (TreeParserTrial treeParserTrial : TREE_PARSER_TRIALS) {
-            message.append(treeParserTrial.getClass().getSimpleName()).append(" ");
-        }
-        ShellDiagnosticProvider.sendMessage(message.toString());
-    }
-
     @Override
     public Node parse(String source) {
-        assert source.endsWith(";");
-
         for (TreeParserTrial treeParserTrial : TREE_PARSER_TRIALS) {
             try {
                 return treeParserTrial.tryParse(source);
-            } catch (FailedTrialException ignored) {
+            } catch (ParserTrialFailedException ignored) {
                 // Trial failed, try next trial
             }
         }
 
-        throw new RuntimeException("[Parsing Failed] Error in input: " + source);
-    }
-
-    /**
-     * Creates a nil literal node. ()
-     * This is the default placeholder expression.
-     *
-     * @return A new nil literal node
-     */
-    public static ExpressionNode nilLiteralExpression() {
-        return NodeFactory.createNilLiteralNode(
-                NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
-                NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)
-        );
+        throw new ParserException("Sorry, input statement not allowed.");
     }
 }

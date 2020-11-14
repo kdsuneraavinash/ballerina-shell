@@ -15,10 +15,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.ballerina.repl;
 
-import io.ballerina.shell.BallerinaShellResult;
-import io.ballerina.shell.ShellResultController;
+import io.ballerina.shell.LogStatus;
+import io.ballerina.shell.ShellController;
 import org.jline.terminal.Terminal;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
@@ -28,7 +29,7 @@ import org.jline.utils.AttributedStyle;
  * output to the terminal.
  * Colors will be used as necessary.
  */
-public class ReplResultController implements ShellResultController {
+public class ReplResultController implements ShellController {
     private final Terminal terminal;
 
     public ReplResultController(Terminal terminal) {
@@ -36,29 +37,26 @@ public class ReplResultController implements ShellResultController {
     }
 
     @Override
-    public void addBallerinaShellResult(BallerinaShellResult ballerinaShellResultPart) {
-        printShellResult(ballerinaShellResultPart);
+    public void startSession() {
+        // Nothing
     }
 
     @Override
-    public void completeExecutionSession() {
-        terminal.writer().println();
+    public void emitResult(String output, LogStatus status) {
+        if (status != LogStatus.SUCCESS) {
+            output = new AttributedStringBuilder()
+                    .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW))
+                    .append(output).toAnsi();
+        }
+        terminal.writer().println(output);
+        terminal.writer().flush();
     }
 
-    /**
-     * Prints a shell result to the terminal.
-     * Errors will be colorized.
-     *
-     * @param shellResult Result to output.
-     */
-    private void printShellResult(BallerinaShellResult shellResult) {
-        String message = shellResult.getOutput();
-        if (shellResult.isError()) {
-            message = new AttributedStringBuilder()
-                    .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW))
-                    .append(message).toAnsi();
-        }
-        terminal.writer().print(message);
-        terminal.writer().flush();
+    @Override
+    public void finishSession() {
+    }
+
+    @Override
+    public void failSession() {
     }
 }

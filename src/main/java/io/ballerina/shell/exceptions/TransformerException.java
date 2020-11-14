@@ -16,18 +16,13 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.timeit;
+package io.ballerina.shell.exceptions;
 
 /**
- * Interface for timed operations to run via {@code TimeIt}.
- *
- * @param <T> Return type for operation.
+ * Transforming failed for some reason.
  */
-public interface TimedOperation<T> {
-    /**
-     * Runs a operation to be timed.
-     *
-     * @return The return value from operation.
-     */
-    T run();
+public class TransformerException extends RuntimeException {
+    public TransformerException(String message) {
+        super(message);
+    }
 }

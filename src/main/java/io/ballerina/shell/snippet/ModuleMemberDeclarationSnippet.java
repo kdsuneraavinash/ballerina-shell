@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.AnnotationDeclarationNode;
@@ -23,9 +24,9 @@ import io.ballerina.compiler.syntax.tree.ConstantDeclarationNode;
 import io.ballerina.compiler.syntax.tree.EnumDeclarationNode;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ListenerDeclarationNode;
-import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleXMLNamespaceDeclarationNode;
+import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.TypeDefinitionNode;
 
@@ -35,19 +36,20 @@ import io.ballerina.compiler.syntax.tree.TypeDefinitionNode;
  * Any undefined variable in these declarations are ignored.
  * (Except for module level variable declarations)
  */
-public class ModuleMemberDeclarationSnippet extends Snippet<ModuleMemberDeclarationNode> {
-    protected ModuleMemberDeclarationSnippet(ModuleMemberDeclarationNode node, SnippetSubKind subKind) {
-        super(node, subKind);
+public class ModuleMemberDeclarationSnippet extends Snippet {
+    protected ModuleMemberDeclarationSnippet(Node node, SnippetSubKind subKind) {
+        super(node.toSourceCode(), subKind);
         assert subKind.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND;
     }
 
     /**
      * Create a module member declaration snippet from the given node.
+     * Returns null if snippet cannot be created.
      *
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public static ModuleMemberDeclarationSnippet fromNode(ModuleMemberDeclarationNode node) {
+    public static ModuleMemberDeclarationSnippet tryFromNode(Node node) {
         if (node instanceof FunctionDefinitionNode) {
             return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.FUNCTION_DEFINITION);
         } else if (node instanceof ListenerDeclarationNode) {
@@ -68,8 +70,7 @@ public class ModuleMemberDeclarationSnippet extends Snippet<ModuleMemberDeclarat
             return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.ENUM_DECLARATION);
         } else if (node instanceof ClassDefinitionNode) {
             return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.CLASS_DEFINITION);
-        } else {
-            throw new IllegalArgumentException("Node is of unexpected type");
         }
+        return null;
     }
 }

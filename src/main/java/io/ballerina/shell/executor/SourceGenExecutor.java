@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor;
 
 import com.google.gson.Gson;
@@ -25,7 +26,6 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.StatementSnippet;
 import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
-import io.ballerina.shell.utils.timeit.TimeIt;
 
 import java.io.File;
 import java.io.FileReader;
@@ -48,7 +48,7 @@ public class SourceGenExecutor extends StatefulExecutor {
     private static final String GENERATED_FILE = "main.bal";
     private static final String DUMP_FILE = "state.dump";
     private final ProcessInvoker processInvoker;
-    protected ArrayList<Snippet<?>> preservedSnippets;
+    protected ArrayList<Snippet> preservedSnippets;
     private final Gson gson;
     private SourceGenExecutorState state;
 
@@ -82,16 +82,10 @@ public class SourceGenExecutor extends StatefulExecutor {
         // Execute and return correct output.
         ExecutorResult result;
         try {
-            TimeIt.timeIt("Compilation and execution", () -> {
-                processInvoker.execute();
-                return null;
-            });
-
-            List<String> standardStrings = processInvoker.isErrorExit()
-                    ? processInvoker.getStandardError()
-                    : processInvoker.getStandardOutput();
-            String output = String.join("\n", standardStrings);
-            result = new ExecutorResult(processInvoker.isErrorExit(), output);
+            processInvoker.execute();
+            String stdOutput = String.join("\n", processInvoker.getStandardOutput());
+            String stdError = String.join("\n", processInvoker.getStandardError());
+            result = new ExecutorResult(processInvoker.isErrorExit(), stdError, stdOutput);
         } catch (Exception e) {
             throw new RuntimeException("Ballerina process invocation failed.", e);
         }
@@ -105,8 +99,8 @@ public class SourceGenExecutor extends StatefulExecutor {
     }
 
     @Override
-    protected List<Snippet<?>> getSnippetsForExecution(Snippet<?> newSnippet) {
-        List<Snippet<?>> generated = new ArrayList<>();
+    protected List<Snippet> getSnippetsForExecution(Snippet newSnippet) {
+        List<Snippet> generated = new ArrayList<>();
         for (String identifier : state.allVariables()) {
             String sourceCode = String.format("%s = %s;", identifier, state.valueOfVariable(identifier));
             generated.add(StatementSnippet.fromCodeOfAssignment(sourceCode));
@@ -125,13 +119,13 @@ public class SourceGenExecutor extends StatefulExecutor {
     }
 
     @Override
-    protected void executionSuccessful(Snippet<?> newSnippet) {
+    protected void executionSuccessful(Snippet newSnippet) {
         ShellDiagnosticProvider.sendMessage("Execution succeeded.");
         // Do nothing
     }
 
     @Override
-    protected void executionFailed(Snippet<?> newSnippet) {
+    protected void executionFailed(Snippet newSnippet) {
         if (shouldPreserve(newSnippet)) {
             ShellDiagnosticProvider.sendMessage("Execution succeeded.");
             preservedSnippets.remove(newSnippet);
@@ -164,7 +158,7 @@ public class SourceGenExecutor extends StatefulExecutor {
      * @param snippet Snippet.
      * @return Whether it should be preserved.
      */
-    private boolean shouldPreserve(Snippet<?> snippet) {
+    private boolean shouldPreserve(Snippet snippet) {
         return snippet.getKind() == SnippetKind.IMPORT_KIND
                 || snippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND
                 || snippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND;

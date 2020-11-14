@@ -15,24 +15,46 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell;
 
 /**
  * Public interface for the shell result of the Ballerina Shell.
+ * <p>
+ * {@code BallerinaShell} would use this to notify of the events.
+ * {@code startSession} is called at the first statement.
+ * In each snippet evaluation, evaluation output would be
+ * notified via {@code addSessionItem}. If the evaluation was
+ * completely successful, {@code finishSession} will be called.
+ * Otherwise, {@code failSession} should be called.
  */
-public interface ShellResultController {
+public interface ShellController {
+    /**
+     * Starts a execution session.
+     * Called as the first statement in the shell session.
+     */
+    void startSession();
+
     /**
      * Adds a shell results to the output.
      * Child classes may override this to fetch the shell results.
+     * Every result, including errors are emitted via this interface,
      *
-     * @param ballerinaShellResultPart current shell result.
+     * @param output Output string.
+     * @param status Status of the output.
      */
-    void addBallerinaShellResult(BallerinaShellResult ballerinaShellResultPart);
+    void emitResult(String output, LogStatus status);
 
     /**
      * Ends a execution session.
      * A session contains one user line and one or more statements.
      * This will be not called if there was an error in execution.
      */
-    void completeExecutionSession();
+    void finishSession();
+
+    /**
+     * Session ended in an error.
+     * Could be because of an error in any phase.
+     */
+    void failSession();
 }

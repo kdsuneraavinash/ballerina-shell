@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.treeparser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
@@ -28,7 +29,7 @@ public interface TreeParserTrial {
      *
      * @param source Input source statement.
      * @return Parsed syntax tree root node.
-     * @throws FailedTrialException When trial fails.
+     * @throws ParserTrialFailedException When trial fails.
      */
-    Node tryParse(String source) throws FailedTrialException;
+    Node tryParse(String source) throws ParserTrialFailedException;
 }

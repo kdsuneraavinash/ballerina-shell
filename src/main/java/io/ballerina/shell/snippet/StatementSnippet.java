@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.AssignmentStatementNode;
@@ -31,11 +32,11 @@ import io.ballerina.compiler.syntax.tree.IfElseStatementNode;
 import io.ballerina.compiler.syntax.tree.LocalTypeDefinitionStatementNode;
 import io.ballerina.compiler.syntax.tree.LockStatementNode;
 import io.ballerina.compiler.syntax.tree.MatchStatementNode;
+import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.PanicStatementNode;
 import io.ballerina.compiler.syntax.tree.RetryStatementNode;
 import io.ballerina.compiler.syntax.tree.ReturnStatementNode;
 import io.ballerina.compiler.syntax.tree.RollbackStatementNode;
-import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.compiler.syntax.tree.TransactionStatementNode;
 import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.WhileStatementNode;
@@ -45,9 +46,9 @@ import io.ballerina.compiler.syntax.tree.XMLNamespaceDeclarationNode;
  * These are normal statements that should be evaluated from
  * top to bottom inside a function.
  */
-public class StatementSnippet extends Snippet<StatementNode> {
-    protected StatementSnippet(StatementNode node, SnippetSubKind subKind) {
-        super(node, subKind);
+public class StatementSnippet extends Snippet {
+    protected StatementSnippet(Node node, SnippetSubKind subKind) {
+        super(node.toSourceCode(), subKind);
     }
 
     protected StatementSnippet(String sourceCode, SnippetSubKind subKind) {
@@ -69,11 +70,12 @@ public class StatementSnippet extends Snippet<StatementNode> {
 
     /**
      * Create a statement snippet from the given node.
+     * Returns null if snippet cannot be created.
      *
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public static StatementSnippet fromNode(StatementNode node) {
+    public static StatementSnippet tryFromNode(Node node) {
         if (node instanceof AssignmentStatementNode) {
             return new StatementSnippet(node, SnippetSubKind.ASSIGNMENT_STATEMENT_SUBKIND);
         } else if (node instanceof CompoundAssignmentStatementNode) {
@@ -118,9 +120,8 @@ public class StatementSnippet extends Snippet<StatementNode> {
             return new StatementSnippet(node, SnippetSubKind.MATCH_STATEMENT);
         } else if (node instanceof DoStatementNode) {
             return new StatementSnippet(node, SnippetSubKind.DO_STATEMENT);
-        } else {
-            throw new IllegalArgumentException("Node is of unexpected type");
         }
+        return null;
     }
 }
 

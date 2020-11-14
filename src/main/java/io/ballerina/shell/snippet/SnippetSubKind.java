@@ -63,11 +63,11 @@ public enum SnippetSubKind {
     DO_STATEMENT(SnippetKind.STATEMENT_KIND),
 
     TYPE_TEST_EXPRESSION(SnippetKind.EXPRESSION_KIND), // Issue
-    TABLE_CONSTRUCTOR_EXPRESSION("Table expressions are disallowed"), // Issue
-    SERVICE_CONSTRUCTOR_EXPRESSION("Service constructors are disallowed"), // Issue
+    TABLE_CONSTRUCTOR_EXPRESSION("Table expressions are disallowed."), // Issue
+    SERVICE_CONSTRUCTOR_EXPRESSION("Service constructors are disallowed."), // Issue
     OTHER_EXPRESSION(SnippetKind.EXPRESSION_KIND),
 
-    ERROR("Unidentified statement? "); // Error
+    ERROR("Unidentified statement."); // Error
 
     private final SnippetKind kind;
     private final boolean ignored;

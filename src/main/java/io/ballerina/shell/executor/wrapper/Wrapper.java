@@ -19,13 +19,13 @@ package io.ballerina.shell.executor.wrapper;
 
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.snippet.ExpressionSnippet;
 import io.ballerina.shell.snippet.ImportSnippet;
 import io.ballerina.shell.snippet.ModuleMemberDeclarationSnippet;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.StatementSnippet;
 import io.ballerina.shell.snippet.VariableDefinitionSnippet;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -77,7 +77,7 @@ public abstract class Wrapper {
      * @param expressionSnippet Most recent expression snippet. (May be null)
      * @return Source code corresponding to the wrapped snippets.
      */
-    public String wrap(Collection<Snippet<?>> snippets, ExpressionSnippet expressionSnippet) {
+    public String wrap(Collection<Snippet> snippets, ExpressionSnippet expressionSnippet) {
         // Default values for all snippets
         List<ImportSnippet> importSnippets = new ArrayList<>();
         List<ModuleMemberDeclarationSnippet> moduleDeclarationSnippets = new ArrayList<>();
@@ -85,7 +85,7 @@ public abstract class Wrapper {
         List<StatementSnippet> statementSnippets = new ArrayList<>();
         if (expressionSnippet == null) {
             // Default expression is a colored OK message
-            expressionSnippet = ExpressionSnippet.fromNode(
+            expressionSnippet = ExpressionSnippet.tryFromNode(
                     NodeFactory.createBasicLiteralNode(
                             SyntaxKind.STRING_LITERAL,
                             NodeFactory.createLiteralValueToken(
@@ -95,10 +95,11 @@ public abstract class Wrapper {
                                     NodeFactory.createEmptyMinutiaeList()
                             )
                     ));
+            assert expressionSnippet != null;
         }
 
         // Add snippets to the relevant category.
-        for (Snippet<?> snippet : snippets) {
+        for (Snippet snippet : snippets) {
             if (snippet instanceof ImportSnippet) {
                 importSnippets.add((ImportSnippet) snippet);
             } else if (snippet instanceof ModuleMemberDeclarationSnippet) {

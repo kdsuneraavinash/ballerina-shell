@@ -16,18 +16,14 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.timeit;
+package io.ballerina.shell.exceptions;
 
 /**
- * Interface for timed operations to run via {@code TimeIt}.
- *
- * @param <T> Return type for operation.
+ * Preprocessor found a error in the input.
+ * Mismatching brackets or similar.
  */
-public interface TimedOperation<T> {
-    /**
-     * Runs a operation to be timed.
-     *
-     * @return The return value from operation.
-     */
-    T run();
+public class PreprocessorException extends RuntimeException {
+    public PreprocessorException(String message) {
+        super(message);
+    }
 }

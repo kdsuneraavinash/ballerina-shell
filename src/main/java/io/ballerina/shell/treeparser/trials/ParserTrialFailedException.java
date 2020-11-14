@@ -15,10 +15,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell;
+
+package io.ballerina.shell.treeparser.trials;
 
 /**
- * Exception to signify that shell execution failed for some reason.
+ * Exception to denote that trial failed.
  */
-public class ExecutorFailedException extends Exception {
+public class ParserTrialFailedException extends Exception {
+    ParserTrialFailedException(Throwable throwable) {
+        super("Syntax tree parsing failed", throwable);
+    }
+
+    ParserTrialFailedException(String message) {
+        super(message);
+    }
 }

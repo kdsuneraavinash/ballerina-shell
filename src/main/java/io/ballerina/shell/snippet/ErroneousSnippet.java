@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.Node;
@@ -23,19 +24,19 @@ import io.ballerina.compiler.syntax.tree.Node;
  * A syntactically incorrect input for which the
  * specific kind could not be determined.
  */
-public class ErroneousSnippet extends Snippet<Node> {
+public class ErroneousSnippet extends Snippet {
     protected ErroneousSnippet(Node node, SnippetSubKind subKind) {
-        super(node, subKind);
+        super(node.toSourceCode(), subKind);
         assert subKind.getKind() == SnippetKind.ERRONEOUS_KIND;
     }
 
     /**
-     * Create a error snippet from the given node.
+     * Create an error snippet from the given node.
      *
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public static ErroneousSnippet fromNode(Node node) {
+    public static ErroneousSnippet tryFromNode(Node node) {
         return new ErroneousSnippet(node, SnippetSubKind.ERROR);
     }
 }

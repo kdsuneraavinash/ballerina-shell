@@ -15,7 +15,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.ballerina.repl;
+
+package org.ballerina.repl.terminal;
 
 import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import org.jline.reader.impl.completer.StringsCompleter;

@@ -15,16 +15,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.ballerina.repl;
 
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.SourceGenExecutor;
 import io.ballerina.shell.executor.TemplateExecutor;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.ballerina.repl.exceptions.ReplCmdHelpException;
+import org.ballerina.repl.terminal.ReplCommandOption;
 import org.jline.terminal.Terminal;
 
 import java.util.Objects;
@@ -33,9 +35,6 @@ import java.util.Objects;
  * Object to store configurations related to the REPL.
  */
 public class ReplConfiguration {
-    private static final String TRUE = "true";
-    private static final String FALSE = "false";
-
     private final Terminal terminal;
     private final String executorName;
     private boolean isDebugMode;
@@ -44,11 +43,11 @@ public class ReplConfiguration {
         Objects.requireNonNull(cmd, "Command line arguments were not received.");
         Objects.requireNonNull(terminal, "Terminal objects were not received.");
 
-        if (cmd.hasOption(ReplCommandOption.HELP.option())) {
+        if (ReplCommandOption.HELP.hasOptionSet(cmd)) {
             throw new ReplCmdHelpException();
         }
-        isDebugMode = cmd.hasOption(ReplCommandOption.DEBUG.option());
-        executorName = cmd.getOptionValue(ReplCommandOption.EXECUTOR.option(), "gen");
+        isDebugMode = ReplCommandOption.DEBUG.hasOptionSet(cmd);
+        executorName = ReplCommandOption.EXECUTOR.getOptionValue(cmd, "gen");
         this.terminal = terminal;
         setDiagnosticOutputMode();
     }
@@ -61,8 +60,7 @@ public class ReplConfiguration {
     public static Options getCommandLineOptions() {
         Options options = new Options();
         for (ReplCommandOption op : ReplCommandOption.values()) {
-            Option option = new Option(op.option(), op.name, op.hasArg, op.description);
-            option.setRequired(false);
+            Option option = op.toOption();
             options.addOption(option);
         }
         return options;

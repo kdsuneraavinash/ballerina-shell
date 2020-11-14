@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.treeparser.trials;
 
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
@@ -33,7 +34,7 @@ import java.util.Objects;
  */
 public class ImportDeclarationTrial implements TreeParserTrial {
     @Override
-    public Node tryParse(String source) throws FailedTrialException {
+    public Node tryParse(String source) throws ParserTrialFailedException {
         try {
             TextDocument document = TextDocuments.from(source);
             SyntaxTree tree = SyntaxTree.from(document);
@@ -42,7 +43,7 @@ public class ImportDeclarationTrial implements TreeParserTrial {
             ImportDeclarationNode importDeclarationNode = node.imports().get(0);
             return Objects.requireNonNull(importDeclarationNode);
         } catch (Exception e) {
-            throw new FailedTrialException(e);
+            throw new ParserTrialFailedException(e);
         }
     }
 }

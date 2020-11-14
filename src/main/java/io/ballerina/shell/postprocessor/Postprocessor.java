@@ -15,8 +15,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.postprocessor;
 
+import io.ballerina.shell.ShellController;
 import io.ballerina.shell.executor.ExecutorResult;
 
 /**
@@ -26,9 +28,11 @@ import io.ballerina.shell.executor.ExecutorResult;
 public interface Postprocessor {
     /**
      * Processes the output depending on the exit type.
+     * Every output from postprocessor is sent via controller.
      *
      * @param executorResult Result of the executor
-     * @return The output processed string.
+     * @param controller     Shell controller to output the output.
+     * @return Whether the preprocessing encountered errors.
      */
-    String process(ExecutorResult executorResult);
+    boolean process(ExecutorResult executorResult, ShellController controller);
 }

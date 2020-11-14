@@ -15,13 +15,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.ballerina.shell.treeparser.trials;
+
+package io.ballerina.shell.exceptions;
 
 /**
- * Exception to denote that trial failed.
+ * Snippet caused some error.
+ * Possible because of an invalid type of entry.
  */
-public class FailedTrialException extends Exception {
-    FailedTrialException(Throwable throwable) {
-        super("Syntax tree parsing failed", throwable);
+public class SnippetException extends RuntimeException {
+    public SnippetException(String message) {
+        super(message);
     }
 }

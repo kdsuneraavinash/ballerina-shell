@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor.wrapper;
 
 import io.ballerina.shell.snippet.ExpressionSnippet;
@@ -57,7 +58,7 @@ public class TemplateWrapper extends Wrapper {
      * @param snippets Snippets.
      * @return Joined source code.
      */
-    private <T extends Snippet<?>> String toCodeLines(Collection<T> snippets) {
+    private <T extends Snippet> String toCodeLines(Collection<T> snippets) {
         StringBuilder generated = new StringBuilder();
         for (T snippet : snippets) {
             generated.append(snippet.toSourceCode()).append('\n');

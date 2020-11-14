@@ -16,18 +16,11 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.timeit;
+package io.ballerina.shell.exceptions;
 
 /**
- * Interface for timed operations to run via {@code TimeIt}.
- *
- * @param <T> Return type for operation.
+ * Exception to signify that shell execution failed because of an
+ * error in the executor. Most probably an invalid statement was processed.
  */
-public interface TimedOperation<T> {
-    /**
-     * Runs a operation to be timed.
-     *
-     * @return The return value from operation.
-     */
-    T run();
+public class ExecutorException extends Exception {
 }

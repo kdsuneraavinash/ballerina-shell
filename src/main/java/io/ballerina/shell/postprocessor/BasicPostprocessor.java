@@ -15,50 +15,49 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.postprocessor;
 
+import io.ballerina.shell.LogStatus;
+import io.ballerina.shell.ShellController;
 import io.ballerina.shell.executor.ExecutorResult;
 
 import java.util.Scanner;
 
 /**
- * Returns the output as is.
+ * Will output STDERR and STDOUT to the controller.
+ * Will use error and warning prefixes to categorize STDERR.
  */
 public class BasicPostprocessor implements Postprocessor {
-    private static final String[] WHITE_LISTED_STD_ERR_PREFIXES = {
-            "error:", "warning:"
-    };
+    private static final String ERROR_PREFIX = "error:";
+    private static final String WARNING_PREFIX = "warning:";
 
     @Override
-    public String process(ExecutorResult executorResult) {
-        if (executorResult.isError()) {
-            Scanner outputScanner = new Scanner(executorResult.getOutput());
-            StringBuilder original = new StringBuilder();
-            StringBuilder formatted = new StringBuilder();
+    public boolean process(ExecutorResult executorResult, ShellController controller) {
+        Scanner executorOut = new Scanner(executorResult.getStdErrLogs());
 
-            boolean foundAnyLogs = false;
-            formatted.append("Compilation failed (Error Logs):\n");
+        // Process all output lines from the executor.
+        boolean foundErrorsOrWarnings = false;
+        while (executorOut.hasNextLine()) {
+            String line = executorOut.nextLine();
 
-            while (outputScanner.hasNextLine()) {
-                String line = outputScanner.nextLine();
-                original.append(line).append("\n");
-                for (String prefix : WHITE_LISTED_STD_ERR_PREFIXES) {
-                    if (line.startsWith(prefix)) {
-                        formatted.append(line).append("\n");
-                        foundAnyLogs = true;
-                        break;
-                    }
-                }
+            if (line.startsWith(ERROR_PREFIX)) {
+                foundErrorsOrWarnings = true;
+                controller.emitResult(line, LogStatus.ERROR);
+            } else if (line.startsWith(WARNING_PREFIX)) {
+                foundErrorsOrWarnings = true;
+                controller.emitResult(line, LogStatus.WARNING);
             }
-            if (!foundAnyLogs) {
-                // Oh no; no error logs but failed
-                // Restore original logs, dont care if there are compiler/run messages
-                return original.toString();
-            }
-
-            return formatted.toString();
-        } else {
-            return executorResult.getOutput();
         }
+
+        // Oh no; no error logs but failed.
+        // Restore original logs, dont care if there are compiler/run messages.
+        if (executorResult.isError() && !foundErrorsOrWarnings) {
+            controller.emitResult(executorResult.getStdErrLogs(), LogStatus.FATAL_ERROR);
+        }
+
+        // Output from the STDOUT.
+        controller.emitResult(executorResult.getStdOutLogs(), LogStatus.SUCCESS);
+        return true;
     }
 }

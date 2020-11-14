@@ -15,32 +15,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.ballerina.repl;
 
+package io.ballerina.shell.exceptions;
 
 /**
- * CLI option enum with the name and description.
+ * Parsing of the expression failed.
+ * Not a valid ballerina statement.
  */
-enum ReplCommandOption {
-    DEBUG("debug", "start with debug mode)", false),
-    EXECUTOR("executor", "executor to use (gen/reeval)", true),
-    HELP("help", "prints this help message", false);
-
-    final String name;
-    final String description;
-    final boolean hasArg;
-
-    ReplCommandOption(String name, String description, boolean hasArg) {
-        this.name = name;
-        this.description = description;
-        this.hasArg = hasArg;
-    }
-
-    /**
-     * The option parameter.
-     * This is the first letter of the name.
-     */
-    String option() {
-        return name.substring(0, 1);
+public class ParserException extends RuntimeException {
+    public ParserException(String message) {
+        super(message);
     }
 }

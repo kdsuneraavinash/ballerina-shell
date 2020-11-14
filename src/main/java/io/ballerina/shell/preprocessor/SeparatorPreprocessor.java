@@ -15,7 +15,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.preprocessor;
+
+import io.ballerina.shell.exceptions.PreprocessorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,12 +53,14 @@ public class SeparatorPreprocessor implements Preprocessor {
             char character = input.charAt(i);
             builder.append(character);
 
+            // Switch in and out of string literal.
             if (character == SINGLE_QUOTE || character == DOUBLE_QUOTE) {
                 if (!isEscaped(input, i)) {
                     isInStringLiteral = !isInStringLiteral;
                 }
             }
 
+            // If not in a string literal, process brackets.
             if (!isInStringLiteral) {
                 if (character == SEMICOLON && brackets.isEmpty()) {
                     snippets.add(builder.toString());
@@ -69,7 +74,7 @@ public class SeparatorPreprocessor implements Preprocessor {
         }
 
         if (!brackets.isEmpty()) {
-            throw new RuntimeException("Brackets do not match");
+            throw new PreprocessorException("Brackets do not match");
         }
 
         // Append remaining string to the statements.

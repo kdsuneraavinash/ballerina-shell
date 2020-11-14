@@ -15,11 +15,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.snippet;
-
-import io.ballerina.compiler.syntax.tree.Node;
-
-import java.util.Objects;
 
 /**
  * Every snippet must have a kind (which dictates where the snippet should go and
@@ -33,18 +30,10 @@ import java.util.Objects;
  * Also, names given to the REPL may never be overridden.
  * (If `x` variable is defined, you cannot redefine variable `x` even with the same type.
  * Same goes for functions, classes etc..)
- *
- * @param <T> Type of the node that corresponds to the snippet.
  */
-public abstract class Snippet<T extends Node> {
+public abstract class Snippet {
     protected final SnippetSubKind subKind;
     protected final String sourceCode;
-
-    protected Snippet(T node, SnippetSubKind subKind) {
-        Objects.requireNonNull(node);
-        this.sourceCode = node.toSourceCode();
-        this.subKind = subKind;
-    }
 
     protected Snippet(String sourceCode, SnippetSubKind subKind) {
         this.sourceCode = sourceCode;
@@ -70,17 +59,8 @@ public abstract class Snippet<T extends Node> {
     }
 
     /**
-     * Ignored snippets are snippets that are handled by
-     * another kind.
-     *
-     * @return Whether the sub kind is ignored.
-     */
-    public boolean isIgnored() {
-        return subKind.isIgnored();
-    }
-
-    /**
      * Valid snippets are all the snippets that are not erroneous and not ignored.
+     * Erroneous types will throw an error.
      *
      * @return Whether the snippet is valid.
      */
@@ -88,6 +68,11 @@ public abstract class Snippet<T extends Node> {
         if (getKind() == SnippetKind.ERRONEOUS_KIND) {
             throw new RuntimeException(subKind.getErrorMessage());
         }
-        return !isIgnored();
+        return !subKind.isIgnored();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("(%s) %s:%s", getClass().getSimpleName(), subKind.getKind(), subKind);
     }
 }

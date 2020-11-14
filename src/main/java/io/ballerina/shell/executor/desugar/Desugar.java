@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor.desugar;
 
 import io.ballerina.shell.snippet.Snippet;
@@ -28,7 +29,7 @@ import java.util.List;
  * @param <P> Snippet type that will get desugared.
  * @param <Q> Converted type.
  */
-public interface Desugar<P extends Snippet<?>, Q> {
+public interface Desugar<P extends Snippet, Q> {
     /**
      * Converts a snippets to a list of snippets.
      * The resultant snippets should be effectively same as the input.

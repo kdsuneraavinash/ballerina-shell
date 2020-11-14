@@ -15,14 +15,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.treeparser.trials;
 
+import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.NodeList;
+import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
-import io.ballerina.shell.treeparser.TrialTreeParser;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -33,7 +36,7 @@ import io.ballerina.tools.text.TextDocuments;
  */
 public class EmptyExpressionTrial implements TreeParserTrial {
     @Override
-    public Node tryParse(String source) throws FailedTrialException {
+    public Node tryParse(String source) throws ParserTrialFailedException {
         try {
             TextDocument document = TextDocuments.from(source);
             SyntaxTree tree = SyntaxTree.from(document);
@@ -41,11 +44,24 @@ public class EmptyExpressionTrial implements TreeParserTrial {
 
             NodeList<ModuleMemberDeclarationNode> moduleMemberDeclarationNodes = node.members();
             if (moduleMemberDeclarationNodes.isEmpty()) {
-                return TrialTreeParser.nilLiteralExpression();
+                return nilLiteralExpression();
             }
             throw new Exception("Not an empty expression");
         } catch (Exception e) {
-            throw new FailedTrialException(e);
+            throw new ParserTrialFailedException(e);
         }
+    }
+
+    /**
+     * Creates a nil literal node. ()
+     * This is the default placeholder expression.
+     *
+     * @return A new nil literal node
+     */
+    private static ExpressionNode nilLiteralExpression() {
+        return NodeFactory.createNilLiteralNode(
+                NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
+                NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)
+        );
     }
 }

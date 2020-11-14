@@ -15,9 +15,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.ballerina.repl;
+
+package org.ballerina.repl.terminal;
 
 import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import org.ballerina.repl.ReplShell;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
 import org.ballerina.repl.exceptions.ReplToggleDebugException;

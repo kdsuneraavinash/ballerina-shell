@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor;
 
 import io.ballerina.shell.snippet.Snippet;
@@ -31,5 +32,5 @@ public interface Executor {
      * @param newSnippet New snippet to execute.
      * @return Execution output lines.
      */
-    ExecutorResult execute(Snippet<?> newSnippet);
+    ExecutorResult execute(Snippet newSnippet);
 }

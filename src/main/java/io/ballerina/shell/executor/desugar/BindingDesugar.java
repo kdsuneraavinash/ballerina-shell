@@ -23,8 +23,8 @@ import io.ballerina.compiler.syntax.tree.ErrorBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.ListBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.MappingBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.WildcardBindingPatternNode;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import io.ballerina.shell.snippet.VariableDefinitionSnippet;
+import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 import java.util.List;
 

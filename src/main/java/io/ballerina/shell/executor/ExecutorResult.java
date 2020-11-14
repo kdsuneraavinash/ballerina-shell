@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package io.ballerina.shell.executor;
 
 /**
@@ -24,21 +25,33 @@ package io.ballerina.shell.executor;
  */
 public class ExecutorResult {
     private final boolean isError;
-    private final String output;
+    private final String stdErrLogs;
+    private final String stdOutLogs;
 
-    public ExecutorResult(boolean isError, String output) {
+    public ExecutorResult(boolean isError, String stdErrLogs, String stdOutLogs) {
         this.isError = isError;
-        this.output = output;
+        this.stdErrLogs = stdErrLogs;
+        this.stdOutLogs = stdOutLogs;
     }
 
     /**
-     * Output of an executor is either its error messages
-     * or output. {@code isError} defines what it is.
+     * Output from the executor to the standard error.
+     * However, having output in this doesn't mean that the
+     * program execution failed. Execution status is given via {@code isError}.
      *
-     * @return Output of the executor.
+     * @return STDERR of the executor.
      */
-    public String getOutput() {
-        return output;
+    public String getStdErrLogs() {
+        return stdErrLogs;
+    }
+
+    /**
+     * Output from the executor to the standard output.
+     *
+     * @return STDOUT of the executor.
+     */
+    public String getStdOutLogs() {
+        return stdOutLogs;
     }
 
     /**
