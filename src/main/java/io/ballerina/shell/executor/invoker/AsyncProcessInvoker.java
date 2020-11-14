@@ -19,7 +19,7 @@
 package io.ballerina.shell.executor.invoker;
 
 import io.ballerina.shell.postprocessor.Postprocessor;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +59,7 @@ public class AsyncProcessInvoker extends ShellProcessInvoker {
         stdErrThread.join();
 
 
-        ShellDiagnosticProvider.sendMessage("Execution finished with exit code %s.", String.valueOf(exitCode));
+        DebugProvider.sendMessage("Execution finished with exit code %s.", String.valueOf(exitCode));
         assert !stdOutThread.isAlive() && !stdErrThread.isAlive();
         return exitCode == 0;
     }
@@ -71,7 +71,7 @@ public class AsyncProcessInvoker extends ShellProcessInvoker {
                     stringConsumer.accept(scanner.nextLine());
                 }
             }
-            ShellDiagnosticProvider.sendMessage("Thread %s exiting.", String.valueOf(name));
+            DebugProvider.sendMessage("Thread %s exiting.", String.valueOf(name));
         }, name);
     }
 }

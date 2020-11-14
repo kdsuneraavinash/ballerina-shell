@@ -18,7 +18,7 @@
 
 package io.ballerina.shell.utils.timeit;
 
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -50,7 +50,7 @@ public class TimeIt {
         operationTimes.put(name, entry);
 
         String message = String.format("%s took %s ms. Average is %s ms.", name, duration.toMillis(), mean.toMillis());
-        ShellDiagnosticProvider.sendMessage(message);
+        DebugProvider.sendMessage(message);
 
         return result;
     }

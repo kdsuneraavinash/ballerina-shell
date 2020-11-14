@@ -18,7 +18,7 @@
 
 package org.ballerina.repl;
 
-import io.ballerina.shell.utils.diagnostics.DiagnosticWriter;
+import io.ballerina.shell.utils.debug.DebugWriter;
 import org.jline.terminal.Terminal;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
@@ -27,10 +27,10 @@ import org.jline.utils.AttributedStyle;
  * Diagnostic writer that will write to the
  * REPL with a different color output.
  */
-public class ReplDiagnosticWriter implements DiagnosticWriter {
+public class ReplDebugWriter implements DebugWriter {
     private final Terminal terminal;
 
-    public ReplDiagnosticWriter(Terminal terminal) {
+    public ReplDebugWriter(Terminal terminal) {
         this.terminal = terminal;
     }
 

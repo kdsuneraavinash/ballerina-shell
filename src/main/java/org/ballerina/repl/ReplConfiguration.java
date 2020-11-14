@@ -20,7 +20,7 @@ package org.ballerina.repl;
 
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.reeval.ReEvalExecutor;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -46,7 +46,7 @@ public class ReplConfiguration {
             throw new ReplCmdHelpException();
         }
         isDebugMode = ReplCommandOption.DEBUG.hasOptionSet(cmd);
-        executorName = ReplCommandOption.EXECUTOR.getOptionValue(cmd, "gen");
+        executorName = ReplCommandOption.EXECUTOR.getOptionValue(cmd, "reeval");
         this.terminal = terminal;
         setDiagnosticOutputMode();
     }
@@ -78,11 +78,11 @@ public class ReplConfiguration {
      */
     private void setDiagnosticOutputMode() {
         if (isDebugMode) {
-            ShellDiagnosticProvider.getInstance().setWriter(new ReplDiagnosticWriter(terminal));
-            ShellDiagnosticProvider.sendMessage("Diagnostic output mode set to ON.");
+            DebugProvider.setWriter(new ReplDebugWriter(terminal));
+            DebugProvider.sendMessage("Diagnostic output mode set to ON.");
         } else {
-            ShellDiagnosticProvider.sendMessage("Diagnostic output mode set to OFF.");
-            ShellDiagnosticProvider.getInstance().setWriter(null);
+            DebugProvider.sendMessage("Diagnostic output mode set to OFF.");
+            DebugProvider.setWriter(null);
         }
     }
 

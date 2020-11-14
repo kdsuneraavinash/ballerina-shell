@@ -34,4 +34,9 @@ public interface Executor {
      * @return Execution output lines.
      */
     boolean execute(Snippet newSnippet, Postprocessor postprocessor);
+
+    /**
+     * Reset executor state so that the execution can be start over.
+     */
+    void reset();
 }

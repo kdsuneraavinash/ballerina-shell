@@ -26,7 +26,7 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetFactory;
 import io.ballerina.shell.transformer.Transformer;
 import io.ballerina.shell.treeparser.TreeParser;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 import io.ballerina.shell.utils.timeit.TimeIt;
 
 import java.util.List;
@@ -85,7 +85,7 @@ public class BallerinaShell {
         for (String statement : statements) {
             Node rootNode = TimeIt.timeIt("Parser", () -> parser.parse(statement));
             Snippet snippet = TimeIt.timeIt("Snippet Factory", () -> SnippetFactory.fromNode(rootNode));
-            ShellDiagnosticProvider.sendMessage("Identified as %s.", snippet.toString());
+            DebugProvider.sendMessage("Identified as %s.", snippet.toString());
             Snippet transformedSnippet = TimeIt.timeIt("Transformer", () -> transformer.transform(snippet));
             boolean isSuccess = TimeIt.timeIt("Executor", () -> executor.execute(transformedSnippet, postprocessor));
 
@@ -93,5 +93,13 @@ public class BallerinaShell {
                 return;
             }
         }
+    }
+
+    /**
+     * Resets the Shell state.
+     * Since the shell state lies in the executor, it will be reset.
+     */
+    public void reset() {
+        executor.reset();
     }
 }

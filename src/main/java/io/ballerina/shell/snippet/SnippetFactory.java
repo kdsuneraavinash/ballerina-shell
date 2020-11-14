@@ -20,7 +20,7 @@ package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.exceptions.SnippetException;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -53,7 +53,7 @@ public class SnippetFactory {
         }
 
         // Should not have reached here. But whatever.
-        ShellDiagnosticProvider.sendMessage("Snippet parsing failed.");
+        DebugProvider.sendMessage("Snippet parsing failed.");
         throw new SnippetException("Invalid syntax. Unknown snippet type.");
     }
 }

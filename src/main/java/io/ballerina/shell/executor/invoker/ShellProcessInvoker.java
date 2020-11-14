@@ -19,7 +19,7 @@
 package io.ballerina.shell.executor.invoker;
 
 import io.ballerina.shell.postprocessor.Postprocessor;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class ShellProcessInvoker implements ProcessInvoker {
         }
 
         int exitCode = process.exitValue();
-        ShellDiagnosticProvider.sendMessage(
+        DebugProvider.sendMessage(
                 "Execution finished with exit code %s.", String.valueOf(exitCode));
         return exitCode == 0;
     }

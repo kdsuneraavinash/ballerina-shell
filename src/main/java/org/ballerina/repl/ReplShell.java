@@ -29,9 +29,10 @@ import io.ballerina.shell.transformer.CombinedTransformer;
 import io.ballerina.shell.transformer.Transformer;
 import io.ballerina.shell.treeparser.TreeParser;
 import io.ballerina.shell.treeparser.TrialTreeParser;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
+import org.ballerina.repl.exceptions.ReplResetException;
 import org.ballerina.repl.exceptions.ReplToggleDebugException;
 import org.ballerina.repl.terminal.ReplCommandHandler;
 import org.jline.reader.EndOfFileException;
@@ -110,12 +111,14 @@ public class ReplShell {
             } catch (ReplExitException e) {
                 terminal.writer().println(REPL_EXIT_MESSAGE);
                 break;
+            } catch (ReplResetException e) {
+                ballerinaShell.reset();
             } catch (ReplToggleDebugException e) {
                 configuration.toggleDiagnosticOutputMode();
             } catch (UserInterruptException | EndOfFileException | ReplHandledException ignored) {
                 // ignore
             } catch (Exception e) {
-                ShellDiagnosticProvider.sendMessage(e.toString());
+                DebugProvider.sendMessage(e.toString());
                 String message = new AttributedStringBuilder()
                         .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
                         .append((e.getMessage())).toAnsi();

@@ -18,10 +18,11 @@
 
 package org.ballerina.repl.terminal;
 
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 import org.ballerina.repl.ReplShell;
 import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
+import org.ballerina.repl.exceptions.ReplResetException;
 import org.ballerina.repl.exceptions.ReplToggleDebugException;
 
 import java.io.PrintWriter;
@@ -36,6 +37,7 @@ public class ReplCommandHandler {
     private static final String EXIT_COMMAND = "/exit";
     private static final String ABOUT_COMMAND = "/about";
     private static final String TOGGLE_DEBUG = "/debug";
+    private static final String RESET_COMMAND = "/reset";
     private static final String EMPTY_LINE = "";
 
     /**
@@ -51,7 +53,7 @@ public class ReplCommandHandler {
      * @throws ReplToggleDebugException to signify to change the debug mode.
      */
     public static void handle(String command, PrintWriter output)
-            throws ReplExitException, ReplHandledException, ReplToggleDebugException {
+            throws ReplExitException, ReplHandledException, ReplToggleDebugException, ReplResetException {
         switch (command.toLowerCase().trim()) {
             case EXIT_COMMAND:
                 throw new ReplExitException();
@@ -59,12 +61,14 @@ public class ReplCommandHandler {
                 String aboutContent = ReplShell.readFile(ABOUT_FILE);
                 output.println(aboutContent);
                 throw new ReplHandledException();
+            case RESET_COMMAND:
+                throw new ReplResetException();
             case EMPTY_LINE:
                 throw new ReplHandledException();
             case TOGGLE_DEBUG:
                 throw new ReplToggleDebugException();
             default:
-                ShellDiagnosticProvider.sendMessage("Command not identified as internal command.");
+                DebugProvider.sendMessage("Command not identified as internal command.");
         }
     }
 }

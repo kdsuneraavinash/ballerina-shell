@@ -16,26 +16,10 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.diagnostics;
+package org.ballerina.repl.exceptions;
 
 /**
- * Private statement structure to keep track of the
- * provider and the message.
+ * Exception to signal to exit the repl.
  */
-public class ShellDiagnosticMessage {
-    private final Class<?> provider;
-    private final String message;
-
-    protected ShellDiagnosticMessage(Class<?> provider, String message) {
-        this.provider = provider;
-        this.message = message;
-    }
-
-    @Override
-    public String toString() {
-        if (provider == null) {
-            return String.format("[DEBUG] %s", message);
-        }
-        return String.format("[DEBUG]:%s %s", provider.getSimpleName(), message);
-    }
+public class ReplResetException extends Exception {
 }

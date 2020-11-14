@@ -16,11 +16,11 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.diagnostics;
+package io.ballerina.shell.utils.debug;
 
 /**
- * Interface of a callback to output diagnostics.
+ * Interface of a callback to output debug messages.
  */
-public interface DiagnosticWriter {
+public interface DebugWriter {
     void write(String write);
 }

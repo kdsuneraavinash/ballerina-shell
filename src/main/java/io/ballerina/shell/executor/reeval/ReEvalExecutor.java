@@ -28,7 +28,7 @@ import io.ballerina.shell.executor.invoker.ProcessInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -66,8 +66,8 @@ public class ReEvalExecutor implements Executor {
     public ReEvalExecutor() {
         String command = String.format(BALLERINA_COMMAND, GENERATED_FILE);
         processInvoker = new AsyncProcessInvoker(command);
-        ShellDiagnosticProvider.sendMessage("Using re-eval executor with shell process invoker.");
-        ShellDiagnosticProvider.sendMessage("Shell command invocation used: " + command);
+        DebugProvider.sendMessage("Using re-eval executor with shell process invoker.");
+        DebugProvider.sendMessage("Shell command invocation used: " + command);
 
         imports = new ArrayList<>();
         moduleDeclarations = new ArrayList<>();
@@ -102,7 +102,7 @@ public class ReEvalExecutor implements Executor {
             return isSuccess;
 
         } catch (InterruptedException | IOException e) {
-            ShellDiagnosticProvider.sendMessage("Process invoker/File generator failed!");
+            DebugProvider.sendMessage("Process invoker/File generator failed!");
             throw new ExecutorException(e);
         } finally {
             // Remove new snippet if new snippet was bad bad
@@ -110,6 +110,16 @@ public class ReEvalExecutor implements Executor {
                 doOperationToRelevantList(newSnippet, (list) -> list.remove(newSnippet));
             }
         }
+    }
+
+    @Override
+    public void reset() {
+        DebugProvider.sendMessage("Resetting Executor.");
+        imports.clear();
+        moduleDeclarations.clear();
+        variableDeclarations.clear();
+        statements.clear();
+        expressions.clear();
     }
 
     /**

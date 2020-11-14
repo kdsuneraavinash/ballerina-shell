@@ -24,7 +24,7 @@ import io.ballerina.compiler.syntax.tree.ListBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.MappingBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.WildcardBindingPatternNode;
 import io.ballerina.shell.snippet.VariableDefinitionSnippet;
-import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
+import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.util.List;
 
@@ -74,12 +74,12 @@ public class BindingDesugar implements Desugar<VariableDefinitionSnippet, Bindin
         } else if (binding.getBind() instanceof ListBindingPatternNode) {
             // [int, int] [a, b] = [2, 4];
             // These are rejected with a unhandled error when defined in module level
-            ShellDiagnosticProvider.sendMessage("List binding pattern detected. Rejecting.");
+            DebugProvider.sendMessage("List binding pattern detected. Rejecting.");
             throw new RuntimeException("List bindings cannot be defined in the REPL.");
         } else if (binding.getBind() instanceof MappingBindingPatternNode) {
             // Person {name:myName, age:myAge} = getPerson();
             // These are rejected with a unhandled error when defined in module level
-            ShellDiagnosticProvider.sendMessage("Mapping binding pattern detected. Rejecting.");
+            DebugProvider.sendMessage("Mapping binding pattern detected. Rejecting.");
             throw new RuntimeException("Mapping bindings cannot be defined in the REPL.");
         } else if (binding.getBind() instanceof ErrorBindingPatternNode) {
             // TODO: Implement this pattern
