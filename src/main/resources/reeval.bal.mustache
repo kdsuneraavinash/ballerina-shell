@@ -1,0 +1,45 @@
+import ballerina/io;
+
+// Imports
+{{#imports}}
+{{{.}}}
+{{/imports}}
+
+any|error __reserved__ = ();
+
+// Module member declaration
+{{#moduleDeclarations}}
+{{{.}}}
+{{/moduleDeclarations}}
+
+// Variable declarations
+{{#variableDeclarations}}
+{{{.}}}
+{{/variableDeclarations}}
+
+// Statements and Expressions
+function stmts() returns error? {
+{{#statements}}
+    {{{.}}}
+{{/statements}}
+{{#expressions}}
+    __reserved__ = {{{.}}};
+{{/expressions}}
+}
+
+function run() returns string|error {
+    check stmts();
+    any|error expr = {{{newExpression}}}; // New expression
+    any value = checkpanic expr;
+    string output = io:sprintf("%s", value);
+    return output;
+}
+
+public function main() {
+    string|error result = trap run();
+    if (result is string) {
+        io:println(result);
+    } else {
+        io:println("\u{001b}[33;1mException occurred: ", result.message(), "\u{001b}[0m");
+    }
+}

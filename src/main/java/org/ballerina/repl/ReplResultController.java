@@ -37,11 +37,6 @@ public class ReplResultController implements ShellController {
     }
 
     @Override
-    public void startSession() {
-        // Nothing
-    }
-
-    @Override
     public void emitResult(String output, LogStatus status) {
         if (status != LogStatus.SUCCESS) {
             output = new AttributedStringBuilder()
@@ -50,13 +45,5 @@ public class ReplResultController implements ShellController {
         }
         terminal.writer().println(output);
         terminal.writer().flush();
-    }
-
-    @Override
-    public void finishSession() {
-    }
-
-    @Override
-    public void failSession() {
     }
 }

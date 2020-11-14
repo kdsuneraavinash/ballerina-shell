@@ -19,20 +19,33 @@
 package io.ballerina.shell.postprocessor;
 
 import io.ballerina.shell.ShellController;
-import io.ballerina.shell.executor.ExecutorResult;
 
 /**
  * Processes a string output to a processed string.
  * May perform some filtering, mapping on the output string.
+ * Used to listen to STDOUT, STDERR streams.
  */
-public interface Postprocessor {
+public abstract class Postprocessor {
+    protected final ShellController controller;
+
+    public Postprocessor(ShellController controller) {
+        this.controller = controller;
+    }
+
     /**
-     * Processes the output depending on the exit type.
-     * Every output from postprocessor is sent via controller.
+     * Processes a line sent the stdout of the program.
+     * This is the output that the user wanted to be printed.
      *
-     * @param executorResult Result of the executor
-     * @param controller     Shell controller to output the output.
-     * @return Whether the preprocessing encountered errors.
+     * @param line Input string line.
      */
-    boolean process(ExecutorResult executorResult, ShellController controller);
+    public abstract void onProgramOutput(String line);
+
+    /**
+     * Processes a line sent by the compiler.
+     * This is the STDERR, so could also be output sent by the program.
+     * Generally these lines are compiler generated.
+     *
+     * @param line Input string line.
+     */
+    public abstract void onCompilerOutput(String line);
 }

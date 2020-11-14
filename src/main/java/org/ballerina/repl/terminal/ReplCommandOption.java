@@ -27,7 +27,7 @@ import org.apache.commons.cli.Option;
  */
 public enum ReplCommandOption {
     DEBUG('d', "debug", "start with debug mode)", false),
-    EXECUTOR('e', "executor", "executor to use (gen/reeval)", true),
+    EXECUTOR('e', "executor", "executor to use (gen/reeval/template)", true),
     HELP('h', "help", "prints this help message", false);
 
     private final char code;

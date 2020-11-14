@@ -19,9 +19,7 @@
 package io.ballerina.shell;
 
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.executor.Executor;
-import io.ballerina.shell.executor.ExecutorResult;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.preprocessor.Preprocessor;
 import io.ballerina.shell.snippet.Snippet;
@@ -75,42 +73,25 @@ public class BallerinaShell {
      * If there was an error in one of the statements in the line,
      * then this will stop execution without evaluating later lines.
      *
-     * @param source     Input line from user.
-     * @param controller Shell result object which contain
-     *                   the results of the shell after the execution is done.
+     * @param source Input line from user.
      */
-    public void evaluate(String source, ShellController controller) {
-        try {
-            controller.startSession();
+    public void evaluate(String source) {
+        // 1. Preprocessor  - split the line into one or more statements.
+        // 2. Parser        - Identify the nodes correctly.
+        // 3. Convert       - Convert the node into a snippet.
+        // 4. Transform     - Transform the snippet if needed.
+        // 5. Executor      - Run the snippet. Postprocessor will format.
+        List<String> statements = TimeIt.timeIt("Preprocessor", () -> preprocessor.preprocess(source));
+        for (String statement : statements) {
+            Node rootNode = TimeIt.timeIt("Parser", () -> parser.parse(statement));
+            Snippet snippet = TimeIt.timeIt("Snippet Factory", () -> SnippetFactory.fromNode(rootNode));
+            ShellDiagnosticProvider.sendMessage("Identified as %s.", snippet.toString());
+            Snippet transformedSnippet = TimeIt.timeIt("Transformer", () -> transformer.transform(snippet));
+            boolean isSuccess = TimeIt.timeIt("Executor", () -> executor.execute(transformedSnippet, postprocessor));
 
-            // 1. Preprocessor  - split the line into one or more statements.
-            // 2. Parser        - Identify the nodes correctly.
-            // 3. Convert       - Convert the node into a snippet.
-            // 4. Transform     - Transform the snippet if needed.
-            // 5. Executor      - Run the snippet.
-            // 6. Postprocess   - Reformat the output from the executor.
-            List<String> statements = TimeIt.timeIt("Preprocessor", () -> preprocessor.preprocess(source));
-            for (String statement : statements) {
-                Node rootNode = TimeIt.timeIt("Parser", () -> parser.parse(statement));
-                Snippet snippet = TimeIt.timeIt("Snippet Factory", () -> SnippetFactory.fromNode(rootNode));
-                ShellDiagnosticProvider.sendMessage("Identified as %s.", snippet.toString());
-                Snippet transformedSnippet = TimeIt.timeIt("Transformer", () -> transformer.transform(snippet));
-                ExecutorResult executorResult = TimeIt.timeIt("Executor", () -> executor.execute(transformedSnippet));
-                TimeIt.timeIt("Postprocessor", () -> postprocessor.process(executorResult, controller));
-
-                if (executorResult.isError()) {
-                    throw new ExecutorException();
-                }
+            if (!isSuccess) {
+                return;
             }
-
-            controller.finishSession();
-        } catch (ExecutorException e) {
-            // Statement in the multiple statement input failed.
-            controller.failSession();
-        } catch (Exception e) {
-            // Unexpected error.
-            controller.failSession();
-            throw e;
         }
     }
 }

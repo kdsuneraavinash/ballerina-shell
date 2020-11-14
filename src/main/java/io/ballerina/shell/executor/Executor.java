@@ -18,6 +18,7 @@
 
 package io.ballerina.shell.executor;
 
+import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
 
 /**
@@ -32,5 +33,5 @@ public interface Executor {
      * @param newSnippet New snippet to execute.
      * @return Execution output lines.
      */
-    ExecutorResult execute(Snippet newSnippet);
+    boolean execute(Snippet newSnippet, Postprocessor postprocessor);
 }

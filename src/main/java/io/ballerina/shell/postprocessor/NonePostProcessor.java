@@ -16,20 +16,26 @@
  * under the License.
  */
 
-package io.ballerina.shell;
+package io.ballerina.shell.postprocessor;
+
+import io.ballerina.shell.LogStatus;
+import io.ballerina.shell.ShellController;
 
 /**
- * Public interface for the shell result of the Ballerina Shell.
- * {@code BallerinaShell} would use this to notify of the events.
+ * Will output STDERR and STDOUT to the controller directly without processing.
  */
-public interface ShellController {
-    /**
-     * Adds a shell results to the output.
-     * Child classes may override this to fetch the shell results.
-     * Every result, including errors are emitted via this interface,
-     *
-     * @param output Output string.
-     * @param status Status of the output.
-     */
-    void emitResult(String output, LogStatus status);
+public class NonePostProcessor extends Postprocessor {
+    public NonePostProcessor(ShellController controller) {
+        super(controller);
+    }
+
+    @Override
+    public void onProgramOutput(String line) {
+        controller.emitResult(line, LogStatus.SUCCESS);
+    }
+
+    @Override
+    public void onCompilerOutput(String line) {
+        controller.emitResult(line, LogStatus.ERROR);
+    }
 }

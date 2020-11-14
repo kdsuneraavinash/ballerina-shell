@@ -36,6 +36,10 @@ public class ExpressionSnippet extends Snippet {
         assert subKind.getKind() == SnippetKind.EXPRESSION_KIND;
     }
 
+    protected ExpressionSnippet(String sourceCode, SnippetSubKind subKind) {
+        super(sourceCode, subKind);
+    }
+
     /**
      * Create a expression snippet from the given node.
      * Returns null if snippet cannot be created.

@@ -19,10 +19,15 @@
 package org.ballerina.repl;
 
 import io.ballerina.shell.BallerinaShell;
-import io.ballerina.shell.postprocessor.BasicPostprocessor;
+import io.ballerina.shell.executor.Executor;
+import io.ballerina.shell.postprocessor.BasicPostProcessor;
+import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.preprocessor.CombinedPreprocessor;
+import io.ballerina.shell.preprocessor.Preprocessor;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import io.ballerina.shell.transformer.CombinedTransformer;
+import io.ballerina.shell.transformer.Transformer;
+import io.ballerina.shell.treeparser.TreeParser;
 import io.ballerina.shell.treeparser.TrialTreeParser;
 import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import org.ballerina.repl.exceptions.ReplExitException;
@@ -63,21 +68,24 @@ public class ReplShell {
         this.terminal = lineReader.getTerminal();
         this.lineReader = lineReader;
         this.configuration = configuration;
-        this.ballerinaShell = new BallerinaShell(
-                new CombinedPreprocessor(new SeparatorPreprocessor()),
-                new TrialTreeParser(),
-                new CombinedTransformer(),
-                configuration.getExecutor(),
-                new BasicPostprocessor()
-        );
+
+        ReplResultController controller = new ReplResultController(terminal);
+
+        Preprocessor preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
+        TreeParser parser = new TrialTreeParser();
+        Transformer transformer = new CombinedTransformer();
+        Executor executor = configuration.getExecutor();
+        Postprocessor postprocessor = new BasicPostProcessor(controller);
+        this.ballerinaShell = new BallerinaShell(preprocessor, parser, transformer, executor, postprocessor);
     }
 
     /**
      * Execute the REPL.
+     * This would show the welcome banner, take user input and evaluate it.
+     * To exit the repl, {@code ReplExitException} should be thrown.
+     * TODO: (Issue) exits when ctrl+c when executing shell command.
      */
     public void execute() {
-        ReplResultController replResultController = new ReplResultController(terminal);
-
         // Output welcome banner
         String banner = readFile(REPL_HEADER);
         banner = String.format(banner, VERSION);
@@ -86,15 +94,19 @@ public class ReplShell {
         Duration previousDuration = null;
         while (true) {
             try {
-                String line = readInput(lineReader, previousDuration);
+                // Read and handle internal commands
+                String line = readInput(previousDuration);
                 ReplCommandHandler.handle(line, terminal.writer());
+
+                // Evaluate and Print
                 Instant start = Instant.now();
                 try {
-                    ballerinaShell.evaluate(line.trim(), replResultController);
+                    ballerinaShell.evaluate(line.trim());
                 } finally {
                     Instant end = Instant.now();
                     previousDuration = Duration.between(start, end);
                 }
+
             } catch (ReplExitException e) {
                 terminal.writer().println(REPL_EXIT_MESSAGE);
                 break;
@@ -116,7 +128,13 @@ public class ReplShell {
         terminal.writer().flush();
     }
 
-    private static String readInput(LineReader lineReader, Duration previousDuration) {
+    /**
+     * Reads a line from user. Duration for last execution is in right side.
+     *
+     * @param previousDuration Duration for the last statement evaluation.
+     * @return User input.
+     */
+    private String readInput(Duration previousDuration) {
         String rightPrompt = null;
         if (previousDuration != null) {
             long seconds = previousDuration.toMillis();

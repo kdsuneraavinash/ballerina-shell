@@ -16,43 +16,24 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.process;
+package io.ballerina.shell.executor.invoker;
+
+import io.ballerina.shell.postprocessor.Postprocessor;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Interface for calling external processes.
  */
 public interface ProcessInvoker {
     /**
-     * Executes the command line binary.
+     * Executes the command line shell command/external process.
+     * If something failed, the return would be false. (eg: compilation failed)
      *
+     * @param postprocessor Postprocessor to use to output data.
+     * @return Whether the operation was successful.
      * @throws IOException          When input read fails.
      * @throws InterruptedException WHen process executor/failed.
      */
-    void execute() throws IOException, InterruptedException;
-
-    /**
-     * Whether the process exited in an error.
-     *
-     * @return Is process final state an error.
-     */
-    boolean isErrorExit();
-
-    /**
-     * Getter for the standard output of the process.
-     * Each entry represents a line.
-     *
-     * @return Strings outputted from the process to stdout.
-     */
-    List<String> getStandardError();
-
-    /**
-     * Getter for the standard error of the process.
-     * Each entry represents a line.
-     *
-     * @return Strings outputted from the process to stderr.
-     */
-    List<String> getStandardOutput();
+    boolean execute(Postprocessor postprocessor) throws IOException, InterruptedException;
 }

@@ -16,43 +16,32 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.process;
+package io.ballerina.shell.executor.invoker;
 
+import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * External process information and invoker.
- * Invokes a shell command given and provides APIs to retrieve stdout/stderr/exit code.
+ * Invokes a shell command given.
  */
 public class ShellProcessInvoker implements ProcessInvoker {
-    private final String command;
-    private final List<String> standardOutput;
-    private final List<String> standardError;
-    private int exitCode;
+    protected final String command;
 
     public ShellProcessInvoker(String command) {
         this.command = command;
-        this.standardOutput = new ArrayList<>();
-        this.standardError = new ArrayList<>();
-        this.exitCode = 0;
     }
 
     @Override
-    public void execute() throws IOException, InterruptedException {
-        this.standardOutput.clear();
-        this.standardError.clear();
-
+    public boolean execute(Postprocessor postprocessor) throws IOException, InterruptedException {
         Runtime runtime = Runtime.getRuntime();
         Process process = runtime.exec(command);
         process.waitFor();
-        this.exitCode = process.exitValue();
 
         Charset defaultCharset = Charset.defaultCharset();
         try (
@@ -63,30 +52,16 @@ public class ShellProcessInvoker implements ProcessInvoker {
         ) {
             String line;
             while ((line = stdOutBuff.readLine()) != null) {
-                this.standardOutput.add(line);
+                postprocessor.onProgramOutput(line);
             }
             while ((line = stdErrBuff.readLine()) != null) {
-                this.standardError.add(line);
-            }
-            if (isErrorExit()) {
-                ShellDiagnosticProvider.sendMessage(
-                        "Execution failed with exit code %s.", String.valueOf(exitCode));
+                postprocessor.onCompilerOutput(line);
             }
         }
-    }
 
-    @Override
-    public boolean isErrorExit() {
-        return exitCode != 0;
-    }
-
-    @Override
-    public List<String> getStandardError() {
-        return standardError;
-    }
-
-    @Override
-    public List<String> getStandardOutput() {
-        return standardOutput;
+        int exitCode = process.exitValue();
+        ShellDiagnosticProvider.sendMessage(
+                "Execution finished with exit code %s.", String.valueOf(exitCode));
+        return exitCode == 0;
     }
 }

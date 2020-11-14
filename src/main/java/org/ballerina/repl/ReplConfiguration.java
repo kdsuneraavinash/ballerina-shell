@@ -19,8 +19,7 @@
 package org.ballerina.repl;
 
 import io.ballerina.shell.executor.Executor;
-import io.ballerina.shell.executor.SourceGenExecutor;
-import io.ballerina.shell.executor.TemplateExecutor;
+import io.ballerina.shell.executor.reeval.ReEvalExecutor;
 import io.ballerina.shell.utils.diagnostics.ShellDiagnosticProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -93,10 +92,8 @@ public class ReplConfiguration {
      * @return a new Executor object.
      */
     public Executor getExecutor() {
-        if (executorName.equalsIgnoreCase("gen")) {
-            return new SourceGenExecutor();
-        } else if (executorName.equalsIgnoreCase("reeval")) {
-            return new TemplateExecutor();
+        if (executorName.equalsIgnoreCase("reeval")) {
+            return new ReEvalExecutor();
         }
         throw new RuntimeException("Unknown executor name: " + executorName);
     }

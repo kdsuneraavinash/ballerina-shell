@@ -18,19 +18,8 @@
 
 package io.ballerina.shell.executor;
 
-import io.ballerina.shell.executor.wrapper.Wrapper;
-
 /**
- * An executor that will delegate the compilation to the experimental Project API.
- * This would create an in-memory compilation unit and execute it.
+ * A interface to tag contexts for the mustache generation.
  */
-public class ProjectApiExecutor extends StatelessExecutor {
-    public ProjectApiExecutor(Wrapper wrapper) {
-        super(wrapper);
-    }
-
-    @Override
-    protected ExecutorResult evaluateSourceCode(String sourceCode) {
-        throw new UnsupportedOperationException();
-    }
+public interface Context {
 }
