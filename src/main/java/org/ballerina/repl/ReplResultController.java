@@ -38,11 +38,24 @@ public class ReplResultController implements ShellController {
 
     @Override
     public void emitResult(String output, LogStatus status) {
-        if (status != LogStatus.SUCCESS) {
-            output = new AttributedStringBuilder()
-                    .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW))
-                    .append(output).toAnsi();
+        int color;
+        switch (status) {
+            case FATAL_ERROR:
+                color = AttributedStyle.RED;
+                break;
+            case ERROR:
+                color = AttributedStyle.YELLOW;
+                break;
+            case WARNING:
+                color = AttributedStyle.CYAN;
+                break;
+            default:
+                color = AttributedStyle.BRIGHT;
+                break;
         }
+        output = new AttributedStringBuilder()
+                .style(AttributedStyle.DEFAULT.foreground(color))
+                .append(output).toAnsi();
         terminal.writer().println(output);
         terminal.writer().flush();
     }

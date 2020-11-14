@@ -20,6 +20,7 @@ package io.ballerina.shell.executor.reeval;
 
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,29 +31,38 @@ import java.util.Objects;
  * The methods in this context would be consumed by the template file.
  */
 public class ReEvalContext implements Context {
-    private static final String DEFAULT_EXPR = "\"\\u{001b}[30;1mOK\\u{001b}[0m\"";
+    private static final String DEFAULT_EXPR = "__NoExpressionError__(\"No expression\")";
+    private static final String EXPR_DECLARATION = "__reserved__ = %s;";
+
 
     private final List<String> imports;
     private final List<String> moduleDeclarations;
     private final List<String> variableDeclarations;
-    private final List<String> statements;
-    private final List<String> expressions;
+    private final List<String> statementsAndExpressions;
     private final String newExpression;
 
     public ReEvalContext(
             List<Snippet> imports,
             List<Snippet> moduleDeclarations,
             List<Snippet> variableDeclarations,
-            List<Snippet> statements,
-            List<Snippet> expressions,
+            List<Snippet> statementsAndExpressions,
             Snippet newExpression) {
         this.imports = snippetsToStrings(imports);
         this.moduleDeclarations = snippetsToStrings(moduleDeclarations);
         this.variableDeclarations = snippetsToStrings(variableDeclarations);
-        this.statements = snippetsToStrings(statements);
-        this.expressions = snippetsToStrings(expressions);
+        this.statementsAndExpressions = new ArrayList<>();
         this.newExpression = (newExpression == null) ? null : newExpression.toSourceCode();
-        this.expressions.remove(this.newExpression);
+
+        for (Snippet snippet : statementsAndExpressions) {
+            if (snippet != newExpression) {
+                String code = snippet.toSourceCode();
+                if (snippet.getKind() == SnippetKind.EXPRESSION_KIND) {
+                    code = String.format(EXPR_DECLARATION, snippet.toSourceCode());
+                }
+                this.statementsAndExpressions.add(code);
+            }
+        }
+        this.statementsAndExpressions.remove(this.newExpression);
     }
 
     private List<String> snippetsToStrings(List<Snippet> snippets) {
@@ -79,13 +89,8 @@ public class ReEvalContext implements Context {
     }
 
     @SuppressWarnings("unused")
-    public List<String> statements() {
-        return statements;
-    }
-
-    @SuppressWarnings("unused")
-    public List<String> expressions() {
-        return expressions;
+    public List<String> statementsAndExpressions() {
+        return statementsAndExpressions;
     }
 
     @SuppressWarnings("unused")

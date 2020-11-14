@@ -58,8 +58,7 @@ public class ReEvalExecutor implements Executor {
     private final List<Snippet> imports;
     private final List<Snippet> moduleDeclarations;
     private final List<Snippet> variableDeclarations;
-    private final List<Snippet> statements;
-    private final List<Snippet> expressions;
+    private final List<Snippet> statementsAndExpressions;
     private final Mustache mustache;
     private final ProcessInvoker processInvoker;
 
@@ -72,8 +71,7 @@ public class ReEvalExecutor implements Executor {
         imports = new ArrayList<>();
         moduleDeclarations = new ArrayList<>();
         variableDeclarations = new ArrayList<>();
-        statements = new ArrayList<>();
-        expressions = new ArrayList<>();
+        statementsAndExpressions = new ArrayList<>();
         MustacheFactory mf = new DefaultMustacheFactory();
         mustache = mf.compile(TEMPLATE_FILE);
     }
@@ -90,7 +88,7 @@ public class ReEvalExecutor implements Executor {
             // Get the new expression and populate context
             Snippet newExpression = newSnippet.getKind() == SnippetKind.EXPRESSION_KIND ? newSnippet : null;
             ReEvalContext context = new ReEvalContext(imports, moduleDeclarations,
-                    variableDeclarations, statements, expressions, newExpression);
+                    variableDeclarations, statementsAndExpressions, newExpression);
 
             // Generate file
             try (FileWriter fileWriter = new FileWriter(GENERATED_FILE)) {
@@ -118,8 +116,7 @@ public class ReEvalExecutor implements Executor {
         imports.clear();
         moduleDeclarations.clear();
         variableDeclarations.clear();
-        statements.clear();
-        expressions.clear();
+        statementsAndExpressions.clear();
     }
 
     /**
@@ -137,9 +134,9 @@ public class ReEvalExecutor implements Executor {
         } else if (snippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
             operation.operate(variableDeclarations);
         } else if (snippet.getKind() == SnippetKind.STATEMENT_KIND) {
-            operation.operate(statements);
+            operation.operate(statementsAndExpressions);
         } else if (snippet.getKind() == SnippetKind.EXPRESSION_KIND) {
-            operation.operate(expressions);
+            operation.operate(statementsAndExpressions);
         } else {
             throw new RuntimeException("Unexpected operation type.");
         }

@@ -18,17 +18,18 @@ any|error __reserved__ = ();
 {{/variableDeclarations}}
 
 // Statements and Expressions
-function stmts() returns error? {
-{{#statements}}
+function __stmts__() returns error? {
+{{#statementsAndExpressions}}
     {{{.}}}
-{{/statements}}
-{{#expressions}}
-    __reserved__ = {{{.}}};
-{{/expressions}}
+{{/statementsAndExpressions}}
 }
 
-function run() returns string|error {
-    check stmts();
+// No Expression handlers
+type __NoExpression__ record {};
+type __NoExpressionError__ error<__NoExpression__>;
+
+function __run__() returns string|error {
+    check __stmts__();
     any|error expr = {{{newExpression}}}; // New expression
     any value = checkpanic expr;
     string output = io:sprintf("%s", value);
@@ -36,10 +37,12 @@ function run() returns string|error {
 }
 
 public function main() {
-    string|error result = trap run();
+    string|error result = trap __run__();
     if (result is string) {
         io:println(result);
-    } else {
+    } else if (result is __NoExpressionError__) {
+        // ignore
+    }else {
         io:println("\u{001b}[33;1mException occurred: ", result.message(), "\u{001b}[0m");
     }
 }
