@@ -86,9 +86,8 @@ public class ReEvalExecutor implements Executor {
 
         try {
             // Get the new expression and populate context
-            Snippet newExpression = newSnippet.getKind() == SnippetKind.EXPRESSION_KIND ? newSnippet : null;
-            ReEvalContext context = new ReEvalContext(imports, moduleDeclarations,
-                    variableDeclarations, statementsAndExpressions, newExpression);
+            ReEvalContext context = ReEvalContext.create(imports, moduleDeclarations,
+                    variableDeclarations, statementsAndExpressions, newSnippet);
 
             // Generate file
             try (FileWriter fileWriter = new FileWriter(GENERATED_FILE)) {

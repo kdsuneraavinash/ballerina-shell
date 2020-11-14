@@ -34,38 +34,27 @@ public class ReEvalContext implements Context {
     private static final String DEFAULT_EXPR = "__NoExpressionError__(\"No expression\")";
     private static final String EXPR_DECLARATION = "__reserved__ = %s;";
 
-
     private final List<String> imports;
     private final List<String> moduleDeclarations;
     private final List<String> variableDeclarations;
     private final List<String> statementsAndExpressions;
     private final String newExpression;
+    private final String newStatement;
 
-    public ReEvalContext(
-            List<Snippet> imports,
-            List<Snippet> moduleDeclarations,
-            List<Snippet> variableDeclarations,
-            List<Snippet> statementsAndExpressions,
-            Snippet newExpression) {
-        this.imports = snippetsToStrings(imports);
-        this.moduleDeclarations = snippetsToStrings(moduleDeclarations);
-        this.variableDeclarations = snippetsToStrings(variableDeclarations);
-        this.statementsAndExpressions = new ArrayList<>();
-        this.newExpression = (newExpression == null) ? null : newExpression.toSourceCode();
-
-        for (Snippet snippet : statementsAndExpressions) {
-            if (snippet != newExpression) {
-                String code = snippet.toSourceCode();
-                if (snippet.getKind() == SnippetKind.EXPRESSION_KIND) {
-                    code = String.format(EXPR_DECLARATION, snippet.toSourceCode());
-                }
-                this.statementsAndExpressions.add(code);
-            }
-        }
-        this.statementsAndExpressions.remove(this.newExpression);
+    public ReEvalContext(List<String> imports,
+                         List<String> moduleDeclarations,
+                         List<String> variableDeclarations,
+                         List<String> statementsAndExpressions,
+                         String newExpression, String newStatement) {
+        this.imports = imports;
+        this.moduleDeclarations = moduleDeclarations;
+        this.variableDeclarations = variableDeclarations;
+        this.statementsAndExpressions = statementsAndExpressions;
+        this.newExpression = newExpression;
+        this.newStatement = newStatement;
     }
 
-    private List<String> snippetsToStrings(List<Snippet> snippets) {
+    private static List<String> snippetsToStrings(List<Snippet> snippets) {
         List<String> strings = new ArrayList<>();
         for (Snippet snippet : snippets) {
             strings.add(snippet.toSourceCode());
@@ -97,4 +86,62 @@ public class ReEvalContext implements Context {
     public String newExpression() {
         return Objects.requireNonNullElse(newExpression, DEFAULT_EXPR);
     }
+
+    @SuppressWarnings("unused")
+    public String newStatement() {
+        return Objects.requireNonNullElse(newStatement, "");
+    }
+
+
+    /**
+     * Context creation utility function.
+     *
+     * @param importSnippets                  Imports.
+     * @param moduleDeclarationSnippets       Module level declarations.
+     * @param variableDeclarationSnippets     Variable declarations.
+     * @param statementsAndExpressionSnippets Statement and expression snippets. (In order)
+     * @param newLine                         Newly added snippet.
+     * @return Created context.
+     */
+    public static ReEvalContext create(List<Snippet> importSnippets,
+                                       List<Snippet> moduleDeclarationSnippets,
+                                       List<Snippet> variableDeclarationSnippets,
+                                       List<Snippet> statementsAndExpressionSnippets,
+                                       Snippet newLine) {
+        List<String> imports = snippetsToStrings(importSnippets);
+        List<String> moduleDeclarations = snippetsToStrings(moduleDeclarationSnippets);
+        List<String> variableDeclarations = snippetsToStrings(variableDeclarationSnippets);
+        List<String> statementsAndExpressions = new ArrayList<>();
+
+        // Get the new statement/new expression - if any
+        String newExpression = null;
+        String newStatement = null;
+        if (newLine != null) {
+            if (newLine.getKind() == SnippetKind.EXPRESSION_KIND) {
+                newExpression = newLine.toSourceCode();
+            } else if (newLine.getKind() == SnippetKind.STATEMENT_KIND) {
+                newStatement = newLine.toSourceCode();
+            }
+        }
+
+        // Reformat expressions
+        for (Snippet snippet : statementsAndExpressionSnippets) {
+            if (snippet != newLine) {
+                String code = snippet.toSourceCode();
+                if (snippet.getKind() == SnippetKind.EXPRESSION_KIND) {
+                    code = String.format(EXPR_DECLARATION, code);
+                }
+                statementsAndExpressions.add(code);
+            }
+        }
+
+        // Remove repeated lines
+        statementsAndExpressions.remove(newExpression);
+        statementsAndExpressions.remove(newStatement);
+
+        return new ReEvalContext(imports, moduleDeclarations,
+                variableDeclarations, statementsAndExpressions,
+                newExpression, newStatement);
+    }
 }
+

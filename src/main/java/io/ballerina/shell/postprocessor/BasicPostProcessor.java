@@ -26,19 +26,30 @@ import io.ballerina.shell.ShellController;
  * Will use error and warning prefixes to categorize STDERR.
  */
 public class BasicPostProcessor extends Postprocessor {
+    private static final String ACTIVATION_START = "[[__START__]]";
+    private static final String ACTIVATION_END = "[[__END__]]";
     private static final String ERROR_PREFIX = "error:";
     private static final String WARNING_PREFIX = "warning:";
     private static final String EXPECTED_COMPILING_MSG = "Compiling source";
     private static final String EXPECTED_PROGRAM_NAME = "main.bal";
     private static final String EXPECTED_RUNNING_MSG = "Running executables";
 
+    private boolean isActivated;
+
     public BasicPostProcessor(ShellController controller) {
         super(controller);
+        isActivated = false;
     }
 
     @Override
     public void onProgramOutput(String line) {
-        controller.emitResult(line, LogStatus.SUCCESS);
+        if (line.trim().equals(ACTIVATION_START)) {
+            isActivated = true;
+        } else if (line.trim().equals(ACTIVATION_END)) {
+            isActivated = false;
+        } else if (isActivated) {
+            controller.emitResult(line, LogStatus.SUCCESS);
+        }
     }
 
     @Override

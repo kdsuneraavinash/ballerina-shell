@@ -1,36 +1,35 @@
 import ballerina/io;
-
-// Imports
 {{#imports}}
-{{{.}}}
+    {{{.}}}
 {{/imports}}
 
-any|error __reserved__ = ();
-
-// Module member declaration
 {{#moduleDeclarations}}
-{{{.}}}
+    {{{.}}}
 {{/moduleDeclarations}}
-
-// Variable declarations
 {{#variableDeclarations}}
-{{{.}}}
+    {{{.}}}
 {{/variableDeclarations}}
 
-// Statements and Expressions
-function __stmts__() returns error? {
+function __stmts__() {
 {{#statementsAndExpressions}}
     {{{.}}}
 {{/statementsAndExpressions}}
 }
 
-// No Expression handlers
+function __new_stmt__() returns error? {
+{{{newStatement}}}
+}
+
+any|error __reserved__ = ();
 type __NoExpression__ record {};
 type __NoExpressionError__ error<__NoExpression__>;
 
 function __run__() returns string|error {
-    check __stmts__();
-    any|error expr = {{{newExpression}}}; // New expression
+    __stmts__();
+
+    io:println("\n[[__START__]]");
+    check  __new_stmt__();
+    any|error expr = {{{newExpression}}}; // ==== New expression
     any value = checkpanic expr;
     string output = io:sprintf("%s", value);
     return output;
@@ -45,4 +44,5 @@ public function main() {
     }else {
         io:println("\u{001b}[33;1mException occurred: ", result.message(), "\u{001b}[0m");
     }
+    io:println("[[__END__]]\n");
 }
