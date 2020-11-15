@@ -115,3 +115,4 @@ ballerina/home
 stdout.txt
 main.jar
 *.lck
+*.log.*
