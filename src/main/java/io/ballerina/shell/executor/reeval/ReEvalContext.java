@@ -18,82 +18,95 @@
 
 package io.ballerina.shell.executor.reeval;
 
+import freemarker.ext.beans.TemplateAccessible;
 import io.ballerina.shell.executor.Context;
+import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Mustache context for {@link ReEvalExecutor}.
  * The methods in this context would be consumed by the template file.
  */
-public class ReEvalContext extends Context {
-    private static final String DEFAULT_EXPR = "__NoExpressionError__(\"No expression\")";
-    private static final String EXPR_DECLARATION = "__reserved__ = %s;";
+public class ReEvalContext implements Context {
+    /**
+     * Statement expression containing a statement/expression.
+     * Expressions needs to be formatted differently than a statement.
+     * However, they need to be in order of appearance.
+     */
+    public static class StatementExpression {
+        private final boolean isExpr;
+        private final String code;
 
-    private final List<String> imports;
-    private final List<String> moduleDeclarations;
-    private final List<String> variableDefinitions;
-    private final List<String> statementsAndExpressions;
+        public StatementExpression(Snippet snippet) {
+            this.isExpr = snippet.getKind() == SnippetKind.EXPRESSION_KIND;
+            this.code = snippet.toSourceCode();
+        }
 
-    public ReEvalContext(List<String> imports,
-                         List<String> moduleDeclarations,
-                         List<String> variableDefinitions,
-                         List<String> statementsAndExpressions,
-                         Snippet newSnippet) {
-        super(newSnippet);
-        this.imports = imports;
-        this.moduleDeclarations = moduleDeclarations;
-        this.variableDefinitions = variableDefinitions;
-        this.statementsAndExpressions = statementsAndExpressions;
+        @TemplateAccessible
+        public String getCode() {
+            return code;
+        }
 
-        // Remove repeated lines
-        statementsAndExpressions.remove(newExpression);
-        statementsAndExpressions.remove(newStatement);
+        @TemplateAccessible
+        public boolean isExpr() {
+            return isExpr;
+        }
     }
 
-    @SuppressWarnings("unused")
-    public List<String> imports() {
+    private final List<String> imports;
+    private final List<String> moduleDclns;
+    private final List<String> varDclns;
+    private final List<StatementExpression> stmts;
+    private final StatementExpression lastStmt;
+
+    public ReEvalContext(List<String> imports,
+                         List<String> moduleDclns,
+                         List<String> varDclns,
+                         List<StatementExpression> stmts,
+                         StatementExpression lastStmt) {
+        this.imports = imports;
+        this.moduleDclns = moduleDclns;
+        this.varDclns = varDclns;
+        this.stmts = stmts;
+        this.lastStmt = lastStmt;
+    }
+
+    @TemplateAccessible
+    public List<String> getImports() {
         return imports;
     }
 
-    @SuppressWarnings("unused")
-    public List<String> moduleDeclarations() {
-        return moduleDeclarations;
+    @TemplateAccessible
+    public List<String> getModuleDclns() {
+        return moduleDclns;
     }
 
-    @SuppressWarnings("unused")
-    public List<String> variableDefinitions() {
-        return variableDefinitions;
+    @TemplateAccessible
+    public List<String> getVarDclns() {
+        return varDclns;
     }
 
-    @SuppressWarnings("unused")
-    public List<String> statementsAndExpressions() {
-        return statementsAndExpressions;
+    @TemplateAccessible
+    public List<StatementExpression> getStmts() {
+        return stmts;
     }
 
-    @SuppressWarnings("unused")
-    public String newExpression() {
-        return Objects.requireNonNullElse(newExpression, DEFAULT_EXPR);
+    @TemplateAccessible
+    public StatementExpression getLastStmt() {
+        return lastStmt;
     }
 
-    @SuppressWarnings("unused")
-    public String newStatement() {
-        return Objects.requireNonNullElse(newStatement, "");
+    @TemplateAccessible
+    public String getIoActivationStart() {
+        return Postprocessor.ACTIVATION_START;
     }
 
-
-    /**
-     * Formats expression to be put on template.
-     * Expressions cannot be directly put as a statement.
-     * So they have to be formatted as a variable assignment.
-     *
-     * @param expression Expression to format.
-     * @return Created context.
-     */
-    public static String formatExpression(String expression) {
-        return String.format(EXPR_DECLARATION, expression);
+    @TemplateAccessible
+    public String getIoActivationEnd() {
+        return Postprocessor.ACTIVATION_END;
     }
 }
 

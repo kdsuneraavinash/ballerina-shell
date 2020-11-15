@@ -18,15 +18,15 @@
 
 package io.ballerina.shell.executor;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
@@ -50,15 +50,22 @@ import java.nio.charset.Charset;
 public abstract class Executor<P extends State, Q extends Context, R extends Invoker> {
     private static final String GENERATED_FILE = "main.bal";
 
-    private final Mustache mustache;
+    private final Template template;
     protected final P state;
     protected final R invoker;
 
     protected Executor(String templateName, P state, R invoker) {
         this.state = state;
         this.invoker = invoker;
-        MustacheFactory mf = new DefaultMustacheFactory();
-        mustache = mf.compile(templateName);
+
+        Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
+        cfg.setClassForTemplateLoading(getClass(), "/");
+        cfg.setDefaultEncoding("UTF-8");
+        try {
+            this.template = cfg.getTemplate(templateName);
+        } catch (IOException e) {
+            throw new ExecutorException(e);
+        }
 
         String message = String.format("Using %s with %s invoker on %s file.",
                 getClass().getSimpleName(), invoker.getClass().getSimpleName(), templateName);
@@ -81,7 +88,7 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
         try {
             Context context = currentContext(newSnippet);
             try (FileWriter fileWriter = new FileWriter(GENERATED_FILE, Charset.defaultCharset())) {
-                mustache.execute(fileWriter, context).flush();
+                template.process(context, fileWriter);
             }
             boolean isSuccess = executeInvoker(postprocessor);
             if (isSuccess) {

@@ -3,7 +3,7 @@ module io.ballerina.shell {
     requires io.ballerina.parser;
     requires io.ballerina.tools.api;
     requires org.jline;
-    requires com.github.mustachejava;
+    requires freemarker;
     requires com.google.gson;
     requires commons.cli;
 

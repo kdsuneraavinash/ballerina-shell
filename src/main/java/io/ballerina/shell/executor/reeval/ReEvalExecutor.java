@@ -36,7 +36,7 @@ import java.util.List;
  * and executing it.
  */
 public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalInvoker> {
-    private static final String TEMPLATE_FILE = "template.reeval.mustache";
+    private static final String TEMPLATE_FILE = "template.reeval.ftl";
     private static final String GENERATED_FILE = "main.bal";
 
     public ReEvalExecutor() {
@@ -48,7 +48,8 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalI
         List<String> imports = Context.snippetsToStrings(state.imports());
         List<String> moduleDeclarations = Context.snippetsToStrings(state.moduleDeclarations());
         List<String> variableDefinitions = Context.snippetsToStrings(state.variableDefinitions());
-        List<String> statementsAndExpressions = new ArrayList<>();
+        List<ReEvalContext.StatementExpression> statementsAndExpressions = new ArrayList<>();
+        ReEvalContext.StatementExpression newStatementOrExpression = new ReEvalContext.StatementExpression(newSnippet);
 
         if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
             imports.add(newSnippet.toSourceCode());
@@ -61,16 +62,13 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalI
         // Reformat expressions
         for (Snippet snippet : state.statementsAndExpressions()) {
             if (snippet != newSnippet) {
-                String code = snippet.toSourceCode();
-                if (snippet.getKind() == SnippetKind.EXPRESSION_KIND) {
-                    code = ReEvalContext.formatExpression(code);
-                }
-                statementsAndExpressions.add(code);
+                statementsAndExpressions.add(new ReEvalContext.StatementExpression(snippet));
             }
         }
 
+
         return new ReEvalContext(imports, moduleDeclarations,
-                variableDefinitions, statementsAndExpressions, newSnippet);
+                variableDefinitions, statementsAndExpressions, newStatementOrExpression);
     }
 
     @Override

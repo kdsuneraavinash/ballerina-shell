@@ -26,6 +26,9 @@ import io.ballerina.shell.ShellController;
  * Used to listen to STDOUT, STDERR streams.
  */
 public abstract class Postprocessor {
+    public static final String ACTIVATION_START = "[[__START__]]";
+    public static final String ACTIVATION_END = "[[__END__]]";
+
     protected final ShellController controller;
 
     public Postprocessor(ShellController controller) {

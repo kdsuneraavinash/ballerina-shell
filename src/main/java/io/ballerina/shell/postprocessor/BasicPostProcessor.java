@@ -26,8 +26,6 @@ import io.ballerina.shell.ShellController;
  * Will use error and warning prefixes to categorize STDERR.
  */
 public class BasicPostProcessor extends Postprocessor {
-    private static final String ACTIVATION_START = "[[__START__]]";
-    private static final String ACTIVATION_END = "[[__END__]]";
     private static final String ERROR_PREFIX = "error:";
     private static final String WARNING_PREFIX = "warning:";
     private static final String EXPECTED_COMPILING_MSG = "Compiling source";

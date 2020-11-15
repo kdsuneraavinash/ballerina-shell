@@ -19,7 +19,6 @@
 package io.ballerina.shell.executor;
 
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,26 +27,7 @@ import java.util.List;
  * A Tag to contexts for the mustache generation.
  * Provides helper methods to populate fields.
  */
-public abstract class Context {
-    protected final String newStatement;
-    protected final String newExpression;
-
-    protected Context(Snippet newSnippet) {
-        // Get the new statement/new expression - if any
-        // New statement/new expression will be set depending on the type
-        String newExpression = null;
-        String newStatement = null;
-        if (newSnippet != null) {
-            if (newSnippet.getKind() == SnippetKind.EXPRESSION_KIND) {
-                newExpression = newSnippet.toSourceCode();
-            } else if (newSnippet.getKind() == SnippetKind.STATEMENT_KIND) {
-                newStatement = newSnippet.toSourceCode();
-            }
-        }
-        this.newStatement = newStatement;
-        this.newExpression = newExpression;
-    }
-
+public interface Context {
     public static List<String> snippetsToStrings(Iterable<Snippet> snippets) {
         List<String> strings = new ArrayList<>();
         for (Snippet snippet : snippets) {
