@@ -31,18 +31,30 @@ import java.nio.charset.Charset;
 
 /**
  * Executor that executes a list of snippets.
+ * <p>
+ * State of an executor persists all the information required.
+ * It is preferred that no other state variable exists in the executor.
+ * If there are, override the {@code reset} function.
+ * <p>
+ * Context of an executor is the context that will be used to
+ * fill the mustache template. This should be a logic-less class.
+ * Logic should be added in {@code currentContext} getter.
+ * <p>
+ * Invoker is the object that will launch the application.
+ * That logic as well as logic to update state may be moved to the invoker.
  *
  * @param <P> State that the executor uses.
- * @param <Q> Invoker that the executor uses.
+ * @param <Q> Context that the executor uses.
+ * @param <R> Invoker that the executor uses.
  */
-public abstract class Executor<P extends State, Q extends Invoker> {
+public abstract class Executor<P extends State, Q extends Context, R extends Invoker> {
     private static final String GENERATED_FILE = "main.bal";
 
     private final Mustache mustache;
     protected final P state;
-    protected final Q invoker;
+    protected final R invoker;
 
-    protected Executor(String templateName, P state, Q invoker) {
+    protected Executor(String templateName, P state, R invoker) {
         this.state = state;
         this.invoker = invoker;
         MustacheFactory mf = new DefaultMustacheFactory();
@@ -88,7 +100,7 @@ public abstract class Executor<P extends State, Q extends Invoker> {
      * @param newSnippet New snippet to include.
      * @return Created context.
      */
-    public abstract Context currentContext(Snippet newSnippet);
+    public abstract Q currentContext(Snippet newSnippet);
 
     /**
      * Executes the invoker and returns whether it was successful.

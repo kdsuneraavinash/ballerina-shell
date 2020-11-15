@@ -24,15 +24,17 @@ import io.ballerina.shell.executor.dynamic.invoker.DynamicInvoker;
 import io.ballerina.shell.executor.dynamic.invoker.DynamicShellInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Executes the snippet given.
  * Re evaluates the snippet by generating a file containing all snippets
  * and executing it.
  */
-public class DynamicExecutor extends Executor<DynamicState, DynamicInvoker> {
+public class DynamicExecutor extends Executor<DynamicState, DynamicContext, DynamicInvoker> {
     private static final String TEMPLATE_FILE = "template.dynamic.mustache";
     private static final String GENERATED_FILE = "main.bal";
 
@@ -41,8 +43,20 @@ public class DynamicExecutor extends Executor<DynamicState, DynamicInvoker> {
     }
 
     @Override
-    public Context currentContext(Snippet newSnippet) {
-        return DynamicContext.create(state, newSnippet);
+    public DynamicContext currentContext(Snippet newSnippet) {
+        List<String> imports = Context.snippetsToStrings(state.imports());
+        List<String> moduleDeclarations = Context.snippetsToStrings(state.moduleDeclarations());
+        List<String> variableDefinitions = Context.snippetsToStrings(state.variableDefinitions());
+
+        if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
+            imports.add(newSnippet.toSourceCode());
+        } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
+            moduleDeclarations.add(newSnippet.toSourceCode());
+        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
+            variableDefinitions.add(newSnippet.toSourceCode());
+        }
+
+        return new DynamicContext(imports, moduleDeclarations, variableDefinitions, newSnippet);
     }
 
     @Override

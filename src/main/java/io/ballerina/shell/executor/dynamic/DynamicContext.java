@@ -20,7 +20,6 @@ package io.ballerina.shell.executor.dynamic;
 
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 
 import java.util.List;
 import java.util.Objects;
@@ -69,29 +68,5 @@ public class DynamicContext extends Context {
     @SuppressWarnings("unused")
     public String newStatement() {
         return Objects.requireNonNullElse(newStatement, "");
-    }
-
-
-    /**
-     * Context creation utility function.
-     *
-     * @param state      State object to populate context.
-     * @param newSnippet Newly added snippet.
-     * @return Created context.
-     */
-    public static DynamicContext create(DynamicState state, Snippet newSnippet) {
-        List<String> imports = snippetsToStrings(state.imports());
-        List<String> moduleDeclarations = snippetsToStrings(state.moduleDeclarations());
-        List<String> variableDefinitions = snippetsToStrings(state.variableDefinitions());
-
-        if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
-            imports.add(newSnippet.toSourceCode());
-        } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
-            moduleDeclarations.add(newSnippet.toSourceCode());
-        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
-            variableDefinitions.add(newSnippet.toSourceCode());
-        }
-
-        return new DynamicContext(imports, moduleDeclarations, variableDefinitions, newSnippet);
     }
 }

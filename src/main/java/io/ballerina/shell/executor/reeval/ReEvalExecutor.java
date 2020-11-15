@@ -24,15 +24,18 @@ import io.ballerina.shell.executor.reeval.invoker.ReEvalAsyncInvoker;
 import io.ballerina.shell.executor.reeval.invoker.ReEvalInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Executes the snippet given.
  * Re evaluates the snippet by generating a file containing all snippets
  * and executing it.
  */
-public class ReEvalExecutor extends Executor<ReEvalState, ReEvalInvoker> {
+public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalInvoker> {
     private static final String TEMPLATE_FILE = "template.reeval.mustache";
     private static final String GENERATED_FILE = "main.bal";
 
@@ -41,8 +44,33 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalInvoker> {
     }
 
     @Override
-    public Context currentContext(Snippet newSnippet) {
-        return ReEvalContext.create(state, newSnippet);
+    public ReEvalContext currentContext(Snippet newSnippet) {
+        List<String> imports = Context.snippetsToStrings(state.imports());
+        List<String> moduleDeclarations = Context.snippetsToStrings(state.moduleDeclarations());
+        List<String> variableDefinitions = Context.snippetsToStrings(state.variableDefinitions());
+        List<String> statementsAndExpressions = new ArrayList<>();
+
+        if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
+            imports.add(newSnippet.toSourceCode());
+        } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
+            moduleDeclarations.add(newSnippet.toSourceCode());
+        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
+            variableDefinitions.add(newSnippet.toSourceCode());
+        }
+
+        // Reformat expressions
+        for (Snippet snippet : state.statementsAndExpressions()) {
+            if (snippet != newSnippet) {
+                String code = snippet.toSourceCode();
+                if (snippet.getKind() == SnippetKind.EXPRESSION_KIND) {
+                    code = ReEvalContext.formatExpression(code);
+                }
+                statementsAndExpressions.add(code);
+            }
+        }
+
+        return new ReEvalContext(imports, moduleDeclarations,
+                variableDefinitions, statementsAndExpressions, newSnippet);
     }
 
     @Override

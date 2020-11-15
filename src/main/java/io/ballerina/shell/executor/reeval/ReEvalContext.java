@@ -20,9 +20,7 @@ package io.ballerina.shell.executor.reeval;
 
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -87,39 +85,15 @@ public class ReEvalContext extends Context {
 
 
     /**
-     * Context creation utility function.
+     * Formats expression to be put on template.
+     * Expressions cannot be directly put as a statement.
+     * So they have to be formatted as a variable assignment.
      *
-     * @param state      State of the ReEval executor.
-     * @param newSnippet Newly added snippet.
+     * @param expression Expression to format.
      * @return Created context.
      */
-    public static ReEvalContext create(ReEvalState state, Snippet newSnippet) {
-        List<String> imports = snippetsToStrings(state.imports());
-        List<String> moduleDeclarations = snippetsToStrings(state.moduleDeclarations());
-        List<String> variableDefinitions = snippetsToStrings(state.variableDefinitions());
-        List<String> statementsAndExpressions = new ArrayList<>();
-
-        if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
-            imports.add(newSnippet.toSourceCode());
-        } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
-            moduleDeclarations.add(newSnippet.toSourceCode());
-        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
-            variableDefinitions.add(newSnippet.toSourceCode());
-        }
-
-        // Reformat expressions
-        for (Snippet snippet : state.statementsAndExpressions()) {
-            if (snippet != newSnippet) {
-                String code = snippet.toSourceCode();
-                if (snippet.getKind() == SnippetKind.EXPRESSION_KIND) {
-                    code = String.format(EXPR_DECLARATION, code);
-                }
-                statementsAndExpressions.add(code);
-            }
-        }
-
-        return new ReEvalContext(imports, moduleDeclarations,
-                variableDefinitions, statementsAndExpressions, newSnippet);
+    public static String formatExpression(String expression) {
+        return String.format(EXPR_DECLARATION, expression);
     }
 }
 

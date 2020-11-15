@@ -92,10 +92,10 @@ public class ReplConfiguration {
      *
      * @return a new Executor object.
      */
-    public Executor<?, ?> getExecutor() {
+    public Executor<?, ?, ?> getExecutor() {
         if (executorName.equalsIgnoreCase("reeval")) {
             return new ReEvalExecutor();
-        } else if (executorName.equalsIgnoreCase("stateful")) {
+        } else if (executorName.equalsIgnoreCase("dynamic")) {
             return new DynamicExecutor();
         }
         throw new RuntimeException("Unknown executor name: " + executorName);

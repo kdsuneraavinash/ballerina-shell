@@ -48,7 +48,7 @@ public abstract class Context {
         this.newExpression = newExpression;
     }
 
-    protected static List<String> snippetsToStrings(Iterable<Snippet> snippets) {
+    public static List<String> snippetsToStrings(Iterable<Snippet> snippets) {
         List<String> strings = new ArrayList<>();
         for (Snippet snippet : snippets) {
             strings.add(snippet.toSourceCode());
