@@ -19,7 +19,6 @@
 package org.ballerina.repl;
 
 import io.ballerina.shell.executor.Executor;
-import io.ballerina.shell.executor.dynamic.DynamicExecutor;
 import io.ballerina.shell.executor.reeval.ReEvalExecutor;
 import io.ballerina.shell.utils.debug.DebugProvider;
 import org.apache.commons.cli.CommandLine;
@@ -95,8 +94,6 @@ public class ReplConfiguration {
     public Executor<?, ?, ?> getExecutor() {
         if (executorName.equalsIgnoreCase("reeval")) {
             return new ReEvalExecutor();
-        } else if (executorName.equalsIgnoreCase("dynamic")) {
-            return new DynamicExecutor();
         }
         throw new RuntimeException("Unknown executor name: " + executorName);
     }
