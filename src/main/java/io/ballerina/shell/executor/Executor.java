@@ -18,13 +18,41 @@
 
 package io.ballerina.shell.executor;
 
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
+import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.utils.debug.DebugProvider;
+
+import java.io.FileWriter;
+import java.nio.charset.Charset;
 
 /**
- * Executes a list of snippets.
+ * Executor that executes a list of snippets.
+ *
+ * @param <P> State that the executor uses.
+ * @param <Q> Invoker that the executor uses.
  */
-public interface Executor {
+public abstract class Executor<P extends State, Q extends Invoker> {
+    private static final String GENERATED_FILE = "main.bal";
+
+    private final Mustache mustache;
+    protected final P state;
+    protected final Q invoker;
+
+    protected Executor(String templateName, P state, Q invoker) {
+        this.state = state;
+        this.invoker = invoker;
+        MustacheFactory mf = new DefaultMustacheFactory();
+        mustache = mf.compile(templateName);
+
+        String message = String.format("Using %s with %s invoker on %s file.",
+                getClass().getSimpleName(), invoker.getClass().getSimpleName(), templateName);
+        DebugProvider.sendMessage(message);
+    }
+
     /**
      * Executes a snippet and returns the output lines.
      * Snippets parameter should only include newly added snippets.
@@ -33,10 +61,47 @@ public interface Executor {
      * @param newSnippet New snippet to execute.
      * @return Execution output lines.
      */
-    boolean execute(Snippet newSnippet, Postprocessor postprocessor);
+    public boolean execute(Snippet newSnippet, Postprocessor postprocessor) {
+        // 1. Populate context
+        // 2. Generate file using context
+        // 3. Execute the invoker
+        // 4. If success, permanently ass snippet to state
+        try {
+            Context context = currentContext(newSnippet);
+            try (FileWriter fileWriter = new FileWriter(GENERATED_FILE, Charset.defaultCharset())) {
+                mustache.execute(fileWriter, context).flush();
+            }
+            boolean isSuccess = executeInvoker(postprocessor);
+            if (isSuccess) {
+                state.addSnippet(newSnippet);
+            }
+            return isSuccess;
+        } catch (Exception e) {
+            DebugProvider.sendMessage("Process invoker/File generator failed!");
+            throw new ExecutorException(e);
+        }
+    }
+
+    /**
+     * Creates a context that contain the current state and the new snippet.
+     *
+     * @param newSnippet New snippet to include.
+     * @return Created context.
+     */
+    public abstract Context currentContext(Snippet newSnippet);
+
+    /**
+     * Executes the invoker and returns whether it was successful.
+     *
+     * @param postprocessor Postprocessor for the invoker.
+     * @return Whether execution was successful.
+     */
+    public abstract boolean executeInvoker(Postprocessor postprocessor) throws Exception;
 
     /**
      * Reset executor state so that the execution can be start over.
      */
-    void reset();
+    public void reset() {
+        state.reset();
+    }
 }

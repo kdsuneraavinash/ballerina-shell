@@ -16,24 +16,28 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.invoker;
+package io.ballerina.shell.executor.reeval.invoker;
 
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.utils.debug.DebugProvider;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.Scanner;
 
 /**
  * External process information and invoker.
- * Invokes a shell command given.
+ * Invokes a ballerina run command to compile and evaluate a file.
+ * This will wait until command is finished and output the stdout/stderr.
  */
-public class ShellProcessInvoker implements ProcessInvoker {
+@SuppressWarnings("unused")
+public class ReEvalShellInvoker extends ReEvalInvoker {
+    private static final String BALLERINA_COMMAND = "ballerina run %s";
     protected final String command;
 
-    public ShellProcessInvoker(String command) {
+    public ReEvalShellInvoker(String file) {
+        String command = String.format(BALLERINA_COMMAND, file);
+        DebugProvider.sendMessage("Shell command invocation used: " + command);
         this.command = command;
     }
 
@@ -44,18 +48,13 @@ public class ShellProcessInvoker implements ProcessInvoker {
         process.waitFor();
 
         Charset defaultCharset = Charset.defaultCharset();
-        try (
-                InputStreamReader stdOutReader = new InputStreamReader(process.getInputStream(), defaultCharset);
-                InputStreamReader stdErrReader = new InputStreamReader(process.getErrorStream(), defaultCharset);
-                BufferedReader stdOutBuff = new BufferedReader(stdOutReader);
-                BufferedReader stdErrBuff = new BufferedReader(stdErrReader)
-        ) {
-            String line;
-            while ((line = stdOutBuff.readLine()) != null) {
-                postprocessor.onProgramOutput(line);
+        try (Scanner stdOutScanner = new Scanner(process.getInputStream(), defaultCharset);
+             Scanner stdErrScanner = new Scanner(process.getErrorStream(), defaultCharset)) {
+            while (stdOutScanner.hasNextLine()) {
+                postprocessor.onProgramOutput(stdOutScanner.nextLine());
             }
-            while ((line = stdErrBuff.readLine()) != null) {
-                postprocessor.onCompilerOutput(line);
+            while (stdErrScanner.hasNextLine()) {
+                postprocessor.onCompilerOutput(stdErrScanner.nextLine());
             }
         }
 

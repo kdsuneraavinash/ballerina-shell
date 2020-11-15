@@ -16,12 +16,12 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.reeval;
+package io.ballerina.shell.executor.dynamic;
 
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.executor.Executor;
-import io.ballerina.shell.executor.reeval.invoker.ReEvalAsyncInvoker;
-import io.ballerina.shell.executor.reeval.invoker.ReEvalInvoker;
+import io.ballerina.shell.executor.dynamic.invoker.DynamicInvoker;
+import io.ballerina.shell.executor.dynamic.invoker.DynamicShellInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
 
@@ -32,21 +32,22 @@ import java.io.IOException;
  * Re evaluates the snippet by generating a file containing all snippets
  * and executing it.
  */
-public class ReEvalExecutor extends Executor<ReEvalState, ReEvalInvoker> {
-    private static final String TEMPLATE_FILE = "template.reeval.mustache";
+public class DynamicExecutor extends Executor<DynamicState, DynamicInvoker> {
+    private static final String TEMPLATE_FILE = "template.dynamic.mustache";
     private static final String GENERATED_FILE = "main.bal";
 
-    public ReEvalExecutor() {
-        super(TEMPLATE_FILE, new ReEvalState(), new ReEvalAsyncInvoker(GENERATED_FILE));
+    public DynamicExecutor() {
+        super(TEMPLATE_FILE, new DynamicState(), new DynamicShellInvoker(GENERATED_FILE));
     }
 
     @Override
     public Context currentContext(Snippet newSnippet) {
-        return ReEvalContext.create(state, newSnippet);
+        return DynamicContext.create(state, newSnippet);
     }
 
     @Override
-    public boolean executeInvoker(Postprocessor postprocessor) throws IOException, InterruptedException {
-        return invoker.execute(postprocessor);
+    public boolean executeInvoker(Postprocessor postprocessor)
+            throws InterruptedException, IOException, ClassNotFoundException {
+        return invoker.execute(state, postprocessor);
     }
 }

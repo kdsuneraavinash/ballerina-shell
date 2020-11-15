@@ -13,8 +13,6 @@ module io.ballerina.shell {
     exports io.ballerina.shell.snippet;
     exports io.ballerina.shell.transformer;
     exports io.ballerina.shell.treeparser;
-    exports io.ballerina.shell.executor.wrapper;
-    exports io.ballerina.shell.executor.desugar;
     exports io.ballerina.shell.postprocessor;
     exports io.ballerina.shell.exceptions;
 

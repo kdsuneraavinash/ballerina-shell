@@ -75,7 +75,7 @@ public class ReplShell {
         Preprocessor preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
         TreeParser parser = new TrialTreeParser();
         Transformer transformer = new CombinedTransformer();
-        Executor executor = configuration.getExecutor();
+        Executor<?, ?> executor = configuration.getExecutor();
         Postprocessor postprocessor = new BasicPostProcessor(controller);
         this.ballerinaShell = new BallerinaShell(preprocessor, parser, transformer, executor, postprocessor);
     }

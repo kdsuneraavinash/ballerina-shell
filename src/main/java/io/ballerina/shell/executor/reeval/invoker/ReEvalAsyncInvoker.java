@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.invoker;
+package io.ballerina.shell.executor.reeval.invoker;
 
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.utils.debug.DebugProvider;
@@ -30,10 +30,17 @@ import java.util.function.Consumer;
 /**
  * Invokes the process and asynchronously listens to the STDOUT/STDERR streams.
  * So the program updates would not be blocked until process is finished.
+ * The ballerina run command will be run on the file given.
+ * More responsive that {@link ReEvalShellInvoker}
  */
-public class AsyncProcessInvoker extends ShellProcessInvoker {
-    public AsyncProcessInvoker(String command) {
-        super(command);
+public class ReEvalAsyncInvoker extends ReEvalInvoker {
+    private static final String BALLERINA_COMMAND = "ballerina run %s";
+    protected final String command;
+
+    public ReEvalAsyncInvoker(String file) {
+        String command = String.format(BALLERINA_COMMAND, file);
+        DebugProvider.sendMessage("Shell command invocation used: " + command);
+        this.command = command;
     }
 
     @Override
@@ -64,6 +71,14 @@ public class AsyncProcessInvoker extends ShellProcessInvoker {
         return exitCode == 0;
     }
 
+    /**
+     * Creates a thread to take data from a stream and give to a consumer.
+     *
+     * @param name           Name to set for the thread.
+     * @param inputStream    Input stream to feed on.
+     * @param stringConsumer Consumer to feed data to.
+     * @return Created thread.
+     */
     private Thread inputStreamThread(String name, InputStream inputStream, Consumer<String> stringConsumer) {
         return new Thread(() -> {
             try (Scanner scanner = new Scanner(inputStream, Charset.defaultCharset())) {

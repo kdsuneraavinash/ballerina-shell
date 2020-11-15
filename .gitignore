@@ -112,3 +112,6 @@ main.bal
 
 state.dump
 ballerina/home
+stdout.txt
+main.jar
+*.lck

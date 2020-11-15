@@ -16,26 +16,26 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.desugar;
+package io.ballerina.shell.executor;
 
 import io.ballerina.shell.snippet.Snippet;
 
-import java.util.List;
-
 /**
- * Desugar process will normalize a snippet into a
- * list of (same type or different type) snippets/type.
- *
- * @param <P> Snippet type that will get desugared.
- * @param <Q> Converted type.
+ * State is the object where the executor persists
+ * its execution state.
  */
-public interface Desugar<P extends Snippet, Q> {
+public interface State {
     /**
-     * Converts a snippets to a list of snippets.
-     * The resultant snippets should be effectively same as the input.
-     *
-     * @param snippet Snippet to convert.
-     * @return List of resultant objects.
+     * Reset state to initial state.
      */
-    List<Q> desugar(P snippet);
+    void reset();
+
+    /**
+     * Adds a snippet to state on the correct array depending on the
+     * type of new snippet.
+     * For example, if the new snippet is a expression, that list would be operated.
+     *
+     * @param newSnippet Snippet to check the type of.
+     */
+    void addSnippet(Snippet newSnippet);
 }

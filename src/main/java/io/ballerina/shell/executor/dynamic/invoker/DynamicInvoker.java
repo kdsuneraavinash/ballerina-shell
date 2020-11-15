@@ -16,24 +16,30 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.invoker;
+package io.ballerina.shell.executor.dynamic.invoker;
 
+import io.ballerina.shell.executor.Invoker;
+import io.ballerina.shell.executor.dynamic.DynamicExecutor;
+import io.ballerina.shell.executor.dynamic.DynamicState;
 import io.ballerina.shell.postprocessor.Postprocessor;
 
 import java.io.IOException;
 
 /**
- * Interface for calling external processes.
+ * Invoker for {@link DynamicExecutor}.
  */
-public interface ProcessInvoker {
+public abstract class DynamicInvoker implements Invoker {
     /**
      * Executes the command line shell command/external process.
-     * If something failed, the return would be false. (eg: compilation failed)
+     * If something failed, the return would be {@code false}. (eg: compilation failed)
+     * After a successful execution, the state would be updated by the invoker.
      *
      * @param postprocessor Postprocessor to use to output data.
+     * @param state         State of the executor. This would be updated by the invoker.
      * @return Whether the operation was successful.
      * @throws IOException          When input read fails.
      * @throws InterruptedException WHen process executor/failed.
      */
-    boolean execute(Postprocessor postprocessor) throws IOException, InterruptedException;
+    public abstract boolean execute(DynamicState state, Postprocessor postprocessor)
+            throws IOException, InterruptedException, ClassNotFoundException;
 }

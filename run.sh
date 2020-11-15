@@ -11,6 +11,8 @@
 # Pause till user input
 echo
 read -n 1 -s -r -p "Press any key to continue..."
+rm ballerina-internal.log*
+
 clear
 
 # Restore terminal state
