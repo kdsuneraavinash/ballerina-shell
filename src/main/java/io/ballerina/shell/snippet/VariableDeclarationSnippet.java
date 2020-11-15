@@ -28,13 +28,13 @@ import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
  * Currently only module level variable declarations are accepted.
  * TODO: Move variable value declaration into a statement snippet.
  */
-public class VariableDefinitionSnippet extends Snippet {
+public class VariableDeclarationSnippet extends Snippet {
     private final Node node;
 
-    public VariableDefinitionSnippet(Node node, ExpressionNode initializer) {
+    public VariableDeclarationSnippet(Node node, ExpressionNode initializer) {
         super(node.toSourceCode(), initializer == null
-                ? SnippetSubKind.VARIABLE_DEFINITION_WITHOUT_VALUE
-                : SnippetSubKind.VARIABLE_DEFINITION);
+                ? SnippetSubKind.VARIABLE_DECLARATION_WITHOUT_VALUE
+                : SnippetSubKind.VARIABLE_DECLARATION);
         this.node = node;
     }
 
@@ -45,15 +45,15 @@ public class VariableDefinitionSnippet extends Snippet {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public static VariableDefinitionSnippet tryFromNode(Node node) {
+    public static VariableDeclarationSnippet tryFromNode(Node node) {
         if (node instanceof ModuleVariableDeclarationNode) {
             ModuleVariableDeclarationNode declarationNode = (ModuleVariableDeclarationNode) node;
-            return new VariableDefinitionSnippet(node,
+            return new VariableDeclarationSnippet(node,
                     declarationNode.initializer().orElse(null));
 
         } else if (node instanceof VariableDeclarationNode) {
             VariableDeclarationNode declarationNode = (VariableDeclarationNode) node;
-            return new VariableDefinitionSnippet(node,
+            return new VariableDeclarationSnippet(node,
                     declarationNode.initializer().orElse(null));
 
         }

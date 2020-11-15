@@ -23,6 +23,7 @@ import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.reeval.invoker.ReEvalAsyncInvoker;
 import io.ballerina.shell.executor.reeval.invoker.ReEvalInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
+import io.ballerina.shell.snippet.ImportSnippet;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 
@@ -47,16 +48,26 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalI
     public ReEvalContext currentContext(Snippet newSnippet) {
         List<String> imports = Context.snippetsToStrings(state.imports());
         List<String> moduleDeclarations = Context.snippetsToStrings(state.moduleDeclarations());
-        List<String> variableDefinitions = Context.snippetsToStrings(state.variableDefinitions());
+        List<String> variableDeclarations = Context.snippetsToStrings(state.variableDeclarations());
         List<ReEvalContext.StatementExpression> statementsAndExpressions = new ArrayList<>();
         ReEvalContext.StatementExpression newStatementOrExpression = new ReEvalContext.StatementExpression(newSnippet);
+        List<String> importPrefixes = new ArrayList<>();
 
+        // Add import prefixes
+        for (Snippet importSnippet : state.imports()) {
+            assert importSnippet instanceof ImportSnippet;
+            importPrefixes.add(((ImportSnippet) importSnippet).getImportName());
+        }
+
+        // Add to correct category
         if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
+            assert newSnippet instanceof ImportSnippet;
             imports.add(newSnippet.toSourceCode());
+            importPrefixes.add(((ImportSnippet) newSnippet).getImportName());
         } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
             moduleDeclarations.add(newSnippet.toSourceCode());
         } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
-            variableDefinitions.add(newSnippet.toSourceCode());
+            variableDeclarations.add(newSnippet.toSourceCode());
         }
 
         // Reformat expressions
@@ -66,9 +77,8 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalI
             }
         }
 
-
-        return new ReEvalContext(imports, moduleDeclarations,
-                variableDefinitions, statementsAndExpressions, newStatementOrExpression);
+        return new ReEvalContext(imports, importPrefixes, moduleDeclarations,
+                variableDeclarations, statementsAndExpressions, newStatementOrExpression);
     }
 
     @Override

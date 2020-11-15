@@ -23,10 +23,11 @@ package io.ballerina.shell.snippet;
  * Each subkind as a fixed parent kind.
  */
 public enum SnippetSubKind {
-    IMPORT("You cannot import external modules while in REPL"),
+    IMPORT("You cannot import external modules while in REPL. Use a prefix."),
+    IMPORT_WITH_PREFIX(SnippetKind.IMPORT_KIND),
 
-    VARIABLE_DEFINITION(SnippetKind.VARIABLE_DEFINITION_KIND),
-    VARIABLE_DEFINITION_WITHOUT_VALUE("Variable definitions in REPL must initialize with a value"), // Error
+    VARIABLE_DECLARATION(SnippetKind.VARIABLE_DEFINITION_KIND),
+    VARIABLE_DECLARATION_WITHOUT_VALUE("Variable definitions in REPL must initialize with a value"), // Error
 
     FUNCTION_DEFINITION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
     LISTENER_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),

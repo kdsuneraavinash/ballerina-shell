@@ -26,8 +26,11 @@ import io.ballerina.compiler.syntax.tree.Node;
  * TODO: How to defer unused imports until they are used?
  */
 public class ImportSnippet extends Snippet {
-    protected ImportSnippet(Node node, SnippetSubKind subKind) {
+    private final String importName;
+
+    protected ImportSnippet(Node node, SnippetSubKind subKind, String importName) {
         super(node.toSourceCode(), subKind);
+        this.importName = importName;
         assert subKind.getKind() == SnippetKind.IMPORT_KIND;
     }
 
@@ -40,8 +43,17 @@ public class ImportSnippet extends Snippet {
      */
     public static ImportSnippet tryFromNode(Node node) {
         if (node instanceof ImportDeclarationNode) {
-            return new ImportSnippet(node, SnippetSubKind.IMPORT);
+            ImportDeclarationNode importNode = ((ImportDeclarationNode) node);
+            if (importNode.prefix().isEmpty()) {
+                return new ImportSnippet(node, SnippetSubKind.IMPORT, null);
+            }
+            String importPrefix = importNode.prefix().get().prefix().text();
+            return new ImportSnippet(node, SnippetSubKind.IMPORT_WITH_PREFIX, importPrefix);
         }
         return null;
+    }
+
+    public String getImportName() {
+        return importName;
     }
 }

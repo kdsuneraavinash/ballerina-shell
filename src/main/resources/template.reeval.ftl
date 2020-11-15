@@ -17,8 +17,8 @@ function old_statements() {
     <#list stmts as stmt>
         <#if stmt.expr>
             reserved = ${stmt.code}; // Expressions as valid statements
-        <#else >
-            ${stmt.code}
+        <#elseif stmt.stmt>
+            ${stmt.code} // Statements as is
         </#if>
     </#list>
 }
@@ -27,7 +27,7 @@ function old_statements() {
 # These might be invalid/runtime error statements.
 # + return Error if any old statement caused an error.
 function new_statement() returns error? {
-    <#if !lastStmt.expr>
+    <#if lastStmt.stmt>
         ${lastStmt.code}
     </#if>
 }
@@ -74,4 +74,15 @@ public function main() {
     }
 
     io:println("${ioActivationEnd}"); // End IO guard
+}
+
+# Useless function to pretend to use imports so the
+# compiler won't complain.
+# This will accept imports with `Error` exported.
+# Most of the standard modules export `Error`.
+# TODO: Remove this temp fix.
+function garbage_function() {
+    <#list importPrefixes as importPrefix>
+        reserved = ${importPrefix}:Error;
+    </#list>
 }

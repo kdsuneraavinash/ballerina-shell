@@ -38,10 +38,12 @@ public class ReEvalContext implements Context {
      */
     public static class StatementExpression {
         private final boolean isExpr;
+        private final boolean isStmt;
         private final String code;
 
         public StatementExpression(Snippet snippet) {
             this.isExpr = snippet.getKind() == SnippetKind.EXPRESSION_KIND;
+            this.isStmt = snippet.getKind() == SnippetKind.STATEMENT_KIND;
             this.code = snippet.toSourceCode();
         }
 
@@ -54,20 +56,28 @@ public class ReEvalContext implements Context {
         public boolean isExpr() {
             return isExpr;
         }
+
+        @TemplateAccessible
+        public boolean isStmt() {
+            return isStmt;
+        }
     }
 
     private final List<String> imports;
+    private final List<String> importPrefixes;
     private final List<String> moduleDclns;
     private final List<String> varDclns;
     private final List<StatementExpression> stmts;
     private final StatementExpression lastStmt;
 
     public ReEvalContext(List<String> imports,
+                         List<String> importPrefixes,
                          List<String> moduleDclns,
                          List<String> varDclns,
                          List<StatementExpression> stmts,
                          StatementExpression lastStmt) {
         this.imports = imports;
+        this.importPrefixes = importPrefixes;
         this.moduleDclns = moduleDclns;
         this.varDclns = varDclns;
         this.stmts = stmts;
@@ -77,6 +87,11 @@ public class ReEvalContext implements Context {
     @TemplateAccessible
     public List<String> getImports() {
         return imports;
+    }
+
+    @TemplateAccessible
+    public List<String> getImportPrefixes() {
+        return importPrefixes;
     }
 
     @TemplateAccessible

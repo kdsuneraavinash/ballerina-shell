@@ -66,19 +66,19 @@ public class ReEvalState implements State {
         }
     }
 
-    public Iterable<Snippet> imports() {
+    public List<Snippet> imports() {
         return imports;
     }
 
-    public Iterable<Snippet> moduleDeclarations() {
+    public List<Snippet> moduleDeclarations() {
         return moduleDeclarations;
     }
 
-    public Iterable<Snippet> variableDefinitions() {
+    public List<Snippet> variableDeclarations() {
         return variableDefinitions;
     }
 
-    public Iterable<Snippet> statementsAndExpressions() {
+    public List<Snippet> statementsAndExpressions() {
         return statementsAndExpressions;
     }
 }

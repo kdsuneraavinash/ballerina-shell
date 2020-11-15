@@ -1,10 +1,8 @@
 module io.ballerina.shell {
-    requires java.sql;
     requires io.ballerina.parser;
     requires io.ballerina.tools.api;
     requires org.jline;
     requires freemarker;
-    requires com.google.gson;
     requires commons.cli;
 
     exports io.ballerina.shell;

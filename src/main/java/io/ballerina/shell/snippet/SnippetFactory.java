@@ -36,7 +36,7 @@ public class SnippetFactory {
     public static Snippet fromNode(Node node) {
         List<Supplier<Snippet>> suppliers = List.of(
                 () -> ImportSnippet.tryFromNode(node),
-                () -> VariableDefinitionSnippet.tryFromNode(node),
+                () -> VariableDeclarationSnippet.tryFromNode(node),
                 () -> ModuleMemberDeclarationSnippet.tryFromNode(node),
                 () -> ExpressionSnippet.tryFromNode(node),
                 () -> StatementSnippet.tryFromNode(node),

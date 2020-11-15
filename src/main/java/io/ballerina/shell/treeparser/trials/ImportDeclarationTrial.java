@@ -41,7 +41,8 @@ public class ImportDeclarationTrial implements TreeParserTrial {
             ModulePartNode node = tree.rootNode();
 
             ImportDeclarationNode importDeclarationNode = node.imports().get(0);
-            return Objects.requireNonNull(importDeclarationNode);
+            Objects.requireNonNull(importDeclarationNode);
+            return importDeclarationNode;
         } catch (Exception e) {
             throw new ParserTrialFailedException(e);
         }

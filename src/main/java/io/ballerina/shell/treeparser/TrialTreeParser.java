@@ -35,11 +35,11 @@ import io.ballerina.shell.treeparser.trials.TreeParserTrial;
  */
 public class TrialTreeParser implements TreeParser {
     private static final TreeParserTrial[] TREE_PARSER_TRIALS = {
+            new ImportDeclarationTrial(),
             new ExpressionTrial(),
             new StatementTrial(),
             new ModuleMemberTrial(),
             new EmptyExpressionTrial(),
-            new ImportDeclarationTrial(),
     };
 
     @Override
