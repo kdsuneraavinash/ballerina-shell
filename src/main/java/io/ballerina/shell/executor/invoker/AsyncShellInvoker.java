@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.reeval.invoker;
+package io.ballerina.shell.executor.invoker;
 
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.utils.debug.DebugProvider;
@@ -31,13 +31,13 @@ import java.util.function.Consumer;
  * Invokes the process and asynchronously listens to the STDOUT/STDERR streams.
  * So the program updates would not be blocked until process is finished.
  * The ballerina run command will be run on the file given.
- * More responsive that {@link ReEvalShellInvoker}
+ * More responsive that {@link SimpleShellInvoker}
  */
-public class ReEvalAsyncInvoker extends ReEvalInvoker {
+public class AsyncShellInvoker extends ShellInvoker {
     private static final String BALLERINA_COMMAND = "ballerina run %s";
     protected final String command;
 
-    public ReEvalAsyncInvoker(String file) {
+    public AsyncShellInvoker(String file) {
         String command = String.format(BALLERINA_COMMAND, file);
         DebugProvider.sendMessage("Shell command invocation used: " + command);
         this.command = command;

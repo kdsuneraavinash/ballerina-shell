@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.reeval.invoker;
+package io.ballerina.shell.executor.invoker;
 
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.utils.debug.DebugProvider;
@@ -31,11 +31,11 @@ import java.util.Scanner;
  * This will wait until command is finished and output the stdout/stderr.
  */
 @SuppressWarnings("unused")
-public class ReEvalShellInvoker extends ReEvalInvoker {
+public class SimpleShellInvoker extends ShellInvoker {
     private static final String BALLERINA_COMMAND = "ballerina run %s";
     protected final String command;
 
-    public ReEvalShellInvoker(String file) {
+    public SimpleShellInvoker(String file) {
         String command = String.format(BALLERINA_COMMAND, file);
         DebugProvider.sendMessage("Shell command invocation used: " + command);
         this.command = command;

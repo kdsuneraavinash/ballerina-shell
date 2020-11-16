@@ -19,6 +19,7 @@
 package org.ballerina.repl;
 
 import io.ballerina.shell.executor.Executor;
+import io.ballerina.shell.executor.asm.JarExecutor;
 import io.ballerina.shell.executor.reeval.ReEvalExecutor;
 import io.ballerina.shell.utils.debug.DebugProvider;
 import org.apache.commons.cli.CommandLine;
@@ -94,6 +95,8 @@ public class ReplConfiguration {
     public Executor<?, ?, ?> getExecutor() {
         if (executorName.equalsIgnoreCase("reeval")) {
             return new ReEvalExecutor();
+        } else  if (executorName.equalsIgnoreCase("asm")) {
+            return new JarExecutor();
         }
         throw new RuntimeException("Unknown executor name: " + executorName);
     }

@@ -50,7 +50,7 @@ public class ReplResultController implements ShellController {
                 color = AttributedStyle.CYAN;
                 break;
             default:
-                color = AttributedStyle.WHITE;
+                color = AttributedStyle.BRIGHT;
                 break;
         }
         output = new AttributedStringBuilder()

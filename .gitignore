@@ -116,3 +116,4 @@ stdout.txt
 main.jar
 *.lck
 *.log.*
+libs/*.jar

@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.reeval.invoker;
+package io.ballerina.shell.executor.invoker;
 
 import io.ballerina.shell.executor.Invoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * Interface for calling external processes for {@link io.ballerina.shell.executor.reeval.ReEvalExecutor}.
  */
-public abstract class ReEvalInvoker implements Invoker {
+public abstract class ShellInvoker implements Invoker {
     /**
      * Executes the command line shell command/external process.
      * If something failed, the return would be {@code false}. (eg: compilation failed)

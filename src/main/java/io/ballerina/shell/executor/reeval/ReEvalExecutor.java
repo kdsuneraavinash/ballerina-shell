@@ -20,8 +20,8 @@ package io.ballerina.shell.executor.reeval;
 
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.executor.Executor;
-import io.ballerina.shell.executor.reeval.invoker.ReEvalAsyncInvoker;
-import io.ballerina.shell.executor.reeval.invoker.ReEvalInvoker;
+import io.ballerina.shell.executor.invoker.AsyncShellInvoker;
+import io.ballerina.shell.executor.invoker.ShellInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.ImportSnippet;
 import io.ballerina.shell.snippet.Snippet;
@@ -36,12 +36,16 @@ import java.util.List;
  * Re evaluates the snippet by generating a file containing all snippets
  * and executing it.
  */
-public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalInvoker> {
+public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellInvoker> {
     private static final String TEMPLATE_FILE = "template.reeval.ftl";
     private static final String GENERATED_FILE = "main.bal";
 
     public ReEvalExecutor() {
-        super(TEMPLATE_FILE, new ReEvalState(), new ReEvalAsyncInvoker(GENERATED_FILE));
+        this(TEMPLATE_FILE, new ReEvalState(), new AsyncShellInvoker(GENERATED_FILE));
+    }
+
+    public ReEvalExecutor(String templateName, ReEvalState state, ShellInvoker invoker) {
+        super(templateName, state, invoker);
     }
 
     @Override

@@ -16,23 +16,22 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor;
+package io.ballerina.shell.executor.asm;
 
-import io.ballerina.shell.snippet.Snippet;
-
-import java.util.ArrayList;
-import java.util.List;
+import io.ballerina.shell.executor.invoker.JarShellInvoker;
+import io.ballerina.shell.executor.reeval.ReEvalExecutor;
+import io.ballerina.shell.executor.reeval.ReEvalState;
 
 /**
- * A Tag to contexts for the mustache generation.
- * Provides helper methods to populate fields.
+ * Executes the Jar file by building it first.
+ * Works same as re-eval executor.
  */
-public interface Context {
-    static List<String> snippetsToStrings(Iterable<Snippet> snippets) {
-        List<String> strings = new ArrayList<>();
-        for (Snippet snippet : snippets) {
-            strings.add(snippet.toSourceCode());
-        }
-        return strings;
+public class JarExecutor extends ReEvalExecutor {
+    private static final String TEMPLATE_FILE = "template.reeval.ftl";
+    private static final String GENERATED_FILE = "main.bal";
+    private static final String JAR_FILE = "main.jar";
+
+    public JarExecutor() {
+        super(TEMPLATE_FILE, new ReEvalState(), new JarShellInvoker(GENERATED_FILE, JAR_FILE));
     }
 }
