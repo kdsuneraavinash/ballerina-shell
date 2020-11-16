@@ -66,7 +66,7 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ReEvalI
             importPrefixes.add(((ImportSnippet) newSnippet).getImportName());
         } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
             moduleDeclarations.add(newSnippet.toSourceCode());
-        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
+        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
             variableDeclarations.add(newSnippet.toSourceCode());
         }
 

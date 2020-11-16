@@ -57,7 +57,7 @@ public class ReEvalState implements State {
             imports.add(newSnippet);
         } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
             moduleDeclarations.add(newSnippet);
-        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DEFINITION_KIND) {
+        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
             variableDefinitions.add(newSnippet);
         } else if (newSnippet.getKind() == SnippetKind.STATEMENT_KIND) {
             statementsAndExpressions.add(newSnippet);

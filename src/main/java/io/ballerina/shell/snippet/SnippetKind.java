@@ -25,7 +25,7 @@ package io.ballerina.shell.snippet;
 public enum SnippetKind {
     IMPORT_KIND,
     MODULE_MEMBER_DECLARATION_KIND,
-    VARIABLE_DEFINITION_KIND,
+    VARIABLE_DECLARATION_KIND,
     STATEMENT_KIND,
     EXPRESSION_KIND,
     ERRONEOUS_KIND

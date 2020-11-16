@@ -26,8 +26,7 @@ public enum SnippetSubKind {
     IMPORT("You cannot import external modules while in REPL. Use a prefix."),
     IMPORT_WITH_PREFIX(SnippetKind.IMPORT_KIND),
 
-    VARIABLE_DECLARATION(SnippetKind.VARIABLE_DEFINITION_KIND),
-    VARIABLE_DECLARATION_WITHOUT_VALUE("Variable definitions in REPL must initialize with a value"), // Error
+    VARIABLE_DECLARATION(SnippetKind.VARIABLE_DECLARATION_KIND),
 
     FUNCTION_DEFINITION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
     LISTENER_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION_KIND),
