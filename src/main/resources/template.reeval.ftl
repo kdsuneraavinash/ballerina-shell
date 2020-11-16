@@ -1,7 +1,21 @@
 <#-- @ftlvariable name="" type="io.ballerina.shell.executor.reeval.ReEvalContext" -->
+import ballerina/crypto;
+import ballerina/encoding;
 import ballerina/io;
+import ballerina/java;
+import ballerina/java.arrays as jarrays;
+import ballerina/jsonutils;
+import ballerina/jwt;
+import ballerina/math;
+import ballerina/reflect;
+import ballerina/runtime;
+import ballerina/stringutils;
+import ballerina/system;
+import ballerina/time;
+import ballerina/xmlutils;
+import ballerina/xslt;
 
-// Import statements
+// External import statements
 <#list imports as import>
     ${import}
 </#list>
@@ -78,11 +92,20 @@ public function main() {
 
 # Useless function to pretend to use imports so the
 # compiler won't complain.
-# This will accept imports with `Error` exported.
-# Most of the standard modules export `Error`.
-# TODO: Remove this temp fix.
-function garbage_function() {
-    <#list importPrefixes as importPrefix>
-        reserved = ${importPrefix}:Error;
-    </#list>
+function pretend_to_use_imports() {
+    reserved = crypto:Error;
+    reserved = encoding:Error;
+    reserved = java:toString;
+    reserved = jarrays:fromHandle;
+    reserved = jsonutils:fromTable;
+    reserved = jwt:Error;
+    reserved = math:Error;
+    reserved = reflect:getServiceAnnotations;
+    reserved = runtime:sleep;
+    reserved = stringutils:contains;
+    reserved = system:Error;
+    reserved = time:Error;
+    reserved = xmlutils:fromJSON;
+    reserved = xslt:transform;
+    reserved = ();
 }

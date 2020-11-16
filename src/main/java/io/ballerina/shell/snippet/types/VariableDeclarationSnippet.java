@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.snippet;
+package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ArrayTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.BuiltinSimpleNameReferenceNode;
@@ -35,6 +35,8 @@ import io.ballerina.compiler.syntax.tree.TypedBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.UnionTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.XmlTypeDescriptorNode;
+import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetSubKind;
 import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.util.Optional;

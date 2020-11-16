@@ -7,6 +7,6 @@
 ================================================= version %1$s
 Welcome to Ballerina Shell REPL.
 Type /exit to exit and /about to get about information.
+/imports will show available imports.
 /debug will toggle the debug mode.
 /reset will reset the REPL state.
-

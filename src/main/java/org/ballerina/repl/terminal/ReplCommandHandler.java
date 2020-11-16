@@ -24,6 +24,8 @@ import org.ballerina.repl.exceptions.ReplExitException;
 import org.ballerina.repl.exceptions.ReplHandledException;
 import org.ballerina.repl.exceptions.ReplResetException;
 import org.ballerina.repl.exceptions.ReplToggleDebugException;
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.AttributedStyle;
 
 import java.io.PrintWriter;
 
@@ -34,11 +36,20 @@ import java.io.PrintWriter;
  */
 public class ReplCommandHandler {
     private static final String ABOUT_FILE = "about.txt";
+    private static final String IMPORTS_FILE = "imports.txt";
     private static final String EXIT_COMMAND = "/exit";
     private static final String ABOUT_COMMAND = "/about";
     private static final String TOGGLE_DEBUG = "/debug";
     private static final String RESET_COMMAND = "/reset";
+    private static final String IMPORTS_COMMAND = "/imports";
     private static final String EMPTY_LINE = "";
+
+    private static String coloredText(String text) {
+        return new AttributedStringBuilder()
+                .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.BRIGHT))
+                .append(text)
+                .toAnsi();
+    }
 
     /**
      * This would handle the command and if identified as a valid command,
@@ -59,9 +70,14 @@ public class ReplCommandHandler {
                 throw new ReplExitException();
             case ABOUT_COMMAND:
                 String aboutContent = ReplShell.readFile(ABOUT_FILE);
-                output.println(aboutContent);
+                output.println(coloredText(aboutContent));
+                throw new ReplHandledException();
+            case IMPORTS_COMMAND:
+                String importsContent = ReplShell.readFile(IMPORTS_FILE);
+                output.println(coloredText(importsContent));
                 throw new ReplHandledException();
             case RESET_COMMAND:
+                output.println(coloredText("Resetting State"));
                 throw new ReplResetException();
             case EMPTY_LINE:
                 throw new ReplHandledException();

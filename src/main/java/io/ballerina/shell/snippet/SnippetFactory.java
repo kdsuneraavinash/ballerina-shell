@@ -20,6 +20,12 @@ package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.exceptions.SnippetException;
+import io.ballerina.shell.snippet.types.ErroneousSnippet;
+import io.ballerina.shell.snippet.types.ExpressionSnippet;
+import io.ballerina.shell.snippet.types.ImportSnippet;
+import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
+import io.ballerina.shell.snippet.types.StatementSnippet;
+import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.util.List;

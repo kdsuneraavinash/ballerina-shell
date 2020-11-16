@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.snippet;
+package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.AnnotationDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ClassDefinitionNode;
@@ -29,6 +29,9 @@ import io.ballerina.compiler.syntax.tree.ModuleXMLNamespaceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.TypeDefinitionNode;
+import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * Module level declarations.

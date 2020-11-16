@@ -1,0 +1,77 @@
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++ Following imports are available without importing.       ++++++
+++++++ Any other import needs to be imported with a prefix.     ++++++
+++++++ TODO: Enable compiler to ignore unused imports.          ++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+crypto
+| This module provides the necessary utilities that are required to hash
+| content using different hashing mechanisms and algorithms.
+
+encoding
+| This module provides the necessary utilities,  which are  required  to
+| encode and decode content using different URL encoding mechanisms  and
+| algorithms.
+
+io
+| This module is designed to  support input  and  output  operations via
+| channels in a canonical way,  either   in a blocking,  or non-blocking
+| manner.
+
+java
+| This module provides the API for Java interoperability in Ballerina.It
+| includes a set of Ballerina annotations with which Java constructors,
+| methods, and fields can provide implementations of Ballerina functions
+| with external function bodies.
+
+java.arrays (imported as jarrays)
+| This module provides APIs  to  create  new Java  array  instances, get
+| elements from arrays, set elements, etc.
+
+jsonutils
+| This module provides utility functions to manipulate the built-in json
+| data type. It provides APIs to convert an xml to a json  or convert a
+| table to a json.
+
+jwt
+| This module provides an inbound and outbound JWT authentication provi-
+| der, which can be used to authenticate using a JWT and the functionality
+| related to issuing and validating JWT.
+
+math
+| This module provides functions to  perform   fixed-precision  integer
+| arithmetic and fixed-precision decimal arithmetic.It includes functions
+| to get the absolute, cosine,sine, root, tangent, and more for a given
+| value.
+
+reflect
+| This module provides utility methods for obtaining reflective informa-
+| tion about the Ballerina runtime.
+
+runtime
+| This module provides functions to interact with the runtime, the invo-
+| cation context, and to manage errors.
+
+stringutils
+| This module provides utility functions to manipulate the built-in str-
+| ing data type.
+
+system
+| This module provides functions to retrieve information about the syst-
+| em and the current users of the system. The system:exec method creates
+| the system :Process object, which can control and obtain information
+| about a Ballerina process.
+
+time
+| This module provides implementations related to time,date, time zones,
+| and durations.
+
+xmlutils
+| This module provides utility functions to manipulate the built-in xml
+| data type.It provides APIs to convert a json to an xml or convert a
+| table to an xml.
+
+xslt
+| This module provides  a  function  to  transform the XML  content to
+| another XML/HTML/plain text using XSL transformations.
+

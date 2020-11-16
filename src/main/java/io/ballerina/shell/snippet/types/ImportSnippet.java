@@ -16,10 +16,13 @@
  * under the License.
  */
 
-package io.ballerina.shell.snippet;
+package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * Snippet that represent a import statement.

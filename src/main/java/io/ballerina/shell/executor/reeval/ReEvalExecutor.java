@@ -23,7 +23,7 @@ import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.invoker.AsyncShellInvoker;
 import io.ballerina.shell.executor.invoker.ShellInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
-import io.ballerina.shell.snippet.ImportSnippet;
+import io.ballerina.shell.snippet.types.ImportSnippet;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 

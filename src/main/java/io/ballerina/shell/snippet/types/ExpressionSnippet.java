@@ -16,13 +16,16 @@
  * under the License.
  */
 
-package io.ballerina.shell.snippet;
+package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ServiceConstructorExpressionNode;
 import io.ballerina.compiler.syntax.tree.TableConstructorExpressionNode;
 import io.ballerina.compiler.syntax.tree.TypeTestExpressionNode;
+import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * These are expressions that are executable but are not persistent.

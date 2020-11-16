@@ -31,6 +31,7 @@ import java.util.Objects;
  * Attempts to parse source as a import statement.
  * Puts in the module level and checks for the import entry.
  * Doesn't have any false positives or true negatives.
+ * TODO: Fix issue of method.expr() catching as an import
  */
 public class ImportDeclarationTrial implements TreeParserTrial {
     @Override

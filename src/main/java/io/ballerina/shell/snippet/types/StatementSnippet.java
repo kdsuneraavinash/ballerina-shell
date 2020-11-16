@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.snippet;
+package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.AssignmentStatementNode;
 import io.ballerina.compiler.syntax.tree.BlockStatementNode;
@@ -41,6 +41,8 @@ import io.ballerina.compiler.syntax.tree.TransactionStatementNode;
 import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.WhileStatementNode;
 import io.ballerina.compiler.syntax.tree.XMLNamespaceDeclarationNode;
+import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * These are normal statements that should be evaluated from
