@@ -36,6 +36,15 @@ public class PrinterProvider {
     }
 
     /**
+     * Add a new warning message.
+     *
+     * @param message Debug message content template.
+     */
+    public static void warn(String message) {
+        emit(message, LogStatus.WARNING);
+    }
+
+    /**
      * Add a new message.
      *
      * @param message Message to output.

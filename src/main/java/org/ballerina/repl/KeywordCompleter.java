@@ -34,7 +34,7 @@ import java.util.Scanner;
  * Keywords are read off of a text file.
  */
 public class KeywordCompleter extends StringsCompleter {
-    private static final String KEYWORDS_FILE = "keywords.txt";
+    private static final String KEYWORDS_FILE = "command.keywords.txt";
 
     public KeywordCompleter() {
         super(readKeywords());

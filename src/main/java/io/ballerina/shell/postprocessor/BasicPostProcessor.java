@@ -24,6 +24,7 @@ import io.ballerina.shell.PrinterProvider;
 /**
  * Will output STDERR and STDOUT to the controller.
  * Will use error and warning prefixes to categorize STDERR.
+ * TODO: Use Project API diagnostics instead.
  */
 public class BasicPostProcessor implements Postprocessor {
     private static final String ERROR_PREFIX = "error:";

@@ -21,10 +21,15 @@ package io.ballerina.shell.preprocessor;
 import java.util.List;
 
 /**
- * String preprocessor interface.
- * Preprocessor processes a string into a list of strings,
- * which may contain one or more strings to be fed into the
- * parser phase.
+ * Preprocessor is the first transformational phase of the
+ * program. Any input is sent through the preprocessor to convert
+ * the input into a list of individually processable statements.
+ * For an example any multiple statement input will be split into the
+ * relevant list of string counterpart at the end of this phase.
+ * The implemented `SeparatorPreprocessor` currently splits the statements
+ * into separated lists depending on the semicolons that are in th root bracket level.
+ * The motivation of a preprocessor is to divide the input into separately
+ * identifiable sections so each can be individually processed on.
  */
 public interface Preprocessor {
     /**

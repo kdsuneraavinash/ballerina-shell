@@ -19,6 +19,7 @@
 package io.ballerina.shell.treeparser;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.exceptions.ParserException;
 import io.ballerina.shell.treeparser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.treeparser.trials.ExpressionTrial;
@@ -27,6 +28,9 @@ import io.ballerina.shell.treeparser.trials.ModuleMemberTrial;
 import io.ballerina.shell.treeparser.trials.ParserTrialFailedException;
 import io.ballerina.shell.treeparser.trials.StatementTrial;
 import io.ballerina.shell.treeparser.trials.TreeParserTrial;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Parses the source code line using a trial based method.
@@ -44,14 +48,28 @@ public class TrialTreeParser implements TreeParser {
 
     @Override
     public Node parse(String source) {
+        List<Node> parsedSyntaxTrees = new ArrayList<>();
+        List<String> passedTrials = new ArrayList<>();
         for (TreeParserTrial treeParserTrial : TREE_PARSER_TRIALS) {
             try {
-                return treeParserTrial.tryParse(source);
+                Node node = treeParserTrial.tryParse(source);
+                if (node != null) {
+                    parsedSyntaxTrees.add(node);
+                    passedTrials.add(node.getClass().getSimpleName());
+                }
             } catch (ParserTrialFailedException ignored) {
                 // Trial failed, try next trial
             }
         }
+        // At the end, exactly 1 test should have passed.
+        if (parsedSyntaxTrees.isEmpty()) {
+            throw new ParserException("Sorry, input statement not allowed.");
+        }
 
-        throw new ParserException("Sorry, input statement not allowed.");
+        if (parsedSyntaxTrees.size() > 1) {
+            PrinterProvider.warn("Multiple candidates for the statement type. Using the first candidate.");
+            PrinterProvider.debug(String.format("Candidates are %s. ", passedTrials));
+        }
+        return parsedSyntaxTrees.remove(0);
     }
 }

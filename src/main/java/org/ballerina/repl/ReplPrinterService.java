@@ -29,30 +29,32 @@ import org.jline.utils.AttributedStyle;
  */
 public class ReplPrinterService implements PrinterService {
     private final Terminal terminal;
+    private final boolean ignoreDebug;
 
-    public ReplPrinterService(Terminal terminal) {
+    public ReplPrinterService(Terminal terminal, boolean ignoreDebug) {
         this.terminal = terminal;
+        this.ignoreDebug = ignoreDebug;
     }
 
     @Override
     public void write(String output, LogStatus status) {
+        if (ignoreDebug && status == LogStatus.DEBUG) {
+            return;
+        }
+
         int color;
-        switch (status) {
-            case FATAL_ERROR:
-                color = AttributedStyle.RED;
-                break;
-            case ERROR:
-                color = AttributedStyle.YELLOW;
-                break;
-            case WARNING:
-                color = AttributedStyle.CYAN;
-                break;
-            case SUCCESS:
-                color = AttributedStyle.GREEN;
-                break;
-            default:
-                color = AttributedStyle.BRIGHT;
-                break;
+        if (status == LogStatus.FATAL_ERROR) {
+            color = AttributedStyle.RED;
+            output = String.format("[%s] %s", status, output);
+        } else if (status == LogStatus.ERROR
+                || status == LogStatus.WARNING) {
+            output = String.format("[%s] %s", status, output);
+            color = AttributedStyle.YELLOW;
+        } else if (status == LogStatus.SUCCESS) {
+            color = AttributedStyle.CYAN;
+        } else {
+            output = String.format("[%s] %s", status, output);
+            color = AttributedStyle.BRIGHT;
         }
         output = ReplShell.colored(output, color);
         terminal.writer().println(output);

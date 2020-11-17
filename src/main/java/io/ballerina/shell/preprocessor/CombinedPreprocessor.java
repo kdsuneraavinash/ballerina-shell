@@ -37,7 +37,7 @@ public class CombinedPreprocessor implements Preprocessor {
      */
     public CombinedPreprocessor(Preprocessor... preprocessors) {
         // Send a debug message of preprocessors
-        PrinterProvider.debug("Attached preprocessors: " + preprocessors.length);
+        PrinterProvider.debug(String.format("Attached %s preprocessors.", preprocessors.length));
         this.preprocessors = preprocessors;
     }
 

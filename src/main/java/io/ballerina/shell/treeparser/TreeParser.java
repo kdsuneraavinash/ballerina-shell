@@ -21,7 +21,12 @@ package io.ballerina.shell.treeparser;
 import io.ballerina.compiler.syntax.tree.Node;
 
 /**
- * Parses a source code string into a Node.
+ * In this stage the correct syntax tree is identified.
+ * The root node of the syntax tree must be the corresponding
+ * type for the statement.
+ * For an example, for a import declaration,
+ * the tree that is parsed should have
+ * {@code ImportDeclarationNode} as the root node.
  */
 public interface TreeParser {
     /**

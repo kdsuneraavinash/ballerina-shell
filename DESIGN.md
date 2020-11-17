@@ -1,22 +1,87 @@
 # Ballerina Shell Design Document
 
+## Preprocessor
+
+Preprocessor is the first transformational phase of the program. Any input is sent through the preprocessor to convert the input into a list of individually processable statements. For an example any multiple statement input will be split into the relevant list of string counterpart at the end of this phase. The implemented `SeparatorPreprocessor` currently splits the statements into separated lists depending on the semicolons that are in th root bracket level. The motivation of a preprocessor is to divide the input into separately identifiable sections so each can be individually processed on.
+
+```java
+public interface Preprocessor {
+    List<String> preprocess(String input);
+}
+```
+
+Currently following preprocessors are implemented.
+
+| Preprocessor Name      | Description                                                  |
+| ---------------------- | ------------------------------------------------------------ |
+| Separator preprocessor | Preprocessor to split the input into several statements based on the semicolons and brackets. |
+| Combined preprocessor  | Combines several preprocessors into a single preprocessor.   |
+
+Following are some inputs and expected output of the preprocessor for reference.
+
+| Input                                             | Expected Output                                     |
+| ------------------------------------------------- | --------------------------------------------------- |
+| `int number`                                      | [`int number`]                                      |
+| `int number; number = 100;`                       | [`int number;`, `number = 100;`]                    |
+| `function () { int p = 100; string h = "hello";}` | [`function () { int p = 100; string h = "hello";}`] |
+| `int a = 0; while (a < 10) { a+= 1; }`            | [`int a = 0;`, `while (a < 10) { a+= 1; }`]         |
+
+## Tree Parser
+
+In this stage the correct syntax tree is identified.  The root node of the syntax tree must be the corresponding type for the statement. For an example, for a import declaration, the tree that is parsed should have `ImportDeclarationNode` as the root node.
+
+```java
+public interface TreeParser {
+    Node parse(String source);
+}
+```
+
+Currently following tree parsers are implemented.
+
+| Tree Parser Name  | Description                                                  |
+| ----------------- | ------------------------------------------------------------ |
+| Trial Tree Parser | Parses the source code line using a trial based method. The source code is placed in several places and is attempted to parse. This continues until the correct type can be determined. |
+
+Following are some inputs and expected output of the tree parser for reference.
+
+| Input                       | Expected Output Root Node       |
+| --------------------------- | ------------------------------- |
+| `import ballerina/io;`      | `ImportDeclarationNode`         |
+| `int variable = 100;`       | `ModuleVariableDeclarationNode` |
+| `while (a) { int i = 100;}` | `WhileStatementNode`            |
+
 ## Snippets
 
-Every snippet must have a kind (which dictates where the snippet should go and the sub kind depicting the statement type) Each input line in the REPL can refer to one or more snippets. (Separated by semicolons) These will be handled differently. That means even if the same input line contained several statements, it would be taken as if they were separate lines.
+Snippets are individual statements.
 
-In processing the snippets, if a snippet contained an error and failed to run, it would be ditched. Which means that an error snippet is taken as never given. Also, names given to the REPL may never be overridden. (If `x` variable is defined, you cannot redefine variable `x` even with the same type. Same goes for functions, classes etc..)
+Every snippet must have a **kind** (which dictates where the snippet should go) and a **sub kind** (depicting the statement type) Each snippet must refer to a single statement. That means if the same input line contained several statements, it would be parsed into several snippets. (This separation is done in preprocessor.)
 
-Currently all `visibilityIdentifiers` will be ignored. Every entry will be public always to make sure of the visibility.
+In processing the snippets, if a snippet contained an error and failed to run, the execution of the snippet would be stopped. If the snippet was contained in a line with more snippets, (if the input contained multiple snippets) all the snippets would be ditched. This also means that an error snippet is taken as if it were never given. 
 
-**What to do with `metadata` nodes?**
+Also, names given to the REPL may never be overridden. (If `x` variable is defined, you cannot redefine variable `x` even with the same type. Same goes for functions, classes etc..) However, any valid redeclaration in a different scope may be possible.
 
 ### Snippet Kinds
 
 #### Import Kind
 
-How to defer unused imports until they are used?
+Snippets that represent a import statement. 
+
+Every user import must be done with a prefix. However, REPL would include many base imports by default so that the user does not have to import every module.  Available imports can be viewed via `\imports` internal command.
+
+```bash
+=$ /imports
+Following standard modules are available without importing.
+Any other import needs to be imported with a prefix.
+|   crypto, encoding, io, java, java.arrays (as jarrays),
+|   jsonutils, jwt, math, reflect, runtime, stringutils,
+|   system, time, xmlutils, xslt
+```
+
+> However, due to limitations in the compiler, practically no imports can be done. According to the language specification one cannot have unused imports which results in import snippets always causing an error.
 
 #### Variable Declaration Kind
+
+> TODO: Complete this document
 
 These will be variable declarations. These statements will be split into declaration and initialization. Declaration would contain the declaration and setting of a default variable. This would happen in Module Level Stub. Initialization would happen in the Statement Stub.
 

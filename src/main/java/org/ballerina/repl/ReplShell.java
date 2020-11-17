@@ -50,17 +50,15 @@ import java.util.Scanner;
  * REPL shell terminal executor. Launches the terminal.
  */
 public class ReplShell {
-    private static final String ABOUT_FILE = "about.txt";
-    private static final String IMPORTS_FILE = "imports.txt";
-    private static final String HEADER_FILE = "header.txt";
-    private static final String HELP_FILE = "help.txt";
+    private static final String HELP_FILE = "command.help.txt";
+    private static final String IMPORTS_FILE = "command.imports.txt";
+    private static final String HEADER_FILE = "command.header.txt";
 
+    private static final String HELP_COMMAND = "help";
+    private static final String IMPORTS_COMMAND = "imports";
     private static final String EXIT_COMMAND = "exit";
-    private static final String ABOUT_COMMAND = "about";
     private static final String TOGGLE_DEBUG = "debug";
     private static final String RESET_COMMAND = "reset";
-    private static final String IMPORTS_COMMAND = "imports";
-    private static final String HELP_COMMAND = "help";
 
     private static final String REPL_PROMPT = "=$ ";
     private static final String REPL_EXIT_MESSAGE = "Bye!!";
@@ -157,9 +155,8 @@ public class ReplShell {
      */
     private void attachCommandHandlers() {
         this.handler.attachHandler(EXIT_COMMAND, (w) -> this.continueLoop = false);
-        this.handler.attachHandler(HELP_COMMAND, (w) -> outputResource(HELP_FILE, w));
         this.handler.attachHandler(IMPORTS_COMMAND, (w) -> outputResource(IMPORTS_FILE, w));
-        this.handler.attachHandler(ABOUT_COMMAND, (w) -> outputResource(ABOUT_FILE, w));
+        this.handler.attachHandler(HELP_COMMAND, (w) -> outputResource(HELP_FILE, w));
         this.handler.attachHandler(TOGGLE_DEBUG, (w) -> configuration.toggleDiagnosticOutputMode());
         this.handler.attachHandler(RESET_COMMAND, (w) -> ballerinaShell.reset());
     }

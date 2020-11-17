@@ -29,11 +29,11 @@ import io.ballerina.shell.snippet.SnippetSubKind;
  * TODO: How to defer unused imports until they are used?
  */
 public class ImportSnippet extends Snippet {
-    private final String importName;
+    private final String importPrefix;
 
-    protected ImportSnippet(Node node, SnippetSubKind subKind, String importName) {
+    protected ImportSnippet(Node node, SnippetSubKind subKind, String importPrefix) {
         super(node.toSourceCode(), subKind);
-        this.importName = importName;
+        this.importPrefix = importPrefix;
         assert subKind.getKind() == SnippetKind.IMPORT_KIND;
     }
 
@@ -58,7 +58,7 @@ public class ImportSnippet extends Snippet {
 
 
     @SuppressWarnings("unused")
-    public String getImportName() {
-        return importName;
+    public String getImportPrefix() {
+        return importPrefix;
     }
 }

@@ -19,17 +19,23 @@
 package io.ballerina.shell.snippet;
 
 /**
- * Every snippet must have a kind (which dictates where the snippet should go and
- * the sub kind depicting the statement type) Each input line in the REPL can refer to one or more snippets.
- * (Separated by semicolons) These will be handled differently.
- * That means even if the same input line contained several statements,
- * it would be taken as if they were separate lines.
+ * Snippets are individual statements.
+ * <p>
+ * Every snippet must have a kind (which dictates where the snippet should go) and a
+ * sub kind (depicting the statement type) Each snippet must refer to a single statement.
+ * That means if the same input line contained several statements, it would be parsed
+ * into several snippets. (This separation is done in preprocessor.)
  * <p>
  * In processing the snippets, if a snippet contained an error and failed to run,
- * it would be ditched. Which means that an error snippet is taken as never given.
+ * the execution of the snippet would be stopped. If the snippet was contained in a
+ * line with more snippets, (if the input contained multiple snippets)
+ * all the snippets would be ditched.
+ * This also means that an error snippet is taken as if it were never given.
+ * <p>
  * Also, names given to the REPL may never be overridden.
- * (If `x` variable is defined, you cannot redefine variable `x` even with the same type.
- * Same goes for functions, classes etc..)
+ * (If {@code x} variable is defined, you cannot redefine variable {@code x} even
+ * with the same type. Same goes for functions, classes etc..)
+ * However, any valid redeclaration in a different scope may be possible.
  */
 public abstract class Snippet {
     protected final SnippetSubKind subKind;

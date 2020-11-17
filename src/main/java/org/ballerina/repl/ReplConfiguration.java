@@ -82,11 +82,11 @@ public class ReplConfiguration {
      */
     private void setDiagnosticOutputMode() {
         if (isDebugMode) {
-            PrinterProvider.setWriter(new ReplPrinterService(terminal));
+            PrinterProvider.setWriter(new ReplPrinterService(terminal, false));
             PrinterProvider.debug("Diagnostic output mode set to ON.");
         } else {
             PrinterProvider.debug("Diagnostic output mode set to OFF.");
-            PrinterProvider.setWriter(null);
+            PrinterProvider.setWriter(new ReplPrinterService(terminal, true));
         }
     }
 
