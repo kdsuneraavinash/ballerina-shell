@@ -24,7 +24,9 @@ import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * State of the {@link ReEvalExecutor}.
@@ -34,12 +36,14 @@ public class ReEvalState implements State {
     private final List<Snippet> moduleDeclarations;
     private final List<Snippet> variableDefinitions;
     private final List<Snippet> statementsAndExpressions;
+    private final Set<String> variableNames;
 
     public ReEvalState() {
         imports = new ArrayList<>();
         moduleDeclarations = new ArrayList<>();
         variableDefinitions = new ArrayList<>();
         statementsAndExpressions = new ArrayList<>();
+        variableNames = new HashSet<>();
     }
 
     @Override
@@ -49,6 +53,7 @@ public class ReEvalState implements State {
         moduleDeclarations.clear();
         variableDefinitions.clear();
         statementsAndExpressions.clear();
+        variableNames.clear();
     }
 
     @Override
@@ -66,6 +71,10 @@ public class ReEvalState implements State {
         }
     }
 
+    public void addNewVariableName(String name) {
+        variableNames.add(name);
+    }
+
     public List<Snippet> imports() {
         return imports;
     }
@@ -80,5 +89,9 @@ public class ReEvalState implements State {
 
     public List<Snippet> statementsAndExpressions() {
         return statementsAndExpressions;
+    }
+
+    public Set<String> variableNames() {
+        return variableNames;
     }
 }

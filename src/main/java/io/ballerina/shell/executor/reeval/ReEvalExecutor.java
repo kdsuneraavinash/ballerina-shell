@@ -26,9 +26,12 @@ import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.types.ImportSnippet;
+import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
+import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -55,6 +58,7 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
         List<String> variableDeclarations = Context.snippetsToStrings(state.variableDeclarations());
         List<ReEvalContext.StatementExpression> statementsAndExpressions = new ArrayList<>();
         ReEvalContext.StatementExpression newStatementOrExpression = new ReEvalContext.StatementExpression(newSnippet);
+        HashSet<String> variableNames = new HashSet<>(state.variableNames());
 
         // Add to correct category
         if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
@@ -64,6 +68,12 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
             moduleDeclarations.add(newSnippet.toSourceCode());
         } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
             variableDeclarations.add(newSnippet.toSourceCode());
+            // Add to variable names for context
+            assert newSnippet instanceof VariableDeclarationSnippet;
+            VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
+            if (varSnippet.isSerializable()) {
+                variableNames.add(varSnippet.getVariableName());
+            }
         }
 
         // Reformat expressions
@@ -74,11 +84,26 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
         }
 
         return new ReEvalContext(imports, moduleDeclarations,
-                variableDeclarations, statementsAndExpressions, newStatementOrExpression);
+                variableDeclarations, statementsAndExpressions, newStatementOrExpression,
+                variableNames);
     }
 
     @Override
     public boolean executeInvoker(Postprocessor postprocessor) throws IOException, InterruptedException {
         return invoker.execute(postprocessor);
+    }
+
+    @Override
+    public void onSuccess(Snippet newSnippet) {
+        // Add snippet to state
+        state.addSnippet(newSnippet);
+        // Permanently add name if a var dcln snippet
+        if (newSnippet instanceof VariableDeclarationSnippet) {
+            VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
+            if (varSnippet.isSerializable()) {
+                state.addNewVariableName(varSnippet.getVariableName());
+                DebugProvider.sendMessage("Current variable names: " + state.variableNames());
+            }
+        }
     }
 }

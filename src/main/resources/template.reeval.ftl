@@ -51,6 +51,10 @@ function new_statement() returns any|error {
     return reserved;
 }
 
+// <#list varNames as varName>
+//      ${varName}
+// </#list>
+
 // =========================================
 // === Functionality Snippets ==============
 // =========================================

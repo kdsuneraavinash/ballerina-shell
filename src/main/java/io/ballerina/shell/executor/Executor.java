@@ -92,7 +92,7 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
             }
             boolean isSuccess = executeInvoker(postprocessor);
             if (isSuccess) {
-                state.addSnippet(newSnippet);
+                onSuccess(newSnippet);
             }
             return isSuccess;
         } catch (Exception e) {
@@ -123,4 +123,6 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
     public void reset() {
         state.reset();
     }
+
+    public abstract void onSuccess(Snippet newSnippet);
 }

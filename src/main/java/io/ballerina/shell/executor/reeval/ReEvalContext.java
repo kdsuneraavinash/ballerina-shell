@@ -25,6 +25,7 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Mustache context for {@link ReEvalExecutor}.
@@ -68,17 +69,20 @@ public class ReEvalContext implements Context {
     private final List<String> varDclns;
     private final List<StatementExpression> stmts;
     private final StatementExpression lastStmt;
+    private final Set<String> varNames;
 
     public ReEvalContext(List<String> imports,
                          List<String> moduleDclns,
                          List<String> varDclns,
                          List<StatementExpression> stmts,
-                         StatementExpression lastStmt) {
+                         StatementExpression lastStmt,
+                         Set<String> varNames) {
         this.imports = imports;
         this.moduleDclns = moduleDclns;
         this.varDclns = varDclns;
         this.stmts = stmts;
         this.lastStmt = lastStmt;
+        this.varNames = varNames;
     }
 
     @TemplateAccessible
@@ -104,6 +108,11 @@ public class ReEvalContext implements Context {
     @TemplateAccessible
     public StatementExpression getLastStmt() {
         return lastStmt;
+    }
+
+    @TemplateAccessible
+    public Set<String> getVarNames() {
+        return varNames;
     }
 
     @TemplateAccessible
