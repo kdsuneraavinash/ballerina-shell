@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerina.repl.terminal;
+package org.ballerina.repl;
 
 import io.ballerina.shell.utils.debug.DebugProvider;
 import org.jline.reader.impl.completer.StringsCompleter;
@@ -33,10 +33,10 @@ import java.util.Scanner;
  * Simple completer for the REPL which completes Ballerina Keywords.
  * Keywords are read off of a text file.
  */
-public class ReplKeywordCompleter extends StringsCompleter {
+public class KeywordCompleter extends StringsCompleter {
     private static final String KEYWORDS_FILE = "keywords.txt";
 
-    public ReplKeywordCompleter() {
+    public KeywordCompleter() {
         super(readKeywords());
     }
 
@@ -46,7 +46,7 @@ public class ReplKeywordCompleter extends StringsCompleter {
      * @return Keywords list.
      */
     public static List<String> readKeywords() {
-        ClassLoader classLoader = ReplKeywordCompleter.class.getClassLoader();
+        ClassLoader classLoader = KeywordCompleter.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(KEYWORDS_FILE);
         Objects.requireNonNull(inputStream, "Keyword file does not exist.");
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);

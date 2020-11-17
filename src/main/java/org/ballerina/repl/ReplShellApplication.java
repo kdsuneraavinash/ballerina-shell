@@ -24,8 +24,6 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.ballerina.repl.exceptions.ReplCmdHelpException;
-import org.ballerina.repl.terminal.ReplKeywordCompleter;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -40,7 +38,7 @@ import java.io.IOException;
  * Ballerina base shell REPL.
  * Executes a interactive shell to let the user interact with Ballerina Shell.
  */
-public class ReplShellExecutor {
+public class ReplShellApplication {
     private static final String HELP_MESSAGE = "./run.sh [OPTIONS]";
 
     /**
@@ -50,7 +48,7 @@ public class ReplShellExecutor {
      * @throws IOException If terminal initialization failed.
      */
     public static void main(String[] args) throws IOException {
-        Options options = ReplConfiguration.getCommandLineOptions();
+        Options options = ReplConfiguration.getConfigurationOptions();
         CommandLineParser commandLineParser = new org.apache.commons.cli.DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -65,7 +63,7 @@ public class ReplShellExecutor {
             formatter.printHelp(HELP_MESSAGE, options);
             terminal.writer().println(e.getMessage());
             return;
-        } catch (ReplCmdHelpException e) {
+        } catch (HelpException e) {
             formatter.printHelp(HELP_MESSAGE, options);
             return;
         }
@@ -73,7 +71,7 @@ public class ReplShellExecutor {
         DefaultParser parser = new DefaultParser();
         parser.setEofOnUnclosedBracket(DefaultParser.Bracket.CURLY,
                 DefaultParser.Bracket.ROUND, DefaultParser.Bracket.SQUARE);
-        Completer completer = new ReplKeywordCompleter();
+        Completer completer = new KeywordCompleter();
         DefaultHighlighter highlighter = new DefaultHighlighter();
 
         LineReader lineReader = LineReaderBuilder.builder()

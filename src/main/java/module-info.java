@@ -15,5 +15,4 @@ module io.ballerina.shell {
     exports io.ballerina.shell.exceptions;
 
     exports org.ballerina.repl;
-    exports org.ballerina.repl.exceptions;
 }

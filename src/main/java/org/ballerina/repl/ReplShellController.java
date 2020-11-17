@@ -21,7 +21,6 @@ package org.ballerina.repl;
 import io.ballerina.shell.LogStatus;
 import io.ballerina.shell.ShellController;
 import org.jline.terminal.Terminal;
-import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
 /**
@@ -29,10 +28,10 @@ import org.jline.utils.AttributedStyle;
  * output to the terminal.
  * Colors will be used as necessary.
  */
-public class ReplResultController implements ShellController {
+public class ReplShellController implements ShellController {
     private final Terminal terminal;
 
-    public ReplResultController(Terminal terminal) {
+    public ReplShellController(Terminal terminal) {
         this.terminal = terminal;
     }
 
@@ -53,9 +52,7 @@ public class ReplResultController implements ShellController {
                 color = AttributedStyle.BRIGHT;
                 break;
         }
-        output = new AttributedStringBuilder()
-                .style(AttributedStyle.DEFAULT.foreground(color))
-                .append(output).toAnsi();
+        output = ReplShell.colored(output, color);
         terminal.writer().println(output);
         terminal.writer().flush();
     }

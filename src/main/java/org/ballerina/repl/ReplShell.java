@@ -30,7 +30,6 @@ import io.ballerina.shell.transformer.Transformer;
 import io.ballerina.shell.treeparser.TreeParser;
 import io.ballerina.shell.treeparser.TrialTreeParser;
 import io.ballerina.shell.utils.debug.DebugProvider;
-import org.ballerina.repl.terminal.ReplCommandHandler;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.UserInterruptException;
@@ -66,6 +65,7 @@ public class ReplShell {
     private static final String REPL_PROMPT = "=$ ";
     private static final String REPL_EXIT_MESSAGE = "Bye!!";
     private static final String REPL_VERSION = "0.0.1";
+    private static final String COMMAND_PREFIX = "/";
 
     private static final String SPECIAL_DELIMITER = "\\A";
 
@@ -73,7 +73,7 @@ public class ReplShell {
     private final LineReader lineReader;
     private final BallerinaShell ballerinaShell;
     private final ReplConfiguration configuration;
-    private final ReplCommandHandler handler;
+    private final CommandHandler handler;
     private boolean continueLoop;
 
     public ReplShell(LineReader lineReader, ReplConfiguration configuration) {
@@ -81,9 +81,9 @@ public class ReplShell {
         this.terminal = lineReader.getTerminal();
         this.lineReader = lineReader;
         this.configuration = configuration;
-        this.handler = new ReplCommandHandler();
+        this.handler = new CommandHandler(COMMAND_PREFIX);
 
-        ReplResultController controller = new ReplResultController(terminal);
+        ReplShellController controller = new ReplShellController(terminal);
 
         Preprocessor preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
         TreeParser parser = new TrialTreeParser();
@@ -98,7 +98,6 @@ public class ReplShell {
      * Execute the REPL.
      * This would show the welcome banner, take user input and evaluate it.
      * To exit the repl, {@code ReplExitException} should be thrown.
-     * TODO: (Issue) exits when ctrl+c when executing shell command.
      */
     public void execute() {
         // 1. Output welcome banner
@@ -130,9 +129,7 @@ public class ReplShell {
             } catch (UserInterruptException | EndOfFileException ignored) {
             } catch (Exception e) {
                 DebugProvider.sendMessage(e.toString());
-                String message = new AttributedStringBuilder()
-                        .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.RED))
-                        .append((e.getMessage())).toAnsi();
+                String message = colored(e.getMessage(), AttributedStyle.RED);
                 terminal.writer().println(message);
                 configuration.printStackTrace(e);
                 terminal.writer().flush();
@@ -152,9 +149,7 @@ public class ReplShell {
         String rightPrompt = null;
         if (previousDuration != null) {
             long seconds = previousDuration.toMillis();
-            rightPrompt = new AttributedStringBuilder()
-                    .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.BRIGHT))
-                    .append("took ").append(String.valueOf(seconds)).append("ms").toAnsi();
+            rightPrompt = colored("took " + seconds + "ms", AttributedStyle.BRIGHT);
         }
         return lineReader.readLine(REPL_PROMPT, rightPrompt, (Character) null, null);
     }
@@ -176,8 +171,8 @@ public class ReplShell {
      *
      * @return Read text.
      */
-    public static String readFile(String path) {
-        ClassLoader classLoader = ReplShellExecutor.class.getClassLoader();
+    private static String readFile(String path) {
+        ClassLoader classLoader = ReplShellApplication.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(path);
         Objects.requireNonNull(inputStream, "File does not exist: " + path);
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
@@ -191,11 +186,21 @@ public class ReplShell {
      * @param path   File to read.
      * @param writer Writer to use to output.
      */
-    public static void outputResource(String path, PrintWriter writer) {
+    private static void outputResource(String path, PrintWriter writer) {
         String content = readFile(path);
-        String text = new AttributedStringBuilder()
-                .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.BRIGHT))
-                .append(content).toAnsi();
-        writer.println(text);
+        writer.println(colored(content, AttributedStyle.BRIGHT));
+    }
+
+    /**
+     * Colors a text by the given color.
+     *
+     * @param text  String to color.
+     * @param color Color to use.
+     * @return Colored string.
+     */
+    public static String colored(String text, int color) {
+        return new AttributedStringBuilder()
+                .style(AttributedStyle.DEFAULT.foreground(color))
+                .append(text).toAnsi();
     }
 }

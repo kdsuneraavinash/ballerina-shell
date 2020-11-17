@@ -25,8 +25,6 @@ import io.ballerina.shell.utils.debug.DebugProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.ballerina.repl.exceptions.ReplCmdHelpException;
-import org.ballerina.repl.terminal.ReplCommandOption;
 import org.jline.terminal.Terminal;
 
 import java.util.Objects;
@@ -35,31 +33,36 @@ import java.util.Objects;
  * Object to store configurations related to the REPL.
  */
 public class ReplConfiguration {
+    private static final String REEVAL_EXECUTOR = "reeval";
+    private static final String ASM_EXECUTOR = "asm";
+
     private final Terminal terminal;
     private final String executorName;
     private boolean isDebugMode;
 
-    public ReplConfiguration(CommandLine cmd, Terminal terminal) throws ReplCmdHelpException {
+    public ReplConfiguration(CommandLine cmd, Terminal terminal) throws HelpException {
         Objects.requireNonNull(cmd, "Command line arguments were not received.");
         Objects.requireNonNull(terminal, "Terminal objects were not received.");
 
-        if (ReplCommandOption.HELP.hasOptionSet(cmd)) {
-            throw new ReplCmdHelpException();
+        if (ApplicationOption.HELP.hasOptionSet(cmd)) {
+            throw new HelpException();
         }
-        isDebugMode = ReplCommandOption.DEBUG.hasOptionSet(cmd);
-        executorName = ReplCommandOption.EXECUTOR.getOptionValue(cmd, "reeval");
+        isDebugMode = ApplicationOption.DEBUG.hasOptionSet(cmd);
+        executorName = ApplicationOption.EXECUTOR.getOptionValue(cmd, REEVAL_EXECUTOR);
         this.terminal = terminal;
         setDiagnosticOutputMode();
     }
 
     /**
      * Generate the CLI options.
+     * These options will be used by the CLI parser to
+     * get the necessary configurations.
      *
      * @return Generated CLI options.
      */
-    public static Options getCommandLineOptions() {
+    public static Options getConfigurationOptions() {
         Options options = new Options();
-        for (ReplCommandOption op : ReplCommandOption.values()) {
+        for (ApplicationOption op : ApplicationOption.values()) {
             Option option = op.toOption();
             options.addOption(option);
         }
@@ -93,9 +96,9 @@ public class ReplConfiguration {
      * @return a new Executor object.
      */
     public Executor<?, ?, ?> getExecutor() {
-        if (executorName.equalsIgnoreCase("reeval")) {
+        if (executorName.equalsIgnoreCase(REEVAL_EXECUTOR)) {
             return new ReEvalExecutor();
-        } else  if (executorName.equalsIgnoreCase("asm")) {
+        } else if (executorName.equalsIgnoreCase(ASM_EXECUTOR)) {
             return new JarExecutor();
         }
         throw new RuntimeException("Unknown executor name: " + executorName);

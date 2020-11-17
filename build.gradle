@@ -64,7 +64,7 @@ compileJava {
     }
 }
 
-def mainCliClass = 'org.ballerina.repl.ReplShellExecutor'
+def mainCliClass = 'org.ballerina.repl.ReplShellApplication'
 task run(type: JavaExec) {
     main = mainCliClass
     standardInput = System.in

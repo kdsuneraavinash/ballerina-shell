@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerina.repl.terminal;
+package org.ballerina.repl;
 
 
 import org.apache.commons.cli.CommandLine;
@@ -25,7 +25,7 @@ import org.apache.commons.cli.Option;
 /**
  * CLI option enum with the name and description.
  */
-public enum ReplCommandOption {
+public enum ApplicationOption {
     DEBUG('d', "debug", "start with debug mode)", false),
     EXECUTOR('e', "executor", "executor to use (reeval)", true),
     HELP('h', "help", "prints this help message", false);
@@ -35,7 +35,7 @@ public enum ReplCommandOption {
     private final String description;
     private final boolean hasArg;
 
-    ReplCommandOption(char code, String name, String description, boolean hasArg) {
+    ApplicationOption(char code, String name, String description, boolean hasArg) {
         this.code = code;
         this.name = name;
         this.description = description;

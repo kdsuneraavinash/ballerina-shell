@@ -51,22 +51,29 @@ function new_statement() returns any|error {
     return reserved;
 }
 
+// =========================================
+// === Functionality Snippets ==============
+// =========================================
+
 // Reserved declarations.
 any|error reserved = ();
 
 # Main function entry point.
 # To filter old print statements, a filter guard is set.
 public function main() {
+    // Run old statements.
+    // Inside a IO guard,
+    //      Evaluate current expression/statement
+    //      If return value is null, ignore
+    //      If runtime error, Output colored error message
+    //      Otherwise print string representation
+
     old_statements();
 
     io:println();
-    io:println("${ioActivationStart}"); // Begin IO guard
+    io:println("${ioActivationStart}");
 
     any|error expr = trap new_statement();
-
-    // If null, ignore
-    // If runtime error, Output colored error message
-    // Others, print string representation
     if (expr is ()){
     } else if (expr is error){
         var color_start = "\u{001b}[33;1m";
@@ -76,12 +83,8 @@ public function main() {
         io:println(expr);
     }
 
-    io:println("${ioActivationEnd}"); // End IO guard
+    io:println("${ioActivationEnd}");
 }
-
-// =========================================
-// === Functionality Snippets ==============
-// =========================================
 
 # Useless function to pretend to use imports so the
 # compiler won't complain.

@@ -16,10 +16,10 @@
  * under the License.
  */
 
-package org.ballerina.repl.exceptions;
+package org.ballerina.repl;
 
 /**
  * Exception to trigger help message and exit.
  */
-public class ReplCmdHelpException extends Exception {
+public class HelpException extends Exception {
 }

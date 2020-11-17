@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.ballerina.repl.terminal;
+package org.ballerina.repl;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -28,13 +28,13 @@ import java.util.function.Consumer;
  * Exit, Help, etc... commands are invoked in this manner.
  * This will throw an Exception if handled.
  */
-public class ReplCommandHandler {
-    private static final String COMMAND_PREFIX = "/";
-
+public class CommandHandler {
     private final Map<String, Consumer<PrintWriter>> commandHandlers;
+    private final String commandPrefix;
 
-    public ReplCommandHandler() {
+    public CommandHandler(String commandPrefix) {
         this.commandHandlers = new HashMap<>();
+        this.commandPrefix = commandPrefix;
     }
 
     /**
@@ -46,7 +46,7 @@ public class ReplCommandHandler {
      * @param handler Handler to use.
      */
     public void attachHandler(String command, Consumer<PrintWriter> handler) {
-        commandHandlers.put(COMMAND_PREFIX + command, handler);
+        commandHandlers.put(commandPrefix + command, handler);
     }
 
     /**
