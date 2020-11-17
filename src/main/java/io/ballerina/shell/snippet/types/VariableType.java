@@ -18,15 +18,44 @@
 
 package io.ballerina.shell.snippet.types;
 
+import io.ballerina.compiler.syntax.tree.ArrayTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.BuiltinSimpleNameReferenceNode;
+import io.ballerina.compiler.syntax.tree.DistinctTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.ErrorTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.ExpressionNode;
+import io.ballerina.compiler.syntax.tree.FunctionTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.IndexedExpressionNode;
+import io.ballerina.compiler.syntax.tree.IntersectionTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.NilTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
+import io.ballerina.compiler.syntax.tree.ObjectTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.OptionalTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.ParameterizedTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.ParenthesisedTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.QualifiedNameReferenceNode;
+import io.ballerina.compiler.syntax.tree.RecordTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.SimpleNameReferenceNode;
+import io.ballerina.compiler.syntax.tree.SingletonTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.StreamTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
+import io.ballerina.compiler.syntax.tree.TableTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.Token;
+import io.ballerina.compiler.syntax.tree.TupleTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.TypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.TypeReferenceNode;
+import io.ballerina.compiler.syntax.tree.TypeReferenceTypeDescNode;
+import io.ballerina.compiler.syntax.tree.TypedescTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.UnionTypeDescriptorNode;
+import io.ballerina.compiler.syntax.tree.XmlTypeDescriptorNode;
 
-import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- *
+ * Variable type describes the type of a variable.
+ * This also defines whether the type is serializable or not.
  */
 public class VariableType {
     // () value
@@ -45,10 +74,13 @@ public class VariableType {
     private static final ExpressionNode EMPTY_STRING_LITERAL_NODE = NodeFactory.createBasicLiteralNode(
             SyntaxKind.STRING_LITERAL, NodeFactory.createLiteralValueToken(SyntaxKind.STRING_LITERAL_TOKEN, "\"\"",
                     NodeFactory.createEmptyMinutiaeList(), NodeFactory.createEmptyMinutiaeList()));
-    // xml`` value
+    // xml `<!---->` value
     private static final ExpressionNode EMPTY_XML_NODE = NodeFactory.createTemplateExpressionNode(
             SyntaxKind.XML_TEMPLATE_EXPRESSION, NodeFactory.createToken(SyntaxKind.XML_KEYWORD),
-            NodeFactory.createToken(SyntaxKind.BACKTICK_TOKEN), NodeFactory.createNodeList(),
+            NodeFactory.createToken(SyntaxKind.BACKTICK_TOKEN),
+            NodeFactory.createNodeList(NodeFactory.createXMLComment(
+                    NodeFactory.createToken(SyntaxKind.XML_COMMENT_START_TOKEN), NodeFactory.createNodeList(),
+                    NodeFactory.createToken(SyntaxKind.XML_COMMENT_END_TOKEN))),
             NodeFactory.createToken(SyntaxKind.BACKTICK_TOKEN));
     // [] value
     private static final ExpressionNode EMPTY_LIST_NODE = NodeFactory.createListConstructorExpressionNode(
@@ -63,7 +95,6 @@ public class VariableType {
             NodeFactory.createToken(SyntaxKind.TABLE_KEYWORD), null,
             NodeFactory.createToken(SyntaxKind.OPEN_BRACKET_TOKEN), NodeFactory.createSeparatedNodeList(),
             NodeFactory.createToken(SyntaxKind.CLOSE_BRACKET_TOKEN));
-
 
     // () - basic, simple
     public static final VariableType NIL = new VariableType(true, NIL_LITERAL_NODE);
@@ -113,6 +144,28 @@ public class VariableType {
     // Any un-identifiable type - can be user defined, etc...
     public static final VariableType UNIDENTIFIED = new VariableType(false);
 
+    private static final Map<SyntaxKind, VariableType> TYPE_MAP = new HashMap<>();
+
+    // Create a cache of Syntax kind -> Variable types that are known.
+    // This will be used when identifying the variable type.
+    static {
+        TYPE_MAP.put(SyntaxKind.NIL_TYPE_DESC, VariableType.NIL);
+        TYPE_MAP.put(SyntaxKind.INT_KEYWORD, VariableType.NUMERIC);
+        TYPE_MAP.put(SyntaxKind.FLOAT_KEYWORD, VariableType.NUMERIC);
+        TYPE_MAP.put(SyntaxKind.BOOLEAN_KEYWORD, VariableType.BOOLEAN);
+        TYPE_MAP.put(SyntaxKind.DECIMAL_KEYWORD, VariableType.NUMERIC);
+        TYPE_MAP.put(SyntaxKind.STRING_KEYWORD, VariableType.STRING);
+        TYPE_MAP.put(SyntaxKind.XML_TYPE_DESC, VariableType.XML);
+        TYPE_MAP.put(SyntaxKind.ARRAY_TYPE_DESC, VariableType.LIST);
+        TYPE_MAP.put(SyntaxKind.TUPLE_TYPE_DESC, VariableType.LIST);
+        TYPE_MAP.put(SyntaxKind.JSON_KEYWORD, VariableType.JSON_ANYDATA);
+        TYPE_MAP.put(SyntaxKind.ANY_KEYWORD, VariableType.ANY);
+        TYPE_MAP.put(SyntaxKind.OPTIONAL_TYPE_DESC, VariableType.OPTIONAL);
+        TYPE_MAP.put(SyntaxKind.ANYDATA_KEYWORD, VariableType.JSON_ANYDATA);
+        TYPE_MAP.put(SyntaxKind.BYTE_KEYWORD, VariableType.NUMERIC);
+        TYPE_MAP.put(SyntaxKind.MAP_KEYWORD, VariableType.MAP);
+    }
+
     private final boolean isSerializable;
     private final ExpressionNode defaultValue;
     private final boolean warned;
@@ -123,13 +176,104 @@ public class VariableType {
 
     public VariableType(boolean isSerializable, ExpressionNode defaultValue) {
         this(isSerializable, defaultValue, false);
-        Objects.requireNonNull(defaultValue);
     }
 
     public VariableType(boolean isSerializable, ExpressionNode defaultValue, boolean warned) {
         this.isSerializable = isSerializable;
         this.defaultValue = defaultValue;
         this.warned = warned;
+    }
+
+    /**
+     * Identify the variable type associated with the type.
+     *
+     * @param type Node to get syntax kind of.
+     * @return Kind that is associated with node. UNIDENTIFIED if failed.
+     */
+    public static VariableType fromDescriptor(TypeDescriptorNode type) {
+        if (type instanceof ErrorTypeDescriptorNode
+                || type instanceof FunctionTypeDescriptorNode
+                || type instanceof StreamTypeDescriptorNode
+                || type instanceof ObjectTypeDescriptorNode
+                || type instanceof TypedescTypeDescriptorNode) {
+            return VariableType.BEHAVIORAL;
+        } else if (type instanceof SingletonTypeDescriptorNode
+                || type instanceof IntersectionTypeDescriptorNode
+                || type instanceof DistinctTypeDescriptorNode) {
+            return VariableType.OTHER;
+        } else if (type instanceof TableTypeDescriptorNode) {
+            return VariableType.TABLE;
+        } else if (type instanceof XmlTypeDescriptorNode) {
+            return VariableType.XML;
+        } else if (type instanceof RecordTypeDescriptorNode) {
+            return VariableType.RECORD;
+        } else if (type instanceof ArrayTypeDescriptorNode
+                || type instanceof TupleTypeDescriptorNode) {
+            return VariableType.LIST;
+        } else if (type instanceof NilTypeDescriptorNode) {
+            return VariableType.NIL;
+        } else if (type instanceof TypeReferenceTypeDescNode) {
+            return fromDescriptor(((TypeReferenceTypeDescNode) type).typeRef());
+        } else if (type instanceof ParenthesisedTypeDescriptorNode) {
+            return fromDescriptor(((ParenthesisedTypeDescriptorNode) type).typedesc());
+        } else if (type instanceof BuiltinSimpleNameReferenceNode) {
+            return fromToken(((BuiltinSimpleNameReferenceNode) type).name());
+        } else if (type instanceof SimpleNameReferenceNode) {
+            return fromToken(((SimpleNameReferenceNode) type).name());
+        } else if (type instanceof OptionalTypeDescriptorNode) {
+            // Optional cannot be inferred directly
+            // Serializable if all types serializable.
+            // Default is ()
+            Node typeDescriptor = ((OptionalTypeDescriptorNode) type).typeDescriptor();
+            VariableType rest;
+            if (typeDescriptor instanceof TypeDescriptorNode) {
+                rest = fromDescriptor((TypeDescriptorNode) typeDescriptor);
+            } else if (typeDescriptor instanceof Token) {
+                rest = fromToken((Token) typeDescriptor);
+            } else {
+                rest = VariableType.UNIDENTIFIED;
+            }
+            ExpressionNode defaultType = rest.getDefaultValue().orElse(null);
+            boolean isSerializable = VariableType.OPTIONAL.isSerializable() && rest.isSerializable();
+            return new VariableType(isSerializable, defaultType);
+        } else if (type instanceof UnionTypeDescriptorNode) {
+            // Union cannot be inferred directly
+            // Union default cannot be determined. We need internal types for that.
+            //  Serializable if all types serializable.
+            //  Default value of any type with a default.
+            VariableType leftType = fromDescriptor(((UnionTypeDescriptorNode) type).leftTypeDesc());
+            VariableType rightType = fromDescriptor(((UnionTypeDescriptorNode) type).rightTypeDesc());
+            ExpressionNode defaultType = leftType.getDefaultValue().orElse(rightType.getDefaultValue().orElse(null));
+            boolean isSerializable = VariableType.UNION_TYPE.isSerializable()
+                    && leftType.isSerializable() && rightType.isSerializable();
+            return new VariableType(isSerializable, defaultType);
+        } else if (type instanceof ParameterizedTypeDescriptorNode) {
+            // Something like map<string>
+            // Parameterized type as well as type parameter should be serializable
+            // Default would be the default for parameterized type. (if any)
+            // Eg: to be serializable, map and string should be serializable.
+            //     default would be the default of map.
+            ParameterizedTypeDescriptorNode paramTypeDes = (ParameterizedTypeDescriptorNode) type;
+            VariableType paramType = fromToken(paramTypeDes.parameterizedType());
+            VariableType typeParam = fromDescriptor(paramTypeDes.typeParameter().typeNode());
+            return new VariableType(typeParam.isSerializable() && paramType.isSerializable(),
+                    paramType.getDefaultValue().orElse(null));
+        } else if (type instanceof QualifiedNameReferenceNode
+                || type instanceof IndexedExpressionNode
+                || type instanceof TypeReferenceNode) {
+            return VariableType.UNIDENTIFIED;
+        }
+        return VariableType.UNIDENTIFIED;
+    }
+
+    /**
+     * Identify the variable type associated with the type.
+     *
+     * @param type Node to get syntax kind of.
+     * @return Kind that is associated with node. UNIDENTIFIED if failed.
+     */
+    private static VariableType fromToken(Token type) {
+        return TYPE_MAP.getOrDefault(type.kind(), VariableType.UNIDENTIFIED);
     }
 
     public boolean isSerializable() {
@@ -143,4 +287,5 @@ public class VariableType {
     public boolean isWarned() {
         return warned;
     }
+
 }

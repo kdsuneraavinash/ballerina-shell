@@ -6,7 +6,4 @@
  |____/ \__,_|_|_|\___|_|  |_|_| |_|\__,_| |_____/|_| |_|\___|_|_|
 ================================================= version %1$s
 Welcome to Ballerina Shell REPL.
-Type /exit to exit and /about to get about information.
-/imports will show available imports.
-/debug will toggle the debug mode.
-/reset will reset the REPL state.
+Type /exit to exit and /help to get about information.

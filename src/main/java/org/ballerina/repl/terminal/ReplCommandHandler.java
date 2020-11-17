@@ -18,16 +18,10 @@
 
 package org.ballerina.repl.terminal;
 
-import io.ballerina.shell.utils.debug.DebugProvider;
-import org.ballerina.repl.ReplShell;
-import org.ballerina.repl.exceptions.ReplExitException;
-import org.ballerina.repl.exceptions.ReplHandledException;
-import org.ballerina.repl.exceptions.ReplResetException;
-import org.ballerina.repl.exceptions.ReplToggleDebugException;
-import org.jline.utils.AttributedStringBuilder;
-import org.jline.utils.AttributedStyle;
-
 import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Handler to handle built-in REPL commands.
@@ -35,56 +29,40 @@ import java.io.PrintWriter;
  * This will throw an Exception if handled.
  */
 public class ReplCommandHandler {
-    private static final String ABOUT_FILE = "about.txt";
-    private static final String IMPORTS_FILE = "imports.txt";
-    private static final String EXIT_COMMAND = "/exit";
-    private static final String ABOUT_COMMAND = "/about";
-    private static final String TOGGLE_DEBUG = "/debug";
-    private static final String RESET_COMMAND = "/reset";
-    private static final String IMPORTS_COMMAND = "/imports";
-    private static final String EMPTY_LINE = "";
+    private static final String COMMAND_PREFIX = "/";
 
-    private static String coloredText(String text) {
-        return new AttributedStringBuilder()
-                .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.BRIGHT))
-                .append(text)
-                .toAnsi();
+    private final Map<String, Consumer<PrintWriter>> commandHandlers;
+
+    public ReplCommandHandler() {
+        this.commandHandlers = new HashMap<>();
+    }
+
+    /**
+     * Attach a command handler with a command.
+     * The command should not contain the command prefix.
+     * Prefix would be added by this method.
+     *
+     * @param command Command to register. (without prefix)
+     * @param handler Handler to use.
+     */
+    public void attachHandler(String command, Consumer<PrintWriter> handler) {
+        commandHandlers.put(COMMAND_PREFIX + command, handler);
     }
 
     /**
      * This would handle the command and if identified as a valid command,
-     * would execute something and throw a exception to signify that.
-     * This would also throw exceptions to signify to exit.
-     * If no exception, then that signifies that the handler didn't identify the command.
+     * would execute the handler attached to it.
      *
-     * @param command Command to parse.
      * @param output  Output writer to send output to.
-     * @throws ReplExitException        to signify to exit the program.
-     * @throws ReplHandledException     to signify that the command was handled.
-     * @throws ReplToggleDebugException to signify to change the debug mode.
+     * @param command Command to parse.
+     * @return whether the command was handled.
      */
-    public static void handle(String command, PrintWriter output)
-            throws ReplExitException, ReplHandledException, ReplToggleDebugException, ReplResetException {
-        switch (command.toLowerCase().trim()) {
-            case EXIT_COMMAND:
-                throw new ReplExitException();
-            case ABOUT_COMMAND:
-                String aboutContent = ReplShell.readFile(ABOUT_FILE);
-                output.println(coloredText(aboutContent));
-                throw new ReplHandledException();
-            case IMPORTS_COMMAND:
-                String importsContent = ReplShell.readFile(IMPORTS_FILE);
-                output.println(coloredText(importsContent));
-                throw new ReplHandledException();
-            case RESET_COMMAND:
-                output.println(coloredText("Resetting State"));
-                throw new ReplResetException();
-            case EMPTY_LINE:
-                throw new ReplHandledException();
-            case TOGGLE_DEBUG:
-                throw new ReplToggleDebugException();
-            default:
-                DebugProvider.sendMessage("Command not identified as internal command.");
+    public boolean handle(String command, PrintWriter output) {
+        command = command.trim();
+        if (commandHandlers.containsKey(command)) {
+            commandHandlers.get(command).accept(output);
+            return true;
         }
+        return false;
     }
 }

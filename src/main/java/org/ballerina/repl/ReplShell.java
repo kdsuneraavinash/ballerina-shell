@@ -30,10 +30,6 @@ import io.ballerina.shell.transformer.Transformer;
 import io.ballerina.shell.treeparser.TreeParser;
 import io.ballerina.shell.treeparser.TrialTreeParser;
 import io.ballerina.shell.utils.debug.DebugProvider;
-import org.ballerina.repl.exceptions.ReplExitException;
-import org.ballerina.repl.exceptions.ReplHandledException;
-import org.ballerina.repl.exceptions.ReplResetException;
-import org.ballerina.repl.exceptions.ReplToggleDebugException;
 import org.ballerina.repl.terminal.ReplCommandHandler;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -44,6 +40,7 @@ import org.jline.utils.AttributedStyle;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -54,21 +51,37 @@ import java.util.Scanner;
  * REPL shell terminal executor. Launches the terminal.
  */
 public class ReplShell {
-    private static final String REPL_HEADER = "header.txt";
+    private static final String ABOUT_FILE = "about.txt";
+    private static final String IMPORTS_FILE = "imports.txt";
+    private static final String HEADER_FILE = "header.txt";
+    private static final String HELP_FILE = "help.txt";
+
+    private static final String EXIT_COMMAND = "exit";
+    private static final String ABOUT_COMMAND = "about";
+    private static final String TOGGLE_DEBUG = "debug";
+    private static final String RESET_COMMAND = "reset";
+    private static final String IMPORTS_COMMAND = "imports";
+    private static final String HELP_COMMAND = "help";
+
     private static final String REPL_PROMPT = "=$ ";
     private static final String REPL_EXIT_MESSAGE = "Bye!!";
+    private static final String REPL_VERSION = "0.0.1";
+
     private static final String SPECIAL_DELIMITER = "\\A";
-    private static final String VERSION = "0.0.1";
 
     private final Terminal terminal;
     private final LineReader lineReader;
     private final BallerinaShell ballerinaShell;
     private final ReplConfiguration configuration;
+    private final ReplCommandHandler handler;
+    private boolean continueLoop;
 
     public ReplShell(LineReader lineReader, ReplConfiguration configuration) {
+        this.continueLoop = true;
         this.terminal = lineReader.getTerminal();
         this.lineReader = lineReader;
         this.configuration = configuration;
+        this.handler = new ReplCommandHandler();
 
         ReplResultController controller = new ReplResultController(terminal);
 
@@ -78,6 +91,7 @@ public class ReplShell {
         Executor<?, ?, ?> executor = configuration.getExecutor();
         Postprocessor postprocessor = new BasicPostProcessor(controller);
         this.ballerinaShell = new BallerinaShell(preprocessor, parser, transformer, executor, postprocessor);
+
     }
 
     /**
@@ -87,36 +101,33 @@ public class ReplShell {
      * TODO: (Issue) exits when ctrl+c when executing shell command.
      */
     public void execute() {
-        // Output welcome banner
-        String banner = readFile(REPL_HEADER);
-        banner = String.format(banner, VERSION);
+        // 1. Output welcome banner
+        // 2. Attach handlers
+        // 3. In each iteration,
+        //      a. Read and handle internal commands
+        //      b. If not handled, evaluate line
+        // ^C will be ignored.
+        // The time taken for execution is recorded.
+
+        String banner = readFile(HEADER_FILE);
+        banner = String.format(banner, REPL_VERSION);
         terminal.writer().println(banner);
-
+        attachCommandHandlers();
         Duration previousDuration = null;
-        while (true) {
-            try {
-                // Read and handle internal commands
-                String line = readInput(previousDuration);
-                ReplCommandHandler.handle(line, terminal.writer());
 
-                // Evaluate and Print
+        while (continueLoop) {
+            try {
+                String line = readInput(previousDuration);
                 Instant start = Instant.now();
                 try {
-                    ballerinaShell.evaluate(line.trim());
+                    if (!handler.handle(line, terminal.writer())) {
+                        ballerinaShell.evaluate(line.trim());
+                    }
                 } finally {
                     Instant end = Instant.now();
                     previousDuration = Duration.between(start, end);
                 }
-
-            } catch (ReplExitException e) {
-                terminal.writer().println(REPL_EXIT_MESSAGE);
-                break;
-            } catch (ReplResetException e) {
-                ballerinaShell.reset();
-            } catch (ReplToggleDebugException e) {
-                configuration.toggleDiagnosticOutputMode();
-            } catch (UserInterruptException | EndOfFileException | ReplHandledException ignored) {
-                // ignore
+            } catch (UserInterruptException | EndOfFileException ignored) {
             } catch (Exception e) {
                 DebugProvider.sendMessage(e.toString());
                 String message = new AttributedStringBuilder()
@@ -127,7 +138,7 @@ public class ReplShell {
                 terminal.writer().flush();
             }
         }
-
+        terminal.writer().println(REPL_EXIT_MESSAGE);
         terminal.writer().flush();
     }
 
@@ -149,6 +160,18 @@ public class ReplShell {
     }
 
     /**
+     * Attach the command handlers for internal command.
+     */
+    private void attachCommandHandlers() {
+        this.handler.attachHandler(EXIT_COMMAND, (w) -> this.continueLoop = false);
+        this.handler.attachHandler(HELP_COMMAND, (w) -> outputResource(HELP_FILE, w));
+        this.handler.attachHandler(IMPORTS_COMMAND, (w) -> outputResource(IMPORTS_FILE, w));
+        this.handler.attachHandler(ABOUT_COMMAND, (w) -> outputResource(ABOUT_FILE, w));
+        this.handler.attachHandler(TOGGLE_DEBUG, (w) -> configuration.toggleDiagnosticOutputMode());
+        this.handler.attachHandler(RESET_COMMAND, (w) -> ballerinaShell.reset());
+    }
+
+    /**
      * Reads the header file content from the resources.
      *
      * @return Read text.
@@ -160,5 +183,19 @@ public class ReplShell {
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         Scanner scanner = new Scanner(reader).useDelimiter(SPECIAL_DELIMITER);
         return scanner.hasNext() ? scanner.next() : "";
+    }
+
+    /**
+     * Read a resource file and output its content to the terminal.
+     *
+     * @param path   File to read.
+     * @param writer Writer to use to output.
+     */
+    public static void outputResource(String path, PrintWriter writer) {
+        String content = readFile(path);
+        String text = new AttributedStringBuilder()
+                .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.BRIGHT))
+                .append(content).toAnsi();
+        writer.println(text);
     }
 }
