@@ -18,8 +18,6 @@
 
 package io.ballerina.shell.snippet;
 
-import io.ballerina.shell.exceptions.SnippetException;
-
 /**
  * Every snippet must have a kind (which dictates where the snippet should go and
  * the sub kind depicting the statement type) Each input line in the REPL can refer to one or more snippets.
@@ -76,18 +74,5 @@ public abstract class Snippet {
     @Override
     public String toString() {
         return String.format("(%s) %s:%s", getClass().getSimpleName(), subKind.getKind(), subKind);
-    }
-
-    /**
-     * Helper method to throw a snippet exception if a a condition is not met in the syntax tree.
-     * Use to check for un-allowed nodes.
-     *
-     * @param condition Condition to check. This should be true. If not exception is thrown.
-     * @param message   Error message.
-     */
-    protected static void assertTrue(boolean condition, String message) {
-        if (!condition) {
-            throw new SnippetException(message);
-        }
     }
 }

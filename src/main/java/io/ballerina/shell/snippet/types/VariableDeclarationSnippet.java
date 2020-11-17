@@ -184,10 +184,12 @@ public class VariableDeclarationSnippet extends Snippet {
         }
     }
 
+    @SuppressWarnings("unused")
     public String getVariableName() {
         return variableName;
     }
 
+    @SuppressWarnings("unused")
     public boolean isSerializable() {
         return isSerializable;
     }

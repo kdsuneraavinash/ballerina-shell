@@ -64,20 +64,17 @@ public class ReEvalContext implements Context {
     }
 
     private final List<String> imports;
-    private final List<String> importPrefixes;
     private final List<String> moduleDclns;
     private final List<String> varDclns;
     private final List<StatementExpression> stmts;
     private final StatementExpression lastStmt;
 
     public ReEvalContext(List<String> imports,
-                         List<String> importPrefixes,
                          List<String> moduleDclns,
                          List<String> varDclns,
                          List<StatementExpression> stmts,
                          StatementExpression lastStmt) {
         this.imports = imports;
-        this.importPrefixes = importPrefixes;
         this.moduleDclns = moduleDclns;
         this.varDclns = varDclns;
         this.stmts = stmts;
@@ -87,11 +84,6 @@ public class ReEvalContext implements Context {
     @TemplateAccessible
     public List<String> getImports() {
         return imports;
-    }
-
-    @TemplateAccessible
-    public List<String> getImportPrefixes() {
-        return importPrefixes;
     }
 
     @TemplateAccessible
@@ -115,11 +107,13 @@ public class ReEvalContext implements Context {
     }
 
     @TemplateAccessible
+    @SuppressWarnings("SameReturnValue")
     public String getIoActivationStart() {
         return Postprocessor.ACTIVATION_START;
     }
 
     @TemplateAccessible
+    @SuppressWarnings("SameReturnValue")
     public String getIoActivationEnd() {
         return Postprocessor.ACTIVATION_END;
     }

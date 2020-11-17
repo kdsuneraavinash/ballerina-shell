@@ -30,7 +30,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Scanner;
 
 /**
@@ -54,7 +57,7 @@ public class JarShellInvoker extends ShellInvoker {
         process.waitFor();
 
         // Output compiler output
-        try (Scanner err = new Scanner(process.getErrorStream())) {
+        try (Scanner err = new Scanner(process.getErrorStream(), Charset.defaultCharset())) {
             while (err.hasNextLine()) {
                 postprocessor.onCompilerOutput(err.nextLine());
             }
@@ -65,31 +68,37 @@ public class JarShellInvoker extends ShellInvoker {
         }
 
         // Setup context
-        PrintStream intercept = new InterceptedPrintStream(new FileOutputStream(ALT_STDOUT),
-                postprocessor::onProgramOutput);
-        PrintStream originalStdOut = System.out; // Take backup STDOUT
-        PrintStream originalStdErr = System.err; // Take backup STDERR
-        System.setOut(intercept);
-        System.setErr(intercept);
-        System.setSecurityManager(new NoExitVmSecurityManager());
+        try (FileOutputStream fos = new FileOutputStream(ALT_STDOUT)) {
+            PrintStream intercept = new InterceptedPrintStream(fos, postprocessor::onProgramOutput);
+            PrintStream originalStdOut = System.out; // Take backup STDOUT
+            PrintStream originalStdErr = System.err; // Take backup STDERR
+            System.setOut(intercept);
+            System.setErr(intercept);
+            System.setSecurityManager(new NoExitVmSecurityManager());
 
-        try {
-            URL[] jarPath = {Paths.get(jarFile).toUri().toURL()};
-            URLClassLoader child = new URLClassLoader(jarPath, this.getClass().getClassLoader());
-            Class<?> classToLoad = Class.forName("$_init", true, child);
-            Method method = classToLoad.getDeclaredMethod("main", String[].class);
-            method.invoke(null, new Object[]{new String[]{}});
-        } catch (NoSuchMethodException
-                | IllegalAccessException
-                | ClassNotFoundException e) {
-            throw new ExecutorException(e);
-        } catch (InvocationTargetException e) {
-            // ignore
-        } finally {
-            // Restore context
-            System.setSecurityManager(null);
-            System.setOut(originalStdOut); // Restore STDOUT
-            System.setErr(originalStdErr); // Restore STDERR
+            try {
+                URL[] jarPath = {Paths.get(jarFile).toUri().toURL()};
+                URLClassLoader child = AccessController.doPrivileged(new PrivilegedAction<>() {
+                    @Override
+                    public URLClassLoader run() {
+                        return new URLClassLoader(jarPath, this.getClass().getClassLoader());
+                    }
+                });
+                Class<?> classToLoad = Class.forName("$_init", true, child);
+                Method method = classToLoad.getDeclaredMethod("main", String[].class);
+                method.invoke(null, new Object[]{new String[]{}});
+            } catch (NoSuchMethodException
+                    | IllegalAccessException
+                    | ClassNotFoundException e) {
+                throw new ExecutorException(e);
+            } catch (InvocationTargetException e) {
+                // ignore
+            } finally {
+                // Restore context
+                System.setSecurityManager(null);
+                System.setOut(originalStdOut); // Restore STDOUT
+                System.setErr(originalStdErr); // Restore STDERR
+            }
         }
 
         return true;

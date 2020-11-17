@@ -20,7 +20,6 @@ package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
@@ -28,9 +27,8 @@ import io.ballerina.shell.snippet.SnippetSubKind;
  * specific kind could not be determined.
  */
 public class ErroneousSnippet extends Snippet {
-    protected ErroneousSnippet(Node node, SnippetSubKind subKind) {
-        super(node.toSourceCode(), subKind);
-        assert subKind.getKind() == SnippetKind.ERRONEOUS_KIND;
+    protected ErroneousSnippet(Node node) {
+        super(node.toSourceCode(), SnippetSubKind.ERROR);
     }
 
     /**
@@ -40,6 +38,6 @@ public class ErroneousSnippet extends Snippet {
      * @return Snippet that contains the node.
      */
     public static ErroneousSnippet tryFromNode(Node node) {
-        return new ErroneousSnippet(node, SnippetSubKind.ERROR);
+        return new ErroneousSnippet(node);
     }
 }

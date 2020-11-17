@@ -23,9 +23,9 @@ import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.invoker.AsyncShellInvoker;
 import io.ballerina.shell.executor.invoker.ShellInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
-import io.ballerina.shell.snippet.types.ImportSnippet;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.types.ImportSnippet;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,19 +55,11 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
         List<String> variableDeclarations = Context.snippetsToStrings(state.variableDeclarations());
         List<ReEvalContext.StatementExpression> statementsAndExpressions = new ArrayList<>();
         ReEvalContext.StatementExpression newStatementOrExpression = new ReEvalContext.StatementExpression(newSnippet);
-        List<String> importPrefixes = new ArrayList<>();
-
-        // Add import prefixes
-        for (Snippet importSnippet : state.imports()) {
-            assert importSnippet instanceof ImportSnippet;
-            importPrefixes.add(((ImportSnippet) importSnippet).getImportName());
-        }
 
         // Add to correct category
         if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
             assert newSnippet instanceof ImportSnippet;
             imports.add(newSnippet.toSourceCode());
-            importPrefixes.add(((ImportSnippet) newSnippet).getImportName());
         } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
             moduleDeclarations.add(newSnippet.toSourceCode());
         } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
@@ -81,7 +73,7 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
             }
         }
 
-        return new ReEvalContext(imports, importPrefixes, moduleDeclarations,
+        return new ReEvalContext(imports, moduleDeclarations,
                 variableDeclarations, statementsAndExpressions, newStatementOrExpression);
     }
 

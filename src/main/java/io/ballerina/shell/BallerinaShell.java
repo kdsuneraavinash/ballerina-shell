@@ -40,7 +40,7 @@ public class BallerinaShell {
     private final Preprocessor preprocessor;
     private final TreeParser parser;
     private final Transformer transformer;
-    private final Executor executor;
+    private final Executor<?, ?, ?> executor;
     private final Postprocessor postprocessor;
 
     /**
@@ -53,7 +53,7 @@ public class BallerinaShell {
      * @param postprocessor Post processor to use.
      */
     public BallerinaShell(Preprocessor preprocessor, TreeParser parser,
-                          Transformer transformer, Executor executor,
+                          Transformer transformer, Executor<?, ?, ?> executor,
                           Postprocessor postprocessor) {
         this.preprocessor = preprocessor;
         this.parser = parser;

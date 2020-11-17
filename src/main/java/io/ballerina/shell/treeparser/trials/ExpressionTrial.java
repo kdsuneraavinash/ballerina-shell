@@ -59,7 +59,7 @@ public class ExpressionTrial implements TreeParserTrial {
             FunctionBodyBlockNode mainFunctionBody = (FunctionBodyBlockNode) mainFunction.functionBody();
             ReturnStatementNode returnStatement = (ReturnStatementNode) mainFunctionBody.statements().get(0);
             if (returnStatement.expression().isEmpty()) {
-                throw new ParserTrialFailedException("Return statement not parsed");
+                throw new RuntimeException("Return statement not parsed");
             }
             return returnStatement.expression().get();
         } catch (Exception e) {

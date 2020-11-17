@@ -25,8 +25,4 @@ public class ParserTrialFailedException extends Exception {
     ParserTrialFailedException(Throwable throwable) {
         super("Syntax tree parsing failed", throwable);
     }
-
-    ParserTrialFailedException(String message) {
-        super(message);
-    }
 }

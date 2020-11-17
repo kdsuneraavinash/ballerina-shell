@@ -56,6 +56,8 @@ public class ImportSnippet extends Snippet {
         return null;
     }
 
+
+    @SuppressWarnings("unused")
     public String getImportName() {
         return importName;
     }
