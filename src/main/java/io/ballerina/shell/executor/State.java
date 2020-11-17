@@ -18,8 +18,6 @@
 
 package io.ballerina.shell.executor;
 
-import io.ballerina.shell.snippet.Snippet;
-
 /**
  * State is the object where the executor persists
  * its execution state.
@@ -29,13 +27,4 @@ public interface State {
      * Reset state to initial state.
      */
     void reset();
-
-    /**
-     * Adds a snippet to state on the correct array depending on the
-     * type of new snippet.
-     * For example, if the new snippet is a expression, that list would be operated.
-     *
-     * @param newSnippet Snippet to check the type of.
-     */
-    void addSnippet(Snippet newSnippet);
 }

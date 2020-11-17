@@ -18,8 +18,8 @@
 
 package io.ballerina.shell.transformer;
 
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.utils.debug.DebugProvider;
 
 /**
  * A transformer to apply all transformers.
@@ -34,8 +34,7 @@ public class CombinedTransformer implements Transformer {
      */
     public CombinedTransformer(Transformer... transformers) {
         // Send a debug message of transformers
-        DebugProvider.sendMessage("Attached %s transformers.",
-                String.valueOf(transformers.length));
+        PrinterProvider.debug("Attached transformers: " + transformers.length);
 
         this.transformers = transformers;
     }

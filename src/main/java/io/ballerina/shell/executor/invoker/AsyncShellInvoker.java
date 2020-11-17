@@ -18,8 +18,8 @@
 
 package io.ballerina.shell.executor.invoker;
 
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.postprocessor.Postprocessor;
-import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +39,7 @@ public class AsyncShellInvoker extends ShellInvoker {
 
     public AsyncShellInvoker(String file) {
         String command = String.format(BALLERINA_COMMAND, file);
-        DebugProvider.sendMessage("Shell command invocation used: " + command);
+        PrinterProvider.debug("Shell command invocation used: " + command);
         this.command = command;
     }
 
@@ -66,7 +66,7 @@ public class AsyncShellInvoker extends ShellInvoker {
         stdErrThread.join();
 
 
-        DebugProvider.sendMessage("Execution finished with exit code %s.", String.valueOf(exitCode));
+        PrinterProvider.debug("Execution finished with exit code " + exitCode);
         assert !stdOutThread.isAlive() && !stdErrThread.isAlive();
         return exitCode == 0;
     }
@@ -86,7 +86,6 @@ public class AsyncShellInvoker extends ShellInvoker {
                     stringConsumer.accept(scanner.nextLine());
                 }
             }
-            DebugProvider.sendMessage("Thread %s exiting.", String.valueOf(name));
         }, name);
     }
 }

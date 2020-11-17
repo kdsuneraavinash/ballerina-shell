@@ -18,10 +18,10 @@
 
 package io.ballerina.shell.executor.reeval;
 
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.executor.State;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
-import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,7 +48,7 @@ public class ReEvalState implements State {
 
     @Override
     public void reset() {
-        DebugProvider.sendMessage("Resetting ReEval State.");
+        PrinterProvider.debug("Resetting ReEval State.");
         imports.clear();
         moduleDeclarations.clear();
         variableDefinitions.clear();
@@ -56,7 +56,13 @@ public class ReEvalState implements State {
         variableNames.clear();
     }
 
-    @Override
+    /**
+     * Adds a snippet to state on the correct array depending on the
+     * type of new snippet.
+     * For example, if the new snippet is a expression, that list would be operated.
+     *
+     * @param newSnippet Snippet to check the type of.
+     */
     public void addSnippet(Snippet newSnippet) {
         if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
             imports.add(newSnippet);

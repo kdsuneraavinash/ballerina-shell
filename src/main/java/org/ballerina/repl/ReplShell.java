@@ -19,6 +19,7 @@
 package org.ballerina.repl;
 
 import io.ballerina.shell.BallerinaShell;
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.postprocessor.BasicPostProcessor;
 import io.ballerina.shell.postprocessor.Postprocessor;
@@ -29,7 +30,6 @@ import io.ballerina.shell.transformer.CombinedTransformer;
 import io.ballerina.shell.transformer.Transformer;
 import io.ballerina.shell.treeparser.TreeParser;
 import io.ballerina.shell.treeparser.TrialTreeParser;
-import io.ballerina.shell.utils.debug.DebugProvider;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.UserInterruptException;
@@ -83,13 +83,11 @@ public class ReplShell {
         this.configuration = configuration;
         this.handler = new CommandHandler(COMMAND_PREFIX);
 
-        ReplShellController controller = new ReplShellController(terminal);
-
         Preprocessor preprocessor = new CombinedPreprocessor(new SeparatorPreprocessor());
         TreeParser parser = new TrialTreeParser();
         Transformer transformer = new CombinedTransformer();
         Executor<?, ?, ?> executor = configuration.getExecutor();
-        Postprocessor postprocessor = new BasicPostProcessor(controller);
+        Postprocessor postprocessor = new BasicPostProcessor();
         this.ballerinaShell = new BallerinaShell(preprocessor, parser, transformer, executor, postprocessor);
 
     }
@@ -128,7 +126,7 @@ public class ReplShell {
                 }
             } catch (UserInterruptException | EndOfFileException ignored) {
             } catch (Exception e) {
-                DebugProvider.sendMessage(e.toString());
+                PrinterProvider.debug(e.toString());
                 String message = colored(e.getMessage(), AttributedStyle.RED);
                 terminal.writer().println(message);
                 configuration.printStackTrace(e);

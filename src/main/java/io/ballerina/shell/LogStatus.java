@@ -43,5 +43,10 @@ public enum LogStatus {
      * Success log status.
      * Output from the real compiled programme.
      */
-    SUCCESS
+    SUCCESS,
+
+    /**
+     * Debug log status.
+     */
+    DEBUG
 }

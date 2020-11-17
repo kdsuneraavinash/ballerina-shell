@@ -19,10 +19,9 @@
 package io.ballerina.shell;
 
 /**
- * Public interface for the shell result of the Ballerina Shell.
- * {@code BallerinaShell} would use this to notify of the events.
+ * Interface of a callback to output debug messages.
  */
-public interface ShellController {
+public interface PrinterService {
     /**
      * Adds a shell results to the output.
      * Child classes may override this to fetch the shell results.
@@ -31,5 +30,5 @@ public interface ShellController {
      * @param output Output string.
      * @param status Status of the output.
      */
-    void emitResult(String output, LogStatus status);
+    void write(String output, LogStatus status);
 }

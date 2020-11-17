@@ -16,36 +16,41 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.debug;
+package io.ballerina.shell;
 
 /**
  * Debug information collection class.
  * Call {@code addDebugMessage} to add a message.
  * Messages can also be cleared.
  */
-public class DebugProvider {
-    private static DebugWriter debugWriter;
+public class PrinterProvider {
+    private static PrinterService printerService;
 
     /**
      * Add a new debug message.
      *
-     * @param message   Debug message content template.
-     * @param arguments Values to populate the template.
+     * @param message Debug message content template.
      */
-    public static void sendMessage(String message, String... arguments) {
-        String formattedMessage = message;
-        if (arguments.length != 0) {
-            formattedMessage = String.format(message, (Object[]) arguments);
-        }
-        if (debugWriter != null) {
-            debugWriter.write(formattedMessage);
+    public static void debug(String message) {
+        emit(message, LogStatus.DEBUG);
+    }
+
+    /**
+     * Add a new message.
+     *
+     * @param message Message to output.
+     * @param status  Status of the log. (error/debug/warning/...)
+     */
+    public static void emit(String message, LogStatus status) {
+        if (printerService != null) {
+            printerService.write(message, status);
         }
     }
 
     /**
      * Set the writer. Disables writing if null.
      */
-    public static void setWriter(DebugWriter debugWriter) {
-        DebugProvider.debugWriter = debugWriter;
+    public static void setWriter(PrinterService printerService) {
+        PrinterProvider.printerService = printerService;
     }
 }

@@ -18,22 +18,14 @@
 
 package io.ballerina.shell.postprocessor;
 
-import io.ballerina.shell.ShellController;
-
 /**
  * Processes a string output to a processed string.
  * May perform some filtering, mapping on the output string.
  * Used to listen to STDOUT, STDERR streams.
  */
-public abstract class Postprocessor {
-    public static final String ACTIVATION_START = "[[__START__]]";
-    public static final String ACTIVATION_END = "[[__END__]]";
-
-    protected final ShellController controller;
-
-    public Postprocessor(ShellController controller) {
-        this.controller = controller;
-    }
+public interface Postprocessor {
+    String ACTIVATION_START = "[[__START__]]";
+    String ACTIVATION_END = "[[__END__]]";
 
     /**
      * Processes a line sent the stdout of the program.
@@ -41,7 +33,7 @@ public abstract class Postprocessor {
      *
      * @param line Input string line.
      */
-    public abstract void onProgramOutput(String line);
+    void onProgramOutput(String line);
 
     /**
      * Processes a line sent by the compiler.
@@ -50,5 +42,5 @@ public abstract class Postprocessor {
      *
      * @param line Input string line.
      */
-    public abstract void onCompilerOutput(String line);
+    void onCompilerOutput(String line);
 }

@@ -31,10 +31,10 @@ import io.ballerina.compiler.syntax.tree.RestBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.WildcardBindingPatternNode;
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.exceptions.SnippetException;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
-import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.util.Optional;
 
@@ -118,7 +118,7 @@ public class VariableDeclarationSnippet extends Snippet {
                         "Initializer is required for variable declarations of this type.\n" +
                         "REPL will infer most of the types' default values, but this type could not be inferred.");
             }
-            DebugProvider.sendMessage("Inferred default value: " + type.getDefaultValue().get());
+            PrinterProvider.debug("Inferred default value: " + type.getDefaultValue().get());
 
             // Inject default value.
             sourceCode = NodeFactory.createModuleVariableDeclarationNode(
@@ -130,11 +130,11 @@ public class VariableDeclarationSnippet extends Snippet {
 
         // Now try to identify the variable name.
         Optional<String> variableName = identifyName(dclnNode.typedBindingPattern().bindingPattern());
-        DebugProvider.sendMessage("Identified variable name: " + variableName);
+        PrinterProvider.debug("Identified variable name: " + variableName);
 
         boolean isSerializable = type.isSerializable() && variableName.isPresent();
         if (isSerializable) {
-            DebugProvider.sendMessage("The variable is a candidate for serialization.");
+            PrinterProvider.debug("The variable is a candidate for serialization.");
         }
         return new VariableDeclarationSnippet(sourceCode, variableName.orElse(null), isSerializable);
     }

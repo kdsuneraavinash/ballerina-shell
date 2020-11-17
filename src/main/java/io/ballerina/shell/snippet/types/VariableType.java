@@ -48,7 +48,7 @@ import io.ballerina.compiler.syntax.tree.TypeReferenceTypeDescNode;
 import io.ballerina.compiler.syntax.tree.TypedescTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.UnionTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.XmlTypeDescriptorNode;
-import io.ballerina.shell.utils.debug.DebugProvider;
+import io.ballerina.shell.PrinterProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -279,7 +279,7 @@ public class VariableType {
 
     public boolean isSerializable() {
         if (warned) {
-            DebugProvider.sendMessage("Checking serializable-ity on a warned type.");
+            PrinterProvider.debug("Checking serializable-ity on a warned type.");
         }
         return isSerializable;
     }

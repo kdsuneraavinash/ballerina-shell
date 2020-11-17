@@ -18,6 +18,7 @@
 
 package io.ballerina.shell.executor.reeval;
 
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.invoker.AsyncShellInvoker;
@@ -27,7 +28,6 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.types.ImportSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
-import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -102,7 +102,7 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
             VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
             if (varSnippet.isSerializable()) {
                 state.addNewVariableName(varSnippet.getVariableName());
-                DebugProvider.sendMessage("Current variable names: " + state.variableNames());
+                PrinterProvider.debug("Current variable names: " + state.variableNames());
             }
         }
     }

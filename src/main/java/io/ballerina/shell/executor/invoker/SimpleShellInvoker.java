@@ -18,8 +18,8 @@
 
 package io.ballerina.shell.executor.invoker;
 
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.postprocessor.Postprocessor;
-import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -37,7 +37,7 @@ public class SimpleShellInvoker extends ShellInvoker {
 
     public SimpleShellInvoker(String file) {
         String command = String.format(BALLERINA_COMMAND, file);
-        DebugProvider.sendMessage("Shell command invocation used: " + command);
+        PrinterProvider.debug("Shell command invocation used: " + command);
         this.command = command;
     }
 
@@ -59,8 +59,8 @@ public class SimpleShellInvoker extends ShellInvoker {
         }
 
         int exitCode = process.exitValue();
-        DebugProvider.sendMessage(
-                "Execution finished with exit code %s.", String.valueOf(exitCode));
+        PrinterProvider.debug(
+                "Execution finished with exit code " + exitCode);
         return exitCode == 0;
     }
 }

@@ -18,7 +18,7 @@
 
 package org.ballerina.repl;
 
-import io.ballerina.shell.utils.debug.DebugProvider;
+import io.ballerina.shell.PrinterProvider;
 import org.jline.reader.impl.completer.StringsCompleter;
 
 import java.io.InputStream;
@@ -61,8 +61,7 @@ public class KeywordCompleter extends StringsCompleter {
             keywords.add(keyword);
         }
 
-        DebugProvider.sendMessage("Keyword completer attached! Keywords found: %s.",
-                String.valueOf(keywords.size()));
+        PrinterProvider.debug("Keyword completer attached! Keywords found: " + keywords.size());
         return keywords;
     }
 }

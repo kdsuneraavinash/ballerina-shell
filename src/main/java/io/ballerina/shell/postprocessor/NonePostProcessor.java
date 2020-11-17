@@ -19,23 +19,19 @@
 package io.ballerina.shell.postprocessor;
 
 import io.ballerina.shell.LogStatus;
-import io.ballerina.shell.ShellController;
+import io.ballerina.shell.PrinterProvider;
 
 /**
  * Will output STDERR and STDOUT to the controller directly without processing.
  */
-public class NonePostProcessor extends Postprocessor {
-    public NonePostProcessor(ShellController controller) {
-        super(controller);
-    }
-
+public class NonePostProcessor implements Postprocessor {
     @Override
     public void onProgramOutput(String line) {
-        controller.emitResult(line, LogStatus.SUCCESS);
+        PrinterProvider.emit(line, LogStatus.SUCCESS);
     }
 
     @Override
     public void onCompilerOutput(String line) {
-        controller.emitResult(line, LogStatus.ERROR);
+        PrinterProvider.emit(line, LogStatus.ERROR);
     }
 }

@@ -19,13 +19,13 @@
 package io.ballerina.shell.postprocessor;
 
 import io.ballerina.shell.LogStatus;
-import io.ballerina.shell.ShellController;
+import io.ballerina.shell.PrinterProvider;
 
 /**
  * Will output STDERR and STDOUT to the controller.
  * Will use error and warning prefixes to categorize STDERR.
  */
-public class BasicPostProcessor extends Postprocessor {
+public class BasicPostProcessor implements Postprocessor {
     private static final String ERROR_PREFIX = "error:";
     private static final String WARNING_PREFIX = "warning:";
     private static final String EXPECTED_COMPILING_MSG = "Compiling source";
@@ -34,11 +34,6 @@ public class BasicPostProcessor extends Postprocessor {
 
     private boolean isActivated;
 
-    public BasicPostProcessor(ShellController controller) {
-        super(controller);
-        isActivated = false;
-    }
-
     @Override
     public void onProgramOutput(String line) {
         if (line.trim().equals(ACTIVATION_START)) {
@@ -46,16 +41,16 @@ public class BasicPostProcessor extends Postprocessor {
         } else if (line.trim().equals(ACTIVATION_END)) {
             isActivated = false;
         } else if (isActivated) {
-            controller.emitResult(line, LogStatus.SUCCESS);
+            PrinterProvider.emit(line, LogStatus.SUCCESS);
         }
     }
 
     @Override
     public void onCompilerOutput(String line) {
         if (line.startsWith(ERROR_PREFIX)) {
-            controller.emitResult(line, LogStatus.ERROR);
+            PrinterProvider.emit(line, LogStatus.ERROR);
         } else if (line.startsWith(WARNING_PREFIX)) {
-            controller.emitResult(line, LogStatus.WARNING);
+            PrinterProvider.emit(line, LogStatus.WARNING);
         } else {
             String stripped = line.trim();
             if (stripped.isBlank()
@@ -65,7 +60,7 @@ public class BasicPostProcessor extends Postprocessor {
                 return;
             }
             // Unexpected line
-            controller.emitResult(line, LogStatus.FATAL_ERROR);
+            PrinterProvider.emit(line, LogStatus.FATAL_ERROR);
         }
     }
 }

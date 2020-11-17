@@ -18,7 +18,7 @@
 
 package io.ballerina.shell.preprocessor;
 
-import io.ballerina.shell.utils.debug.DebugProvider;
+import io.ballerina.shell.PrinterProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +37,7 @@ public class CombinedPreprocessor implements Preprocessor {
      */
     public CombinedPreprocessor(Preprocessor... preprocessors) {
         // Send a debug message of preprocessors
-        DebugProvider.sendMessage("Attached %s preprocessors.",
-                String.valueOf(preprocessors.length));
-
+        PrinterProvider.debug("Attached preprocessors: " + preprocessors.length);
         this.preprocessors = preprocessors;
     }
 

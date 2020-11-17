@@ -18,10 +18,10 @@
 
 package org.ballerina.repl;
 
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.asm.JarExecutor;
 import io.ballerina.shell.executor.reeval.ReEvalExecutor;
-import io.ballerina.shell.utils.debug.DebugProvider;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
@@ -82,11 +82,11 @@ public class ReplConfiguration {
      */
     private void setDiagnosticOutputMode() {
         if (isDebugMode) {
-            DebugProvider.setWriter(new ReplDebugWriter(terminal));
-            DebugProvider.sendMessage("Diagnostic output mode set to ON.");
+            PrinterProvider.setWriter(new ReplPrinterService(terminal));
+            PrinterProvider.debug("Diagnostic output mode set to ON.");
         } else {
-            DebugProvider.sendMessage("Diagnostic output mode set to OFF.");
-            DebugProvider.setWriter(null);
+            PrinterProvider.debug("Diagnostic output mode set to OFF.");
+            PrinterProvider.setWriter(null);
         }
     }
 

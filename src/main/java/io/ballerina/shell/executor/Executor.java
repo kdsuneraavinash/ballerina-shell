@@ -20,10 +20,10 @@ package io.ballerina.shell.executor;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.utils.debug.DebugProvider;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -69,7 +69,7 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
 
         String message = String.format("Using %s with %s invoker on %s file.",
                 getClass().getSimpleName(), invoker.getClass().getSimpleName(), templateName);
-        DebugProvider.sendMessage(message);
+        PrinterProvider.debug(message);
     }
 
     /**
@@ -96,7 +96,7 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
             }
             return isSuccess;
         } catch (Exception e) {
-            DebugProvider.sendMessage("Process invoker/File generator failed!");
+            PrinterProvider.debug("Process invoker/File generator failed!");
             throw new ExecutorException(e);
         }
     }

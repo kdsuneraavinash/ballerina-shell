@@ -18,28 +18,44 @@
 
 package org.ballerina.repl;
 
-import io.ballerina.shell.utils.debug.DebugWriter;
+import io.ballerina.shell.LogStatus;
+import io.ballerina.shell.PrinterService;
 import org.jline.terminal.Terminal;
-import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 
 /**
  * Diagnostic writer that will write to the
  * REPL with a different color output.
  */
-public class ReplDebugWriter implements DebugWriter {
+public class ReplPrinterService implements PrinterService {
     private final Terminal terminal;
 
-    public ReplDebugWriter(Terminal terminal) {
+    public ReplPrinterService(Terminal terminal) {
         this.terminal = terminal;
     }
 
     @Override
-    public void write(String write) {
-        String message = new AttributedStringBuilder()
-                .style(AttributedStyle.DEFAULT.foreground(AttributedStyle.BRIGHT))
-                .append(write).toAnsi();
-        terminal.writer().println(message);
-        terminal.writer().flush();
+    public void write(String output, LogStatus status) {
+        int color;
+        switch (status) {
+            case FATAL_ERROR:
+                color = AttributedStyle.RED;
+                break;
+            case ERROR:
+                color = AttributedStyle.YELLOW;
+                break;
+            case WARNING:
+                color = AttributedStyle.CYAN;
+                break;
+            case SUCCESS:
+                color = AttributedStyle.GREEN;
+                break;
+            default:
+                color = AttributedStyle.BRIGHT;
+                break;
+        }
+        output = ReplShell.colored(output, color);
+        terminal.writer().println(output);
+        terminal.flush();
     }
 }
