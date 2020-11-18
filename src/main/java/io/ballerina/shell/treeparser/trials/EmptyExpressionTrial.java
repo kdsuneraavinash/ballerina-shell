@@ -18,12 +18,9 @@
 
 package io.ballerina.shell.treeparser.trials;
 
-import io.ballerina.compiler.syntax.tree.ExpressionNode;
-import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
-import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.tools.text.TextDocument;
@@ -33,35 +30,22 @@ import io.ballerina.tools.text.TextDocuments;
  * Attempts to capture a empty expression.
  * This could be a comment, white space, etc...
  * Puts in the module level and checks for empty module level entry.
+ * Empty entries are converted to ().
  */
-public class EmptyExpressionTrial implements TreeParserTrial {
+public class EmptyExpressionTrial extends TreeParserTrial {
+    private static final Node EMPTY_NODE = NodeFactory.createNilLiteralNode(
+            NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
+            NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN));
+
     @Override
-    public Node tryParse(String source) throws ParserTrialFailedException {
-        try {
-            TextDocument document = TextDocuments.from(source);
-            SyntaxTree tree = SyntaxTree.from(document);
-            ModulePartNode node = tree.rootNode();
+    public Node parse(String source) throws ParserTrialFailedException {
+        TextDocument document = TextDocuments.from(source);
+        SyntaxTree tree = SyntaxTree.from(document);
+        assertTree(tree);
 
-            NodeList<ModuleMemberDeclarationNode> moduleMemberDeclarationNodes = node.members();
-            if (moduleMemberDeclarationNodes.isEmpty()) {
-                return nilLiteralExpression();
-            }
-            throw new Exception("Not an empty expression");
-        } catch (Exception e) {
-            throw new ParserTrialFailedException(e);
-        }
-    }
-
-    /**
-     * Creates a nil literal node. ()
-     * This is the default placeholder expression.
-     *
-     * @return A new nil literal node
-     */
-    private static ExpressionNode nilLiteralExpression() {
-        return NodeFactory.createNilLiteralNode(
-                NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
-                NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)
-        );
+        ModulePartNode node = tree.rootNode();
+        assertIf(node.members().isEmpty(), "Expected no members");
+        assertIf(node.imports().isEmpty(), "Expected no imports");
+        return EMPTY_NODE;
     }
 }

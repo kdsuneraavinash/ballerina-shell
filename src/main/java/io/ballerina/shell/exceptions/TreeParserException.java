@@ -16,21 +16,14 @@
  * under the License.
  */
 
-package io.ballerina.shell.utils.timeit;
-
-import io.ballerina.shell.exceptions.BallerinaShellException;
+package io.ballerina.shell.exceptions;
 
 /**
- * Interface for timed operations to run via {@code TimeIt}.
- *
- * @param <T> Return type for operation.
+ * Parsing of the expression failed.
+ * Not a valid ballerina statement.
  */
-public interface TimedOperation<T> {
-    /**
-     * Runs a operation to be timed.
-     *
-     * @return The return value from operation.
-     * @throws BallerinaShellException If the operation failed.
-     */
-    T run() throws BallerinaShellException;
+public class TreeParserException extends BallerinaShellException {
+    public TreeParserException(String message) {
+        super(message);
+    }
 }

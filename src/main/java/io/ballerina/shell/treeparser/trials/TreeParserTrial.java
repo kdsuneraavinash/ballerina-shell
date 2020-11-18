@@ -19,17 +19,62 @@
 package io.ballerina.shell.treeparser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeList;
+import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.tools.diagnostics.Diagnostic;
+import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
 /**
  * Trial for testing for the correct syntax tree.
  */
-public interface TreeParserTrial {
+public abstract class TreeParserTrial {
     /**
      * Tries to parse the source into a syntax tree.
+     * Returns null if failed.
      *
      * @param source Input source statement.
-     * @return Parsed syntax tree root node.
-     * @throws ParserTrialFailedException When trial fails.
+     * @return Parsed syntax tree root node. Null if failed.
+     * @throws ParserTrialFailedException If trial failed.
      */
-    Node tryParse(String source) throws ParserTrialFailedException;
+    public abstract Node parse(String source) throws ParserTrialFailedException;
+
+    /**
+     * Checks for errors in the syntax tree.
+     *
+     * @param tree Tree to check.
+     * @throws ParserTrialFailedException If tree contains errors.
+     */
+    protected void assertTree(SyntaxTree tree) throws ParserTrialFailedException {
+        for (Diagnostic diagnostic : tree.diagnostics()) {
+            if (diagnostic.diagnosticInfo().severity() == DiagnosticSeverity.ERROR) {
+                throw new ParserTrialFailedException(diagnostic.message());
+            }
+        }
+    }
+
+    /**
+     * Helper assertion to throw if node list is empty.
+     *
+     * @param nodes   Nodes list to check.
+     * @param message Error message if failed.
+     * @throws ParserTrialFailedException If node list is not empty.
+     */
+    protected void assertNotEmpty(NodeList<?> nodes, String message) throws ParserTrialFailedException {
+        if (nodes.isEmpty()) {
+            throw new ParserTrialFailedException(message);
+        }
+    }
+
+    /**
+     * Helper assertion to throw if condition is not satisfied.
+     *
+     * @param condition Condition to check.
+     * @param message   Error message if failed.
+     * @throws ParserTrialFailedException If condition is not satisfied.
+     */
+    protected void assertIf(boolean condition, String message) throws ParserTrialFailedException {
+        if (!condition) {
+            throw new ParserTrialFailedException(message);
+        }
+    }
 }

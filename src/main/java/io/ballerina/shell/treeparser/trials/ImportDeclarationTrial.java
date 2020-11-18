@@ -21,31 +21,29 @@ package io.ballerina.shell.treeparser.trials;
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
-
-import java.util.Objects;
 
 /**
  * Attempts to parse source as a import statement.
  * Puts in the module level and checks for the import entry.
  * Doesn't have any false positives or true negatives.
- * TODO: Fix issue of method.expr() catching as an import
+ * Only checked if the source starts with import keyword.
  */
-public class ImportDeclarationTrial implements TreeParserTrial {
+public class ImportDeclarationTrial extends TreeParserTrial {
     @Override
-    public Node tryParse(String source) throws ParserTrialFailedException {
-        try {
-            TextDocument document = TextDocuments.from(source);
-            SyntaxTree tree = SyntaxTree.from(document);
-            ModulePartNode node = tree.rootNode();
+    public Node parse(String source) throws ParserTrialFailedException {
+        assertIf(source.trim().startsWith("import"), "Expected to start with 'import'");
 
-            ImportDeclarationNode importDeclarationNode = node.imports().get(0);
-            Objects.requireNonNull(importDeclarationNode);
-            return importDeclarationNode;
-        } catch (Exception e) {
-            throw new ParserTrialFailedException(e);
-        }
+        TextDocument document = TextDocuments.from(source);
+        SyntaxTree tree = SyntaxTree.from(document);
+        assertTree(tree);
+
+        ModulePartNode modulePartNode = tree.rootNode();
+        NodeList<ImportDeclarationNode> imports = modulePartNode.imports();
+        assertNotEmpty(imports, "Expected import member");
+        return imports.get(0);
     }
 }

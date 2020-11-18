@@ -22,7 +22,7 @@ package io.ballerina.shell.treeparser.trials;
  * Exception to denote that trial failed.
  */
 public class ParserTrialFailedException extends Exception {
-    ParserTrialFailedException(Throwable throwable) {
-        super("Syntax tree parsing failed", throwable);
+    public ParserTrialFailedException(String message) {
+        super(message);
     }
 }

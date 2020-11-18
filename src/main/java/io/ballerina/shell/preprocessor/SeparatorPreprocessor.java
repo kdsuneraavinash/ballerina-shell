@@ -28,6 +28,7 @@ import java.util.Stack;
  * Preprocessor to split the input into several statements
  * based on the semicolons and brackets.
  * Outputs the split input.
+ * TODO: Find more errors to catch at this stage.
  */
 public class SeparatorPreprocessor implements Preprocessor {
     private static final char ESCAPE_CHAR = '\\';
@@ -42,7 +43,7 @@ public class SeparatorPreprocessor implements Preprocessor {
     private static final char CURLY_BR_CLOSE = '}';
 
     @Override
-    public List<String> preprocess(String input) {
+    public List<String> preprocess(String input) throws PreprocessorException {
         List<String> snippets = new ArrayList<>();
         StringBuilder builder = new StringBuilder();
 
@@ -74,7 +75,7 @@ public class SeparatorPreprocessor implements Preprocessor {
         }
 
         if (!brackets.isEmpty()) {
-            throw new PreprocessorException("Brackets do not match");
+            throw new PreprocessorException("Syntax Error. Brackets/Parenthesis must match.");
         }
 
         // Append remaining string to the statements.

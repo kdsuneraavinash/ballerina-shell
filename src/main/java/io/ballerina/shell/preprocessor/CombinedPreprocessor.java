@@ -19,6 +19,7 @@
 package io.ballerina.shell.preprocessor;
 
 import io.ballerina.shell.PrinterProvider;
+import io.ballerina.shell.exceptions.PreprocessorException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class CombinedPreprocessor implements Preprocessor {
     }
 
     @Override
-    public List<String> preprocess(String input) {
+    public List<String> preprocess(String input) throws PreprocessorException {
         List<String> strings = List.of(input);
         for (Preprocessor preprocessor : preprocessors) {
             List<String> processed = new ArrayList<>();

@@ -19,11 +19,10 @@
 package io.ballerina.shell.exceptions;
 
 /**
- * Parsing of the expression failed.
- * Not a valid ballerina statement.
+ * Base exception class for all exceptions in the ballerina shell.
  */
-public class ParserException extends RuntimeException {
-    public ParserException(String message) {
+public abstract class BallerinaShellException extends Exception {
+    public BallerinaShellException(String message) {
         super(message);
     }
 }

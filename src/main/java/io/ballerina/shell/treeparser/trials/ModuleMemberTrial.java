@@ -18,31 +18,25 @@
 
 package io.ballerina.shell.treeparser.trials;
 
-import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
-import java.util.Objects;
-
 /**
  * Attempts to capture a module member declaration.
  * Puts in the module level and checks for module level entries.
  */
-public class ModuleMemberTrial implements TreeParserTrial {
+public class ModuleMemberTrial extends TreeParserTrial {
     @Override
-    public Node tryParse(String source) throws ParserTrialFailedException {
-        try {
-            TextDocument document = TextDocuments.from(source);
-            SyntaxTree tree = SyntaxTree.from(document);
-            ModulePartNode node = tree.rootNode();
+    public Node parse(String source) throws ParserTrialFailedException {
+        TextDocument document = TextDocuments.from(source);
+        SyntaxTree tree = SyntaxTree.from(document);
+        assertTree(tree);
 
-            ModuleMemberDeclarationNode moduleMemberDeclarationNode = node.members().get(0);
-            return Objects.requireNonNull(moduleMemberDeclarationNode);
-        } catch (Exception e) {
-            throw new ParserTrialFailedException(e);
-        }
+        ModulePartNode node = tree.rootNode();
+        assertNotEmpty(node.members(), "Expected at least one member");
+        return node.members().get(0);
     }
 }

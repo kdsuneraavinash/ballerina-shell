@@ -19,6 +19,7 @@
 package io.ballerina.shell.utils.timeit;
 
 import io.ballerina.shell.PrinterProvider;
+import io.ballerina.shell.exceptions.BallerinaShellException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -37,8 +38,9 @@ public class TimeIt {
      *
      * @param name      Name of the operation. This should be unique and identifiable.
      * @param operation Operation callback to run.
+     * @throws BallerinaShellException If the operation failed.
      */
-    public static <T> T timeIt(String name, TimedOperation<T> operation) {
+    public static <T> T timeIt(String name, TimedOperation<T> operation) throws BallerinaShellException {
         Instant start = Instant.now();
         T result = operation.run();
         Instant end = Instant.now();

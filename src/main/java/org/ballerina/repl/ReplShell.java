@@ -116,9 +116,13 @@ public class ReplShell {
                 String line = readInput(previousDuration);
                 Instant start = Instant.now();
                 try {
-                    if (!handler.handle(line, terminal.writer())) {
-                        ballerinaShell.evaluate(line.trim());
+                    if (line.trim().isBlank()) {
+                        continue;
                     }
+                    if (handler.handle(line, terminal.writer())) {
+                        continue;
+                    }
+                    ballerinaShell.evaluate(line.trim());
                 } finally {
                     Instant end = Instant.now();
                     previousDuration = Duration.between(start, end);

@@ -19,19 +19,21 @@
 package io.ballerina.shell.treeparser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.shell.snippet.types.ExpressionSnippet;
+import io.ballerina.compiler.syntax.tree.ReturnStatementNode;
 
 /**
- * Attempts to parse source as a statement.
- * Puts in the main function statement level and checks for the the entry.
+ * Attempts to parse source as a expression.
  */
-public class ExpressionTrial implements TreeParserTrial {
+public class ExpressionTrial extends StatementTrial {
     @Override
-    public Node tryParse(String source) throws ParserTrialFailedException {
-        try {
-            return ExpressionSnippet.fromStringToExpression(source);
-        } catch (Exception e) {
-            throw new ParserTrialFailedException(e);
-        }
+    public Node parse(String source) throws ParserTrialFailedException {
+        String statementCode = String.format("return %s", source);
+        Node statement = super.parse(statementCode);
+
+        assertIf(statement instanceof ReturnStatementNode, "Expected a return statement");
+        assert statement instanceof ReturnStatementNode;
+        ReturnStatementNode returnStatement = (ReturnStatementNode) statement;
+        assertIf(returnStatement.expression().isPresent(), "Expected an expression on return");
+        return returnStatement.expression().get();
     }
 }

@@ -19,6 +19,7 @@
 package io.ballerina.shell.treeparser;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.exceptions.TreeParserException;
 
 /**
  * In this stage the correct syntax tree is identified.
@@ -36,5 +37,5 @@ public interface TreeParser {
      * @param source Input source code statement.
      * @return Syntax tree for the source code.
      */
-    Node parse(String source);
+    Node parse(String source) throws TreeParserException;
 }

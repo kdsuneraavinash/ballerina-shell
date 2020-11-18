@@ -20,7 +20,7 @@ package io.ballerina.shell.treeparser;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.PrinterProvider;
-import io.ballerina.shell.exceptions.ParserException;
+import io.ballerina.shell.exceptions.TreeParserException;
 import io.ballerina.shell.treeparser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.treeparser.trials.ExpressionTrial;
 import io.ballerina.shell.treeparser.trials.ImportDeclarationTrial;
@@ -29,8 +29,7 @@ import io.ballerina.shell.treeparser.trials.ParserTrialFailedException;
 import io.ballerina.shell.treeparser.trials.StatementTrial;
 import io.ballerina.shell.treeparser.trials.TreeParserTrial;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 /**
  * Parses the source code line using a trial based method.
@@ -47,29 +46,29 @@ public class TrialTreeParser implements TreeParser {
     };
 
     @Override
-    public Node parse(String source) {
-        List<Node> parsedSyntaxTrees = new ArrayList<>();
-        List<String> passedTrials = new ArrayList<>();
+    public Node parse(String source) throws TreeParserException {
         for (TreeParserTrial treeParserTrial : TREE_PARSER_TRIALS) {
             try {
-                Node node = treeParserTrial.tryParse(source);
-                if (node != null) {
-                    parsedSyntaxTrees.add(node);
-                    passedTrials.add(node.getClass().getSimpleName());
-                }
-            } catch (ParserTrialFailedException ignored) {
-                // Trial failed, try next trial
+                Node node = treeParserTrial.parse(source);
+                Objects.requireNonNull(node, "Parser trial returned no nodes");
+                return node;
+            } catch (ParserTrialFailedException e) {
+                PrinterProvider.debug(withClassName(treeParserTrial, e.getMessage()));
+            } catch (Exception e) {
+                PrinterProvider.debug(withClassName(treeParserTrial, "Something went wrong: " + e.getMessage()));
             }
         }
-        // At the end, exactly 1 test should have passed.
-        if (parsedSyntaxTrees.isEmpty()) {
-            throw new ParserException("Sorry, input statement not allowed.");
-        }
+        throw new TreeParserException("Sorry, input statement not allowed.");
+    }
 
-        if (parsedSyntaxTrees.size() > 1) {
-            PrinterProvider.debug("Multiple candidates for the statement type. Using the first candidate.");
-            PrinterProvider.debug(String.format("Candidates are %s. ", passedTrials));
-        }
-        return parsedSyntaxTrees.remove(0);
+    /**
+     * Helper method to generate helpful error message.
+     *
+     * @param trial   Current running trial.
+     * @param message Message to show as failed.
+     * @return Trial name attached message.
+     */
+    private String withClassName(TreeParserTrial trial, String message) {
+        return String.format("[%s failed] %s", trial.getClass().getSimpleName(), message);
     }
 }

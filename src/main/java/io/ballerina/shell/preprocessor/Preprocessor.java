@@ -18,6 +18,8 @@
 
 package io.ballerina.shell.preprocessor;
 
+import io.ballerina.shell.exceptions.PreprocessorException;
+
 import java.util.List;
 
 /**
@@ -38,6 +40,7 @@ public interface Preprocessor {
      *
      * @param input Input string
      * @return Processed resultant strings
+     * @throws PreprocessorException If the preprocessing failed.
      */
-    List<String> preprocess(String input);
+    List<String> preprocess(String input) throws PreprocessorException;
 }
