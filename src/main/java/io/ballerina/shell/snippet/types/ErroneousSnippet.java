@@ -27,17 +27,7 @@ import io.ballerina.shell.snippet.SnippetSubKind;
  * specific kind could not be determined.
  */
 public class ErroneousSnippet extends Snippet {
-    protected ErroneousSnippet(Node node) {
+    public ErroneousSnippet(Node node) {
         super(node.toSourceCode(), SnippetSubKind.ERROR);
-    }
-
-    /**
-     * Create an error snippet from the given node.
-     *
-     * @param node Root node to create snippet from.
-     * @return Snippet that contains the node.
-     */
-    public static ErroneousSnippet tryFromNode(Node node) {
-        return new ErroneousSnippet(node);
     }
 }

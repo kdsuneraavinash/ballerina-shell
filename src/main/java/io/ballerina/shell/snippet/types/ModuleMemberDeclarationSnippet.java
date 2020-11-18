@@ -18,17 +18,7 @@
 
 package io.ballerina.shell.snippet.types;
 
-import io.ballerina.compiler.syntax.tree.AnnotationDeclarationNode;
-import io.ballerina.compiler.syntax.tree.ClassDefinitionNode;
-import io.ballerina.compiler.syntax.tree.ConstantDeclarationNode;
-import io.ballerina.compiler.syntax.tree.EnumDeclarationNode;
-import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
-import io.ballerina.compiler.syntax.tree.ListenerDeclarationNode;
-import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
-import io.ballerina.compiler.syntax.tree.ModuleXMLNamespaceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
-import io.ballerina.compiler.syntax.tree.TypeDefinitionNode;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.SnippetSubKind;
@@ -40,40 +30,8 @@ import io.ballerina.shell.snippet.SnippetSubKind;
  * (Except for module level variable declarations)
  */
 public class ModuleMemberDeclarationSnippet extends Snippet {
-    protected ModuleMemberDeclarationSnippet(Node node, SnippetSubKind subKind) {
+    public ModuleMemberDeclarationSnippet(Node node, SnippetSubKind subKind) {
         super(node.toSourceCode(), subKind);
         assert subKind.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND;
-    }
-
-    /**
-     * Create a module member declaration snippet from the given node.
-     * Returns null if snippet cannot be created.
-     *
-     * @param node Root node to create snippet from.
-     * @return Snippet that contains the node.
-     */
-    public static ModuleMemberDeclarationSnippet tryFromNode(Node node) {
-        if (node instanceof FunctionDefinitionNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.FUNCTION_DEFINITION);
-        } else if (node instanceof ListenerDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.LISTENER_DECLARATION);
-        } else if (node instanceof TypeDefinitionNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.TYPE_DEFINITION);
-        } else if (node instanceof ServiceDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.SERVICE_DECLARATION);
-        } else if (node instanceof ConstantDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.CONSTANT_DECLARATION);
-        } else if (node instanceof ModuleVariableDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.MODULE_VARIABLE_DECLARATION);
-        } else if (node instanceof AnnotationDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.ANNOTATION_DECLARATION);
-        } else if (node instanceof ModuleXMLNamespaceDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.MODULE_XML_NAMESPACE_DECLARATION);
-        } else if (node instanceof EnumDeclarationNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.ENUM_DECLARATION);
-        } else if (node instanceof ClassDefinitionNode) {
-            return new ModuleMemberDeclarationSnippet(node, SnippetSubKind.CLASS_DEFINITION);
-        }
-        return null;
     }
 }

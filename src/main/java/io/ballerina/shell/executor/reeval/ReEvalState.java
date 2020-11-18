@@ -23,7 +23,6 @@ import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.executor.State;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 
 import java.io.FileReader;
@@ -105,13 +104,13 @@ public class ReEvalState implements State {
             throw new ExecutorException(e);
         }
 
-        if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
+        if (newSnippet.isImport()) {
             // imports dont do anything
             imports.add(newSnippet);
-        } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
+        } else if (newSnippet.isModuleMemberDeclaration()) {
             // Module level declarations dont do anything
             moduleDeclarations.add(newSnippet);
-        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
+        } else if (newSnippet.isVariableDeclaration()) {
             assert newSnippet instanceof VariableDeclarationSnippet;
             VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
             if (serializedState.isStmtPreserved) {
@@ -126,8 +125,7 @@ public class ReEvalState implements State {
                 // A non-serializable variable declared, need to add the raw snippet
                 variableDefinitions.put(varSnippet.getVariableName(), varSnippet);
             }
-        } else if (newSnippet.getKind() == SnippetKind.STATEMENT_KIND
-                || newSnippet.getKind() == SnippetKind.EXPRESSION_KIND) {
+        } else if (newSnippet.isStatement() || newSnippet.isExpression()) {
             if (!serializedState.isStmtPreserved) {
                 // Statement/expression didnt change the state, why preserve it
                 statementsAndExpressions.add(newSnippet);

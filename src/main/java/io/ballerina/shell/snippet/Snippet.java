@@ -18,6 +18,13 @@
 
 package io.ballerina.shell.snippet;
 
+import io.ballerina.shell.exceptions.SnippetException;
+import io.ballerina.shell.snippet.types.ExpressionSnippet;
+import io.ballerina.shell.snippet.types.ImportSnippet;
+import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
+import io.ballerina.shell.snippet.types.StatementSnippet;
+import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
+
 /**
  * Snippets are individual statements.
  * <p>
@@ -47,15 +54,6 @@ public abstract class Snippet {
     }
 
     /**
-     * Category of the snippet.
-     *
-     * @return kind of the snippet.
-     */
-    public SnippetKind getKind() {
-        return subKind.getKind();
-    }
-
-    /**
      * Converts the snippet into source code.
      *
      * @return Source code corresponding to snippet.
@@ -65,16 +63,45 @@ public abstract class Snippet {
     }
 
     /**
-     * Valid snippets are all the snippets that are not erroneous and not ignored.
-     * Erroneous types will throw an error.
+     * Ignored snippets are snippets that are handled by
+     * another snippet type. As a result they do not need handling as
+     * this particular snippet.
      *
-     * @return Whether the snippet is valid.
+     * @return Whether the snippet is ignored.
      */
-    public boolean isValid() {
-        if (getKind() == SnippetKind.ERRONEOUS_KIND) {
-            throw new RuntimeException(subKind.getErrorMessage());
+    public boolean isIgnored() {
+        return subKind.isIgnored();
+    }
+
+    /**
+     * Throws an exception if the snippet has some error.
+     *
+     * @throws SnippetException If snippet has an error.
+     */
+    public void throwIfSnippetHasError() throws SnippetException {
+        if (subKind.getKind() == SnippetKind.ERRONEOUS_KIND) {
+            throw new SnippetException(subKind.getErrorMessage());
         }
-        return !subKind.isIgnored();
+    }
+
+    public boolean isImport() {
+        return this instanceof ImportSnippet;
+    }
+
+    public boolean isModuleMemberDeclaration() {
+        return this instanceof ModuleMemberDeclarationSnippet;
+    }
+
+    public boolean isStatement() {
+        return this instanceof StatementSnippet;
+    }
+
+    public boolean isExpression() {
+        return this instanceof ExpressionSnippet;
+    }
+
+    public boolean isVariableDeclaration() {
+        return this instanceof VariableDeclarationSnippet;
     }
 
     @Override

@@ -35,7 +35,7 @@ import io.ballerina.tools.text.TextDocuments;
 public class ImportDeclarationTrial extends TreeParserTrial {
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
-        assertIf(source.trim().startsWith("import"), "Expected to start with 'import'");
+        assertIf(source.trim().startsWith("import "), "Expected to start with 'import'");
 
         TextDocument document = TextDocuments.from(source);
         SyntaxTree tree = SyntaxTree.from(document);

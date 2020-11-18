@@ -18,10 +18,8 @@
 
 package io.ballerina.shell.snippet.types;
 
-import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
@@ -31,31 +29,10 @@ import io.ballerina.shell.snippet.SnippetSubKind;
 public class ImportSnippet extends Snippet {
     private final String importPrefix;
 
-    protected ImportSnippet(Node node, SnippetSubKind subKind, String importPrefix) {
-        super(node.toSourceCode(), subKind);
+    public ImportSnippet(Node node, String importPrefix) {
+        super(node.toSourceCode(), SnippetSubKind.IMPORT_WITH_PREFIX);
         this.importPrefix = importPrefix;
-        assert subKind.getKind() == SnippetKind.IMPORT_KIND;
     }
-
-    /**
-     * Create a import snippet from the given node.
-     * Returns null if snippet cannot be created.
-     *
-     * @param node Root node to create snippet from.
-     * @return Snippet that contains the node.
-     */
-    public static ImportSnippet tryFromNode(Node node) {
-        if (node instanceof ImportDeclarationNode) {
-            ImportDeclarationNode importNode = ((ImportDeclarationNode) node);
-            if (importNode.prefix().isEmpty()) {
-                return new ImportSnippet(node, SnippetSubKind.IMPORT, null);
-            }
-            String importPrefix = importNode.prefix().get().prefix().text();
-            return new ImportSnippet(node, SnippetSubKind.IMPORT_WITH_PREFIX, importPrefix);
-        }
-        return null;
-    }
-
 
     @SuppressWarnings("unused")
     public String getImportPrefix() {

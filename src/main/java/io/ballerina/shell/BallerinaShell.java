@@ -19,6 +19,7 @@
 package io.ballerina.shell;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.exceptions.BallerinaShellException;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.preprocessor.Preprocessor;
@@ -41,6 +42,7 @@ public class BallerinaShell {
     private final Transformer transformer;
     private final Executor<?, ?, ?> executor;
     private final Postprocessor postprocessor;
+    private final SnippetFactory snippetFactory;
 
     /**
      * Creates a {@code BallerinaShell} evaluator.
@@ -59,6 +61,7 @@ public class BallerinaShell {
         this.transformer = transformer;
         this.executor = executor;
         this.postprocessor = postprocessor;
+        this.snippetFactory = new SnippetFactory();
     }
 
     /**
@@ -74,7 +77,7 @@ public class BallerinaShell {
      *
      * @param source Input line from user.
      */
-    public void evaluate(String source) {
+    public void evaluate(String source) throws BallerinaShellException {
         // 1. Preprocessor  - split the line into one or more statements.
         // 2. Parser        - Identify the nodes correctly.
         // 3. Convert       - Convert the node into a snippet.
@@ -83,7 +86,7 @@ public class BallerinaShell {
         List<String> statements = TimeIt.timeIt("Preprocessor", () -> preprocessor.preprocess(source));
         for (String statement : statements) {
             Node rootNode = TimeIt.timeIt("Parser", () -> parser.parse(statement));
-            Snippet snippet = TimeIt.timeIt("Snippet Factory", () -> SnippetFactory.fromNode(rootNode));
+            Snippet snippet = TimeIt.timeIt("Snippet Factory", () -> snippetFactory.fromNode(rootNode));
             PrinterProvider.debug("Identified as : " + snippet);
             Snippet transformedSnippet = TimeIt.timeIt("Transformer", () -> transformer.transform(snippet));
             boolean isSuccess = TimeIt.timeIt("Executor", () -> executor.execute(transformedSnippet, postprocessor));

@@ -22,7 +22,6 @@ import freemarker.ext.beans.TemplateAccessible;
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 
 import java.util.HashSet;
 import java.util.List;
@@ -44,8 +43,8 @@ public class ReEvalContext implements Context {
         private final String code;
 
         public StatementExpression(Snippet snippet) {
-            this.isExpr = snippet.getKind() == SnippetKind.EXPRESSION_KIND;
-            this.isStmt = snippet.getKind() == SnippetKind.STATEMENT_KIND;
+            this.isExpr = snippet.isExpression();
+            this.isStmt = snippet.isStatement();
             this.code = snippet.toSourceCode();
         }
 

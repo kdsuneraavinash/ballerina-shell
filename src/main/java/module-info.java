@@ -10,6 +10,7 @@ module io.ballerina.shell {
     exports io.ballerina.shell.executor;
     exports io.ballerina.shell.preprocessor;
     exports io.ballerina.shell.snippet;
+    exports io.ballerina.shell.snippet.types;
     exports io.ballerina.shell.transformer;
     exports io.ballerina.shell.treeparser;
     exports io.ballerina.shell.postprocessor;

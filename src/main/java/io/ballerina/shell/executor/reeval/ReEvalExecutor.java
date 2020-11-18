@@ -25,7 +25,6 @@ import io.ballerina.shell.executor.invoker.AsyncShellInvoker;
 import io.ballerina.shell.executor.invoker.ShellInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.types.ImportSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 
@@ -78,12 +77,12 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
         }
 
         // Add to correct category
-        if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
+        if (newSnippet.isImport()) {
             assert newSnippet instanceof ImportSnippet;
             imports.add(newSnippet.toSourceCode());
-        } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
+        } else if (newSnippet.isModuleMemberDeclaration()) {
             moduleDeclarations.add(newSnippet.toSourceCode());
-        } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
+        } else if (newSnippet.isVariableDeclaration()) {
             variableDeclarations.add(newSnippet.toSourceCode());
             // Add to variable names for context
             // TODO: What if variable name is null

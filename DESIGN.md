@@ -50,7 +50,7 @@ Following are some inputs and expected output of the tree parser for reference.
 | `int variable = 100;`       | `ModuleVariableDeclarationNode` |
 | `while (a) { int i = 100;}` | `WhileStatementNode`            |
 
-## Snippets
+## Snippet Conversion
 
 Snippets are individual statements.
 
@@ -60,9 +60,20 @@ In processing the snippets, if a snippet contained an error and failed to run, t
 
 Also, names given to the REPL may never be overridden. (If `x` variable is defined, you cannot redefine variable `x` even with the same type. Same goes for functions, classes etc..) However, any valid redeclaration in a different scope may be possible.
 
-### Snippet Kinds
+### Snippet Base Type
 
-#### Import Kind
+Snippets are defined in terms of the source code in contains.
+
+```java
+public abstract class Snippet {
+    protected final SnippetSubKind subKind;
+    protected final String sourceCode;
+}
+```
+
+Snippets would be of mainly 6 categories. Of those 5 categories, erroneous snippet are considered an error and is rejected.
+
+#### Import Snippet
 
 Snippets that represent a import statement. 
 
@@ -77,56 +88,114 @@ Any other import needs to be imported with a prefix.
 |   system, time, xmlutils, xslt
 ```
 
-> However, due to limitations in the compiler, practically no imports can be done. According to the language specification one cannot have unused imports which results in import snippets always causing an error.
-
-#### Variable Declaration Kind
-
-> TODO: Complete this document
-
-These will be variable declarations. These statements will be split into declaration and initialization. Declaration would contain the declaration and setting of a default variable. This would happen in Module Level Stub. Initialization would happen in the Statement Stub.
-
-```C#
-int a = 4;
+```java
+public class ImportSnippet extends Snippet {
+    private final String importPrefix;
+}
 ```
 
-#### Module Member Declaration Kind
+##### Limitations
 
-Module level declarations. These are not active or runnable except for service declarations. Service declaration have the ability to start a service on a port, etc...  All other declarations are just declarations. They do not execute to return a value. Also, any undefined variable in these declarations are ignored (Except for module level variable declarations).
+- Due to limitations in the compiler, practically no imports can be done. According to the language specification one cannot have unused imports which results in import snippets always causing an error. As a result no other imports than the ones that are already there cannot be used.
+
+- All the imports must be done via a prefix. Which means they should follow the following format.
+
+  ```ballerina
+   import [org-name /] module-name [version sem-ver] as import-prefix;
+  ```
+
+#### Variable Declaration Snippet
+
+Bulk of the handling is done for these type of snippets since these snippet hold the whole REPL state. (as global variables) 
+
+##### Converting to a Module Level Declaration
+
+In the REPL, only module level variables are allowed. The main motivation of that is to keep a global state. (So every defined variable is available to others.) Thus, `VariableDeclarationNodes` will also be converted into `ModuleVariableDeclarationNode`. However, the ability of variable declarations to not have a initializer will be an issue.
+
+##### Infer a filler value is possible
+
+Because every declaration is a module level declaration, they must have a initializer. However, for usability, some variables should have a default value to initialize if the initializer is not given. For an example, an integer can be initialized with a `0` if a initializer is not provided. However, this will only be done for selected few types where a default initializer is trivial.
+
+Following initializers will be used when a initializer is not provided. Note that, because lack of information at the stage of this operations, it is not possible to infer the default types of the types which are defined by the user. This will also include `var`, which is a type determined by the compiler. The table also include the whether the type is serializable.
+
+| Type                                                         | Filler Default Value                          | Serializable                            |
+| ------------------------------------------------------------ | --------------------------------------------- | --------------------------------------- |
+| `()`                                                         | `()`                                          | Yes                                     |
+| `boolean`                                                    | `false`                                       | Yes                                     |
+| `int`, `float`, `double`, `byte`                             | `0`                                           | Yes                                     |
+| `string`                                                     | `""`                                          | Yes                                     |
+| `xml`                                                        | `xml '<!---->'`                               | Yes                                     |
+| `array`, `tuple`                                             | `[]`                                          | if all contained types are serializable |
+| `map`                                                        | `{}`                                          | if all contained types are serializable |
+| `record`                                                     | `{}`                                          | No                                      |
+| `table`                                                      | `table []`                                    | No                                      |
+| `any` (not supported)                                        | `()`                                          | No                                      |
+| `union`                                                      | any available filler value of types in union. | if all contained types are serializable |
+| `optional`                                                   | `()`                                          | if the optional type is serializable    |
+| `json`, `anydata`                                            | `()`                                          | Yes                                     |
+| `intersection`, `singleton`, `readonly`, `never`, `distinct` | None                                          | No                                      |
+| all behavioral types                                         | None                                          | No                                      |
+| all other types                                              | None                                          | No                                      |
+
+*Default values for `xml`, `array`, `tuple`, `map`, `record` have the potential to fail or cause errors. However, they are still used if the user didn't provide one in the expectation that user will identify the error if the default value failed. [Ballerina Default Fill Members](https://ballerina.io/spec/lang/2020R1/#FillMember)
+
+Following are some inputs and expected filler values for reference.
+
+| Input                     | Expected Type | Expected Filler Value(s) |
+| ------------------------- | ------------- | ------------------------ |
+| `int number;`             | `int`         | `0`                      |
+| `error|int|string value;` | `union`       | `0` or `""`              |
+| `var t`                   | `other`       | None                     |
+
+> TODO: How to create a empty stream? Should we try to initialize objects with new T()? How to use singletons?
+
+##### Identifying Variable Name
+
+For the serialization (which enables state preservation), variable names has to be identified. Currently the name from the binding is taken as the name. (Note: Only capturing binding patterns are accepted.)
+
+##### Limitations
+
+- `any` type is not supported. `any` does not support `==` operator. As a result generating code for any type would require custom handling. Thus they are disabled for the moment.
+- Current logic only supports `CaptureBindingPatternNode` as the binding pattern. 
+  - `WildcardBindingPatternNode` and `ErrorBindingPatternNode` are not valid binding patterns for global variables. (They do not declare new variable names) `MappingBindingPatternNode` and `ListBindingPatternNode` crashes the compiler when defined at the global level. Thus these are rejected once identified. `NamedArgBindingPatternNode` and `RestBindingPatternNode` are not possible since no other binding patterns are available.
+- Variable names must not start with `_`. Variables starting with `_` are reserved by the code generator.
+
+#### Module Member Declaration Snippet
+
+Module level declarations. These are not active or runnable. Service declaration have the ability to start a service on a port, etc...  All other declarations are just declarations. They do not execute to return a value. Also, any undefined variable in these declarations are ignored. These do not contain semicolons at the end. 
 
 ##### Sub Kinds
 
-| Sub Kind Name                    | State  | Notes                                                        |
-| -------------------------------- | ------ | ------------------------------------------------------------ |
-| Function Definition              | OK     |                                                              |
-| Listener Declaration             | OK     | There must be a initializer. However, there may be undefined variables inside the initializer. |
-| Type Definition                  | OK     |                                                              |
-| Service Declaration              | DECIDE | Has a side effect of starting a server.                      |
-| Constant Declaration             | OK     | Constant variables are always defined in the module level.   |
-| Module Variable Declaration      | MOVED  | Moved responsibility into Variable Declaration Kind.         |
-| Annotation Declaration           | DECIDE | TODO: No examples found.                                     |
-| Module XML Namespace Declaration | OK     |                                                              |
-| Enum Declaration                 | OK     |                                                              |
-| Class Definition                 | OK     |                                                              |
+| Sub Kind Name                    | State    | Notes                                                        |
+| -------------------------------- | -------- | ------------------------------------------------------------ |
+| Function Definition              | OK       |                                                              |
+| Listener Declaration             | OK       | There must be a initializer. However, there may be undefined variables inside the initializer. |
+| Type Definition                  | OK       |                                                              |
+| Service Declaration              | REJECTED | Has a side effect of starting a server.                      |
+| Constant Declaration             | OK       | Constant variables are always defined in the module level.   |
+| Module Variable Declaration      | MOVED    | Moved responsibility into Variable Declaration Kind.         |
+| Annotation Declaration           | OK       | TODO: No examples found.                                     |
+| Module XML Namespace Declaration | OK       |                                                              |
+| Enum Declaration                 | OK       |                                                              |
+| Class Definition                 | OK       |                                                              |
 
 ##### Examples
 
 ```C#
-function printValue(string value) { } 									// Function Definition
-listener http:Listener helloWorldEP = new (9095, helloWorldEPConfig); 	 // Listener Declaration
-type newType record{string name;}; 										// Type Definition
-service hello on new http:Listener(9090) { } 							// Service Declaration 
-const int var1 = 3; 													// Constant Declaration
-// TODO: No examples 													// Annotation Declaration
-xmlns "http://ballerina.com/aa" as ns0; 								// Module XML Namespace Declaration
-enum Color { RED, GREEN, BLUE } 										// Enum Declaration
-class Person { } 														// Class Definition
+function printValue(string value) { } // Function Definition
+listener http:Listener helloWorldEP = new (9095, helloWorldEPConfig); // Listener Declaration
+type newType record{string name;}; // Type Definition
+service hello on new http:Listener(9090) { } // Service Declaration 
+const int var1 = 3; // Constant Declaration
+// TODO: No examples // Annotation Declaration
+xmlns "http://ballerina.com/aa" as ns0; // Module XML Namespace Declaration
+enum Color { RED, GREEN, BLUE } // Enum Declaration
+class Person { } // Class Definition
 ```
 
 #### Statement Kind
 
-These are normal statements that should be evaluated from top to bottom inside a function. Fail Statement Sub Kind are not accepted. **Can we restore stack frame(state) when new statements has to run, instead of re-evaluating the previous statements?**
-
-In statement kinds, the expression stub will be filled by `()`.
+These are normal statements that should be evaluated from top to bottom inside a function. Fail Statement Sub Kind are not accepted. 
 
 ##### Sub Kinds
 
@@ -158,19 +227,19 @@ In statement kinds, the expression stub will be filled by `()`.
 ##### Examples
 
 ```C#
-var1 = 3; 						// Assignment Statement
-var1 += 3; 						// Compound Assignment Statement
-{ int var1 =4; } 				// Block Statement
-if (cond) { } 					// If Else Statement
-while (cond) { } 				// While Statement
-panic error("Record is nil"); 	// Panic
-lock { amount += n; } 			// Lock
-fork { } 						// Fork
+var1 = 3; // Assignment Statement
+var1 += 3; // Compound Assignment Statement
+{ int var1 =4; } // Block Statement
+if (cond) { } // If Else Statement
+while (cond) { } // While Statement
+panic error("Record is nil"); // Panic
+lock { amount += n; } // Lock
+fork { } // Fork
 foreach var color in colors { } // For Each Statement
-transaction { } 				// Transaction Statement
-retry<Type> (args) { } 			// Retry Statement
+transaction { } // Transaction Statement
+retry<Type> (args) { } // Retry Statement
 match var1 { 0 => {} 1 => { } } // Match Statement
-// TODO: No examples 			// Do Statement
+// TODO: No examples // Do Statement
 ```
 
 #### Expression Kind
@@ -180,39 +249,39 @@ These are expressions that are executable but are not persistent. (Does not affe
 ##### Examples
 
 ```C#
-var1 == var2 														// Binary Expression
-(var1 == var2) 														// Braced Expression
-check func1(10) 													// Check Expression
-abc.value 															// Field Access Expression
-func1(arg1) 														// Function Call Expression
-abs.method(arg1) 													// Method Call Expression
-{ line: "str", country: "abc" } 									// Mapping Constructor Expression
-typeof var1 														// Typeof Expression
-! var1 															  	// Unary Expression 
-object { public string city; } 										// Object constructor Expression
-var1 is Type 														// Type Test Expression [ISSUE]
-abc->method(arg1) 													// Action
-() 																	// Nil Literal
-4 																	// Basic Literal
-int|string 															// Type Descriptor [ISSUE] : Abstract so cant detect
-trap func1(10) 														// Trap Expression
-[1, 2, 3, 4] 														// List Constructor Expression
-<float> v1 															 // Type Cast Expression
-table [ {id: 1, name: "J"}, {id: 2, name: "B"} ] 					// Table Constructor Expression [ISSUE]
-let int x = 2 in x*2 												// Let Expression
-string `INSERT INTO Details VALUES (${p.name}, ${p.age})` 			// Template Expression
-function(int arg1) { } 												// Annonymous Function Expression
-new Abc(arg1) 														// New Expression
+var1 == var2 // Binary Expression
+(var1 == var2) // Braced Expression
+check func1(10) // Check Expression
+abc.value // Field Access Expression
+func1(arg1) // Function Call Expression
+abs.method(arg1)// Method Call Expression
+{ line: "str", country: "abc" } // Mapping Constructor Expression
+typeof var1 // Typeof Expression
+! var1 // Unary Expression 
+object { public string city; } // Object constructor Expression
+var1 is Type // Type Test Expression [ISSUE]
+abc->method(arg1) // Action
+() // Nil Literal
+4 // Basic Literal
+int|string // Type Descriptor [ISSUE] : Abstract so cant detect
+trap func1(10) // Trap Expression
+[1, 2, 3, 4] // List Constructor Expression
+<float> v1 // Type Cast Expression
+table [ {id: 1, name: "J"}, {id: 2, name: "B"} ] // Table Constructor Expression [ISSUE]
+let int x = 2 in x*2 // Let Expression
+string `INSERT INTO Details VALUES (${p.name}, ${p.age})` // Template Expression
+function(int arg1) { } // Annonymous Function Expression
+new Abc(arg1) // New Expression
 from var student in studentList select { name: student.firstName }   // Query Expression
-start func1(arg1) 													// Start Action
-flush worker1 														 // Flush Action [ISSUE]
-// TODO: No examples 												// Annot Access Expression
-abc?.value 															// Optional Field Access Expression
-cond ? func1() : func2() 											// Conditionl Expression
-transactional 														// Transactional Expression
-@http:WebSocketServiceConfig {} service {} 							 // Service Constructor Expression ((DECIDE))
-base16 `112233` 													// Byte Array Expression
-bookXML/**/<fname> 													// XML Navigate Expression
+start func1(arg1) // Start Action
+flush worker1 // Flush Action [ISSUE]
+// TODO: No examples // Annot Access Expression
+abc?.value // Optional Field Access Expression
+cond ? func1() : func2() // Conditionl Expression
+transactional // Transactional Expression
+@http:WebSocketServiceConfig {} service {} // Service Constructor Expression ((DECIDE))
+base16 `112233` // Byte Array Expression
+bookXML/**/<fname> // XML Navigate Expression
 ```
 
 #### Erroneous Kind
