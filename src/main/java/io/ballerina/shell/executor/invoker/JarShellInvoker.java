@@ -51,7 +51,7 @@ public class JarShellInvoker extends ShellInvoker {
     }
 
     @Override
-    public boolean execute(Postprocessor postprocessor) throws IOException, InterruptedException {
+    public boolean execute(Postprocessor postprocessor) throws IOException, InterruptedException, ExecutorException {
         Runtime runtime = Runtime.getRuntime();
         Process process = runtime.exec(command);
         process.waitFor();
@@ -90,7 +90,7 @@ public class JarShellInvoker extends ShellInvoker {
             } catch (NoSuchMethodException
                     | IllegalAccessException
                     | ClassNotFoundException e) {
-                throw new ExecutorException(e);
+                throw new ExecutorException("Something went wrong: " + e.getMessage());
             } catch (InvocationTargetException e) {
                 // ignore
             } finally {

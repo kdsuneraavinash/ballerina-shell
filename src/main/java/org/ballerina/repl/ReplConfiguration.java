@@ -20,7 +20,7 @@ package org.ballerina.repl;
 
 import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.executor.Executor;
-import io.ballerina.shell.executor.asm.JarExecutor;
+import io.ballerina.shell.executor.jar.JarExecutor;
 import io.ballerina.shell.executor.reeval.ReEvalExecutor;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;

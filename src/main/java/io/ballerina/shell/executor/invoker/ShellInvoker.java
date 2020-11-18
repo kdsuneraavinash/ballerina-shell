@@ -18,6 +18,7 @@
 
 package io.ballerina.shell.executor.invoker;
 
+import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.executor.Invoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 
@@ -36,5 +37,5 @@ public abstract class ShellInvoker implements Invoker {
      * @throws IOException          When input read fails.
      * @throws InterruptedException WHen process executor/failed.
      */
-    public abstract boolean execute(Postprocessor postprocessor) throws IOException, InterruptedException;
+    public abstract boolean execute(Postprocessor postprocessor) throws IOException, InterruptedException, ExecutorException;
 }

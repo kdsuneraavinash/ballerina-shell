@@ -18,7 +18,7 @@
 
 package io.ballerina.shell.executor.reeval;
 
-import io.ballerina.shell.PrinterProvider;
+import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.executor.Executor;
 import io.ballerina.shell.executor.invoker.AsyncShellInvoker;
@@ -26,18 +26,10 @@ import io.ballerina.shell.executor.invoker.ShellInvoker;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.ImportSnippet;
-import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 
 /**
  * Executes the snippet given.
@@ -58,23 +50,12 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
 
     @Override
     public ReEvalContext currentContext(Snippet newSnippet) {
+        List<ReEvalContext.StatementExpression> statementsAndExpressions = new ArrayList<>();
+        ReEvalContext.StatementExpression newStatementOrExpression = new ReEvalContext.StatementExpression(newSnippet);
+
         List<String> imports = Context.snippetsToStrings(state.imports());
         List<String> moduleDeclarations = Context.snippetsToStrings(state.moduleDeclarations());
         List<String> variableDeclarations = Context.snippetsToStrings(state.variableDeclarations());
-        List<ReEvalContext.StatementExpression> statementsAndExpressions = new ArrayList<>();
-        ReEvalContext.StatementExpression newStatementOrExpression = new ReEvalContext.StatementExpression(newSnippet);
-        Map<String, VariableDeclarationSnippet> variables = new HashMap<>(state.variableDefinitions());
-        String newVarName = "_undefined";
-
-        Set<String> serializableVariableNames = new HashSet<>();
-        Set<String> allVariableNames = new HashSet<>();
-
-        for (String name : variables.keySet()) {
-            allVariableNames.add(name);
-            if (variables.get(name).isSerializable()) {
-                serializableVariableNames.add(name);
-            }
-        }
 
         // Add to correct category
         if (newSnippet.isImport()) {
@@ -84,16 +65,6 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
             moduleDeclarations.add(newSnippet.toSourceCode());
         } else if (newSnippet.isVariableDeclaration()) {
             variableDeclarations.add(newSnippet.toSourceCode());
-            // Add to variable names for context
-            // TODO: What if variable name is null
-            assert newSnippet instanceof VariableDeclarationSnippet;
-            VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
-            Objects.requireNonNull(varSnippet.getVariableName(), "Invalid variable declaration.");
-            newVarName = varSnippet.getVariableName();
-            allVariableNames.add(newVarName);
-            if (varSnippet.isSerializable()) {
-                serializableVariableNames.add(newVarName);
-            }
         }
 
         // Reformat expressions
@@ -103,26 +74,21 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
             }
         }
 
-        // Clear previous file
-        try (FileWriter fw = new FileWriter("state.dump", Charset.defaultCharset())) {
-            fw.write("");
-            PrinterProvider.debug("Previous state file cleared.");
-        } catch (IOException ignored) {
-        }
-
         return new ReEvalContext(imports, moduleDeclarations,
-                variableDeclarations, statementsAndExpressions, newStatementOrExpression,
-                allVariableNames, serializableVariableNames, newVarName);
+                variableDeclarations, statementsAndExpressions, newStatementOrExpression);
     }
 
     @Override
-    public boolean executeInvoker(Postprocessor postprocessor) throws IOException, InterruptedException {
-        return invoker.execute(postprocessor);
+    public boolean executeInvoker(Postprocessor postprocessor) throws ExecutorException {
+        try {
+            return invoker.execute(postprocessor);
+        } catch (IOException | InterruptedException e) {
+            throw new ExecutorException("Something went wrong with compilation/execution: " + e.getMessage());
+        }
     }
 
     @Override
     public void onSuccess(Snippet newSnippet) {
-        // Add snippet to state
         state.saveState(newSnippet);
     }
 }

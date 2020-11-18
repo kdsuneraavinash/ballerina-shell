@@ -63,8 +63,7 @@ public class VariableType {
     public static final VariableType SINGLETON = new VariableType(false, NO_DEFAULT); // singleton
     public static final VariableType UNION = new VariableType(true, NO_DEFAULT); // union
     public static final VariableType OPTIONAL = new VariableType(false, NIL_LITERAL_NODE); // optional
-    public static final VariableType ANY = new VariableType("" +
-            "Sorry `any` type is not support in the REPL for the moment."); // any
+    public static final VariableType ANY = new VariableType(false, NIL_LITERAL_NODE); // any
     public static final VariableType ANYDATA = new VariableType(true, NIL_LITERAL_NODE); // anydata
     public static final VariableType NEVER = new VariableType(false, NO_DEFAULT); // never
     public static final VariableType BYTE = new VariableType(true, ZERO_LITERAL_NODE); // byte
@@ -105,6 +104,7 @@ public class VariableType {
      *
      * @param errorMessage Error message for the type.
      */
+    @SuppressWarnings("unused")
     private VariableType(String errorMessage) {
         this.isSerializable = false;
         this.defaultValue = null;

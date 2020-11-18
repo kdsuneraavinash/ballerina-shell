@@ -16,20 +16,22 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.reeval;
+package io.ballerina.shell.executor.exp.reeval;
 
 import freemarker.ext.beans.TemplateAccessible;
 import io.ballerina.shell.executor.Context;
 import io.ballerina.shell.postprocessor.Postprocessor;
 import io.ballerina.shell.snippet.Snippet;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Mustache context for {@link ReEvalExecutor}.
+ * Mustache context for {@link ReEvalImprovedExecutor}.
  * The methods in this context would be consumed by the template file.
  */
-public class ReEvalContext implements Context {
+public class ReEvalImprovedContext implements Context {
     /**
      * Statement expression containing a statement/expression.
      * Expressions needs to be formatted differently than a statement.
@@ -67,14 +69,29 @@ public class ReEvalContext implements Context {
     private final List<String> varDclns;
     private final List<StatementExpression> stmts;
     private final StatementExpression lastStmt;
+    private final Set<String> serializedVarNames;
+    private final Set<String> nonSerializedVarNames;
+    private final Set<String> varNames;
+    private final String newVarName;
 
-    public ReEvalContext(List<String> imports, List<String> moduleDclns, List<String> varDclns,
-                         List<StatementExpression> stmts, StatementExpression lastStmt) {
+    public ReEvalImprovedContext(List<String> imports,
+                                 List<String> moduleDclns,
+                                 List<String> varDclns,
+                                 List<StatementExpression> stmts,
+                                 StatementExpression lastStmt,
+                                 Set<String> varNames,
+                                 Set<String> serializedVarNames,
+                                 String newVarName) {
         this.imports = imports;
         this.moduleDclns = moduleDclns;
         this.varDclns = varDclns;
         this.stmts = stmts;
         this.lastStmt = lastStmt;
+        this.varNames = varNames;
+        this.serializedVarNames = serializedVarNames;
+        this.newVarName = newVarName;
+        this.nonSerializedVarNames = new HashSet<>(varNames);
+        this.nonSerializedVarNames.removeAll(serializedVarNames);
     }
 
     @TemplateAccessible
@@ -100,6 +117,25 @@ public class ReEvalContext implements Context {
     @TemplateAccessible
     public StatementExpression getLastStmt() {
         return lastStmt;
+    }
+
+    @TemplateAccessible
+    public Set<String> getSerializedVarNames() {
+        return serializedVarNames;
+    }
+
+    public Set<String> getNonSerializedVarNames() {
+        return nonSerializedVarNames;
+    }
+
+    @TemplateAccessible
+    public Set<String> getVarNames() {
+        return varNames;
+    }
+
+    @TemplateAccessible
+    public boolean isIfNewNonSerializableVar() {
+        return nonSerializedVarNames.contains(newVarName);
     }
 
     @TemplateAccessible

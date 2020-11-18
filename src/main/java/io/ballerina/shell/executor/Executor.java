@@ -20,6 +20,7 @@ package io.ballerina.shell.executor;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import io.ballerina.shell.PrinterProvider;
 import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.postprocessor.Postprocessor;
@@ -61,10 +62,11 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
         cfg.setClassForTemplateLoading(getClass(), "/");
         cfg.setDefaultEncoding("UTF-8");
+
         try {
             this.template = cfg.getTemplate(templateName);
         } catch (IOException e) {
-            throw new ExecutorException(e);
+            throw new RuntimeException("Template file read failed: " + e.getMessage());
         }
 
         String message = String.format("Using %s with %s invoker on %s file.",
@@ -80,7 +82,7 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
      * @param newSnippet New snippet to execute.
      * @return Execution output lines.
      */
-    public boolean execute(Snippet newSnippet, Postprocessor postprocessor) {
+    public boolean execute(Snippet newSnippet, Postprocessor postprocessor) throws ExecutorException {
         // 1. Populate context
         // 2. Generate file using context
         // 3. Execute the invoker
@@ -95,9 +97,10 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
                 onSuccess(newSnippet);
             }
             return isSuccess;
-        } catch (Exception e) {
-            PrinterProvider.debug("Process invoker/File generator failed!");
-            throw new ExecutorException(e);
+        } catch (IOException e) {
+            throw new ExecutorException(GENERATED_FILE + " file write failed: " + e.getMessage());
+        } catch (TemplateException e) {
+            throw new ExecutorException("Template file processing failed: " + e.getMessage());
         }
     }
 
@@ -115,7 +118,7 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
      * @param postprocessor Postprocessor for the invoker.
      * @return Whether execution was successful.
      */
-    public abstract boolean executeInvoker(Postprocessor postprocessor) throws Exception;
+    public abstract boolean executeInvoker(Postprocessor postprocessor) throws ExecutorException;
 
     /**
      * Reset executor state so that the execution can be start over.
@@ -132,5 +135,5 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
         PrinterProvider.debug(state.toString());
     }
 
-    public abstract void onSuccess(Snippet newSnippet);
+    public abstract void onSuccess(Snippet newSnippet) throws ExecutorException;
 }

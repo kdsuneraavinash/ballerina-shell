@@ -21,7 +21,7 @@ package io.ballerina.shell.exceptions;
 /**
  * Transforming failed for some reason.
  */
-public class TransformerException extends RuntimeException {
+public class TransformerException extends BallerinaShellException {
     public TransformerException(String message) {
         super(message);
     }

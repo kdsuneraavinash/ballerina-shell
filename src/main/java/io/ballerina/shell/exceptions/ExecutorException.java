@@ -22,8 +22,8 @@ package io.ballerina.shell.exceptions;
  * Exception to signify that shell execution failed because of an
  * error in the executor. Most probably an invalid statement was processed.
  */
-public class ExecutorException extends RuntimeException {
-    public ExecutorException(Throwable throwable) {
-        super(throwable);
+public class ExecutorException extends BallerinaShellException {
+    public ExecutorException(String message) {
+        super(message);
     }
 }

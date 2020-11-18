@@ -193,12 +193,13 @@ public class SnippetFactory {
         Snippet snippet;
         for (CreateSnippetFromNode creator : creators) {
             snippet = creator.createSnippet();
-            if (snippet == null || snippet.isIgnored()) {
-                // If snippet creation failed or
-                // snippet is handled by another type
+            if (snippet == null) {
                 continue;
             }
             snippet.throwIfSnippetHasError();
+            if (snippet.isIgnored()) {
+                continue;
+            }
             return snippet;
         }
 

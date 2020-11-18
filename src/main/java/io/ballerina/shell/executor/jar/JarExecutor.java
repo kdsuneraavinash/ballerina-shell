@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.executor.asm;
+package io.ballerina.shell.executor.jar;
 
 import io.ballerina.shell.executor.invoker.JarShellInvoker;
 import io.ballerina.shell.executor.reeval.ReEvalExecutor;

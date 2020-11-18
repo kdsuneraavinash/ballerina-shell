@@ -29,16 +29,11 @@ import io.ballerina.tools.text.TextDocuments;
  * Puts in the module level and checks for module level entries.
  */
 public class ModuleMemberTrial extends TreeParserTrial {
-    private static final String SEMICOLON = ";";
-
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
-        if (source.endsWith(SEMICOLON)) {
-            source = source.substring(0, source.length() - 1);
-        }
         TextDocument document = TextDocuments.from(source);
         SyntaxTree tree = SyntaxTree.from(document);
-        assertTree(tree);
+        // assertTree(tree); Don't assert
 
         ModulePartNode node = tree.rootNode();
         assertNotEmpty(node.members(), "Expected at least one member");
