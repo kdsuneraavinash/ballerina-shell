@@ -79,6 +79,6 @@ public abstract class Snippet {
 
     @Override
     public String toString() {
-        return String.format("(%s) %s:%s", getClass().getSimpleName(), subKind.getKind(), subKind);
+        return sourceCode;
     }
 }

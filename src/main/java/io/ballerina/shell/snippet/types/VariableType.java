@@ -28,7 +28,6 @@ import io.ballerina.compiler.syntax.tree.IndexedExpressionNode;
 import io.ballerina.compiler.syntax.tree.IntersectionTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.NilTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.ObjectTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.OptionalTypeDescriptorNode;
 import io.ballerina.compiler.syntax.tree.ParameterizedTypeDescriptorNode;
@@ -60,42 +59,21 @@ import java.util.Optional;
  */
 public class VariableType {
     // () value
-    private static final ExpressionNode NIL_LITERAL_NODE = NodeFactory.createNilLiteralNode(
-            NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
-            NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN));
+    private static final ExpressionNode NIL_LITERAL_NODE = ExpressionSnippet.fromStringToExpression("()");
     // false value
-    private static final ExpressionNode FALSE_LITERAL_NODE = NodeFactory.createBasicLiteralNode(
-            SyntaxKind.BOOLEAN_LITERAL, NodeFactory.createToken(SyntaxKind.FALSE_KEYWORD));
+    private static final ExpressionNode FALSE_LITERAL_NODE = ExpressionSnippet.fromStringToExpression("false");
     // 0 value
-    private static final ExpressionNode ZERO_LITERAL_NODE = NodeFactory.createBasicLiteralNode(
-            SyntaxKind.NUMERIC_LITERAL, NodeFactory.createLiteralValueToken(
-                    SyntaxKind.DECIMAL_INTEGER_LITERAL_TOKEN, "0", NodeFactory.createEmptyMinutiaeList(),
-                    NodeFactory.createEmptyMinutiaeList()));
+    private static final ExpressionNode ZERO_LITERAL_NODE = ExpressionSnippet.fromStringToExpression("0");
     // "" value
-    private static final ExpressionNode EMPTY_STRING_LITERAL_NODE = NodeFactory.createBasicLiteralNode(
-            SyntaxKind.STRING_LITERAL, NodeFactory.createLiteralValueToken(SyntaxKind.STRING_LITERAL_TOKEN, "\"\"",
-                    NodeFactory.createEmptyMinutiaeList(), NodeFactory.createEmptyMinutiaeList()));
+    private static final ExpressionNode EMPTY_STRING_LITERAL_NODE = ExpressionSnippet.fromStringToExpression("\"\"");
     // xml `<!---->` value
-    private static final ExpressionNode EMPTY_XML_NODE = NodeFactory.createTemplateExpressionNode(
-            SyntaxKind.XML_TEMPLATE_EXPRESSION, NodeFactory.createToken(SyntaxKind.XML_KEYWORD),
-            NodeFactory.createToken(SyntaxKind.BACKTICK_TOKEN),
-            NodeFactory.createNodeList(NodeFactory.createXMLComment(
-                    NodeFactory.createToken(SyntaxKind.XML_COMMENT_START_TOKEN), NodeFactory.createNodeList(),
-                    NodeFactory.createToken(SyntaxKind.XML_COMMENT_END_TOKEN))),
-            NodeFactory.createToken(SyntaxKind.BACKTICK_TOKEN));
+    private static final ExpressionNode EMPTY_XML_NODE = ExpressionSnippet.fromStringToExpression("xml `<!---->`");
     // [] value
-    private static final ExpressionNode EMPTY_LIST_NODE = NodeFactory.createListConstructorExpressionNode(
-            NodeFactory.createToken(SyntaxKind.OPEN_BRACKET_TOKEN), NodeFactory.createSeparatedNodeList(),
-            NodeFactory.createToken(SyntaxKind.CLOSE_BRACKET_TOKEN));
+    private static final ExpressionNode EMPTY_LIST_NODE = ExpressionSnippet.fromStringToExpression("[]");
     // {} value
-    private static final ExpressionNode EMPTY_MAP_NODE = NodeFactory.createMappingConstructorExpressionNode(
-            NodeFactory.createToken(SyntaxKind.OPEN_BRACE_TOKEN), NodeFactory.createSeparatedNodeList(),
-            NodeFactory.createToken(SyntaxKind.CLOSE_BRACE_TOKEN));
+    private static final ExpressionNode EMPTY_MAP_NODE = ExpressionSnippet.fromStringToExpression("{}");
     // table[] value
-    private static final ExpressionNode EMPTY_TABLE_NODE = NodeFactory.createTableConstructorExpressionNode(
-            NodeFactory.createToken(SyntaxKind.TABLE_KEYWORD), null,
-            NodeFactory.createToken(SyntaxKind.OPEN_BRACKET_TOKEN), NodeFactory.createSeparatedNodeList(),
-            NodeFactory.createToken(SyntaxKind.CLOSE_BRACKET_TOKEN));
+    private static final ExpressionNode EMPTY_TABLE_NODE = ExpressionSnippet.fromStringToExpression("table []");
 
     // () - basic, simple
     public static final VariableType NIL = new VariableType(true, NIL_LITERAL_NODE);

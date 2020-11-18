@@ -124,5 +124,13 @@ public abstract class Executor<P extends State, Q extends Context, R extends Inv
         state.reset();
     }
 
+    /**
+     * Dump state to debug.
+     * State will be dumped because executor state lies there.
+     */
+    public void dumpState() {
+        PrinterProvider.debug(state.toString());
+    }
+
     public abstract void onSuccess(Snippet newSnippet);
 }

@@ -67,7 +67,7 @@ public class TrialTreeParser implements TreeParser {
         }
 
         if (parsedSyntaxTrees.size() > 1) {
-            PrinterProvider.warn("Multiple candidates for the statement type. Using the first candidate.");
+            PrinterProvider.debug("Multiple candidates for the statement type. Using the first candidate.");
             PrinterProvider.debug(String.format("Candidates are %s. ", passedTrials));
         }
         return parsedSyntaxTrees.remove(0);

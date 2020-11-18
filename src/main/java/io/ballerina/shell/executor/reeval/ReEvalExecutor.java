@@ -29,10 +29,16 @@ import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.types.ImportSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Executes the snippet given.
@@ -58,7 +64,18 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
         List<String> variableDeclarations = Context.snippetsToStrings(state.variableDeclarations());
         List<ReEvalContext.StatementExpression> statementsAndExpressions = new ArrayList<>();
         ReEvalContext.StatementExpression newStatementOrExpression = new ReEvalContext.StatementExpression(newSnippet);
-        HashSet<String> variableNames = new HashSet<>(state.variableNames());
+        Map<String, VariableDeclarationSnippet> variables = new HashMap<>(state.variableDefinitions());
+        String newVarName = "_undefined";
+
+        Set<String> serializableVariableNames = new HashSet<>();
+        Set<String> allVariableNames = new HashSet<>();
+
+        for (String name : variables.keySet()) {
+            allVariableNames.add(name);
+            if (variables.get(name).isSerializable()) {
+                serializableVariableNames.add(name);
+            }
+        }
 
         // Add to correct category
         if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
@@ -69,10 +86,14 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
         } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
             variableDeclarations.add(newSnippet.toSourceCode());
             // Add to variable names for context
+            // TODO: What if variable name is null
             assert newSnippet instanceof VariableDeclarationSnippet;
             VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
+            Objects.requireNonNull(varSnippet.getVariableName(), "Invalid variable declaration.");
+            newVarName = varSnippet.getVariableName();
+            allVariableNames.add(newVarName);
             if (varSnippet.isSerializable()) {
-                variableNames.add(varSnippet.getVariableName());
+                serializableVariableNames.add(newVarName);
             }
         }
 
@@ -83,9 +104,16 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
             }
         }
 
+        // Clear previous file
+        try (FileWriter fw = new FileWriter("state.dump", Charset.defaultCharset())) {
+            fw.write("");
+            PrinterProvider.debug("Previous state file cleared.");
+        } catch (IOException ignored) {
+        }
+
         return new ReEvalContext(imports, moduleDeclarations,
                 variableDeclarations, statementsAndExpressions, newStatementOrExpression,
-                variableNames);
+                allVariableNames, serializableVariableNames, newVarName);
     }
 
     @Override
@@ -96,14 +124,6 @@ public class ReEvalExecutor extends Executor<ReEvalState, ReEvalContext, ShellIn
     @Override
     public void onSuccess(Snippet newSnippet) {
         // Add snippet to state
-        state.addSnippet(newSnippet);
-        // Permanently add name if a var dcln snippet
-        if (newSnippet instanceof VariableDeclarationSnippet) {
-            VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
-            if (varSnippet.isSerializable()) {
-                state.addNewVariableName(varSnippet.getVariableName());
-                PrinterProvider.debug("Current variable names: " + state.variableNames());
-            }
-        }
+        state.saveState(newSnippet);
     }
 }

@@ -4,6 +4,7 @@ module io.ballerina.shell {
     requires org.jline;
     requires freemarker;
     requires commons.cli;
+    requires com.google.gson;
 
     exports io.ballerina.shell;
     exports io.ballerina.shell.executor;

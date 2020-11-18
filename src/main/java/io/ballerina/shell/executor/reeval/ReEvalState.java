@@ -18,32 +18,56 @@
 
 package io.ballerina.shell.executor.reeval;
 
+import com.google.gson.Gson;
 import io.ballerina.shell.PrinterProvider;
+import io.ballerina.shell.exceptions.ExecutorException;
 import io.ballerina.shell.executor.State;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * State of the {@link ReEvalExecutor}.
  */
 public class ReEvalState implements State {
+    private static class SerializedState {
+        private final Map<String, String> vars;
+        private final boolean isStmtPreserved;
+
+        private SerializedState(Map<String, String> vars, boolean isStmtPreserved) {
+            this.vars = vars;
+            this.isStmtPreserved = isStmtPreserved;
+        }
+
+        @Override
+        public String toString() {
+            return "SerializedState{" +
+                    "vars=" + vars +
+                    ", isStmtPreserved=" + isStmtPreserved +
+                    '}';
+        }
+    }
+
     private final List<Snippet> imports;
     private final List<Snippet> moduleDeclarations;
-    private final List<Snippet> variableDefinitions;
+    private final Map<String, VariableDeclarationSnippet> variableDefinitions;
     private final List<Snippet> statementsAndExpressions;
-    private final Set<String> variableNames;
+    private final Gson gson;
 
     public ReEvalState() {
         imports = new ArrayList<>();
         moduleDeclarations = new ArrayList<>();
-        variableDefinitions = new ArrayList<>();
+        variableDefinitions = new HashMap<>();
         statementsAndExpressions = new ArrayList<>();
-        variableNames = new HashSet<>();
+        gson = new Gson();
     }
 
     @Override
@@ -53,7 +77,6 @@ public class ReEvalState implements State {
         moduleDeclarations.clear();
         variableDefinitions.clear();
         statementsAndExpressions.clear();
-        variableNames.clear();
     }
 
     /**
@@ -63,22 +86,55 @@ public class ReEvalState implements State {
      *
      * @param newSnippet Snippet to check the type of.
      */
-    public void addSnippet(Snippet newSnippet) {
+    public void saveState(Snippet newSnippet) {
+        SerializedState serializedState;
+
+        try (FileReader fr = new FileReader("state.dump", Charset.defaultCharset())) {
+            serializedState = gson.fromJson(fr, SerializedState.class);
+            PrinterProvider.debug(serializedState.toString());
+            for (String name : serializedState.vars.keySet()) {
+                String initializer = serializedState.vars.get(name);
+                PrinterProvider.debug("Serialized variable {" + name + "}");
+                if (variableDefinitions.containsKey(name)) {
+                    // Previously defined variable - re-add with this value as initializer
+                    variableDefinitions.put(name,
+                            variableDefinitions.get(name).withInitializer(initializer));
+                }
+            }
+        } catch (IOException e) {
+            throw new ExecutorException(e);
+        }
+
         if (newSnippet.getKind() == SnippetKind.IMPORT_KIND) {
+            // imports dont do anything
             imports.add(newSnippet);
         } else if (newSnippet.getKind() == SnippetKind.MODULE_MEMBER_DECLARATION_KIND) {
+            // Module level declarations dont do anything
             moduleDeclarations.add(newSnippet);
         } else if (newSnippet.getKind() == SnippetKind.VARIABLE_DECLARATION_KIND) {
-            variableDefinitions.add(newSnippet);
-        } else if (newSnippet.getKind() == SnippetKind.STATEMENT_KIND) {
-            statementsAndExpressions.add(newSnippet);
-        } else if (newSnippet.getKind() == SnippetKind.EXPRESSION_KIND) {
-            statementsAndExpressions.add(newSnippet);
+            assert newSnippet instanceof VariableDeclarationSnippet;
+            VariableDeclarationSnippet varSnippet = (VariableDeclarationSnippet) newSnippet;
+            if (serializedState.isStmtPreserved) {
+                // New variable - state must be in serialized
+                variableDefinitions.put(varSnippet.getVariableName(),
+                        varSnippet.withInitializer(serializedState.vars.get(varSnippet.getVariableName())));
+            } else {
+                PrinterProvider.warn("" +
+                        "A complex variable " + varSnippet.getVariableName() + " declared.\n" +
+                        "Any changes to this variable will be re-evaluated in each expression.\n" +
+                        "So do not store any random/external data in this variable.");
+                // A non-serializable variable declared, need to add the raw snippet
+                variableDefinitions.put(varSnippet.getVariableName(), varSnippet);
+            }
+        } else if (newSnippet.getKind() == SnippetKind.STATEMENT_KIND
+                || newSnippet.getKind() == SnippetKind.EXPRESSION_KIND) {
+            if (!serializedState.isStmtPreserved) {
+                // Statement/expression didnt change the state, why preserve it
+                statementsAndExpressions.add(newSnippet);
+            }
         }
-    }
 
-    public void addNewVariableName(String name) {
-        variableNames.add(name);
+        PrinterProvider.debug(this.toString());
     }
 
     public List<Snippet> imports() {
@@ -90,14 +146,24 @@ public class ReEvalState implements State {
     }
 
     public List<Snippet> variableDeclarations() {
-        return variableDefinitions;
+        return new ArrayList<>(variableDefinitions.values());
     }
 
     public List<Snippet> statementsAndExpressions() {
         return statementsAndExpressions;
     }
 
-    public Set<String> variableNames() {
-        return variableNames;
+    public Map<String, VariableDeclarationSnippet> variableDefinitions() {
+        return variableDefinitions;
+    }
+
+    @Override
+    public String toString() {
+        return "ReEvalState{" +
+                "imports=" + imports +
+                ", moduleDeclarations=" + moduleDeclarations +
+                ", variableDefinitions=" + variableDefinitions +
+                ", statementsAndExpressions=" + statementsAndExpressions +
+                '}';
     }
 }

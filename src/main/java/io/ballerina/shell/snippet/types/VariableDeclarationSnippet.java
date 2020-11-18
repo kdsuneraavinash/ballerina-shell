@@ -21,6 +21,7 @@ package io.ballerina.shell.snippet.types;
 import io.ballerina.compiler.syntax.tree.BindingPatternNode;
 import io.ballerina.compiler.syntax.tree.CaptureBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.ErrorBindingPatternNode;
+import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.ListBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.MappingBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
@@ -36,21 +37,22 @@ import io.ballerina.shell.exceptions.SnippetException;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
 
-import java.util.Optional;
-
 /**
  * These will be variable declarations.
  * Currently only module level variable declarations are accepted.
  * TODO: Move variable value declaration into a statement snippet.
  */
 public class VariableDeclarationSnippet extends Snippet {
+    private final ModuleVariableDeclarationNode moduleVariableDeclarationNode;
     private final String variableName;
     private final boolean isSerializable;
 
-    public VariableDeclarationSnippet(String sourceCode, String variableName, boolean isSerializable) {
-        super(sourceCode, SnippetSubKind.VARIABLE_DECLARATION);
+    public VariableDeclarationSnippet(ModuleVariableDeclarationNode dclnNode,
+                                      String variableName, boolean isSerializable) {
+        super(dclnNode.toSourceCode(), SnippetSubKind.VARIABLE_DECLARATION);
         this.variableName = variableName;
         this.isSerializable = isSerializable;
+        this.moduleVariableDeclarationNode = dclnNode;
     }
 
     /**
@@ -107,11 +109,11 @@ public class VariableDeclarationSnippet extends Snippet {
         // no initializer present.
 
         VariableType type = VariableType.fromDescriptor(dclnNode.typedBindingPattern().typeDescriptor());
-        String sourceCode;
-        if (dclnNode.initializer().isPresent()) {
-            // Initializer present, no need to infer.
-            sourceCode = dclnNode.toSourceCode();
-        } else {
+        if (type == VariableType.ANY) {
+            throw new SnippetException("Sorry any type is not support in the REPL for the moment.");
+        }
+
+        if (dclnNode.initializer().isEmpty()) {
             // If inferring failed as well, throw an error message.
             if (type.getDefaultValue().isEmpty()) {
                 throw new SnippetException("" +
@@ -121,22 +123,23 @@ public class VariableDeclarationSnippet extends Snippet {
             PrinterProvider.debug("Inferred default value: " + type.getDefaultValue().get());
 
             // Inject default value.
-            sourceCode = NodeFactory.createModuleVariableDeclarationNode(
+            dclnNode = NodeFactory.createModuleVariableDeclarationNode(
                     dclnNode.metadata().orElse(null), dclnNode.finalKeyword().orElse(null),
                     dclnNode.typedBindingPattern(), NodeFactory.createToken(SyntaxKind.EQUAL_TOKEN),
                     type.getDefaultValue().get(), dclnNode.semicolonToken()
-            ).toSourceCode();
+            );
         }
 
         // Now try to identify the variable name.
-        Optional<String> variableName = identifyName(dclnNode.typedBindingPattern().bindingPattern());
+        String variableName = identifyName(dclnNode.typedBindingPattern().bindingPattern());
         PrinterProvider.debug("Identified variable name: " + variableName);
 
-        boolean isSerializable = type.isSerializable() && variableName.isPresent();
+        boolean isSerializable = type.isSerializable();
         if (isSerializable) {
             PrinterProvider.debug("The variable is a candidate for serialization.");
         }
-        return new VariableDeclarationSnippet(sourceCode, variableName.orElse(null), isSerializable);
+
+        return new VariableDeclarationSnippet(dclnNode, variableName, isSerializable);
     }
 
     /**
@@ -147,7 +150,7 @@ public class VariableDeclarationSnippet extends Snippet {
      * @param bind Binding pattern enclosing the name.
      * @return Names that are defined in the statement.
      */
-    private static Optional<String> identifyName(BindingPatternNode bind) {
+    private static String identifyName(BindingPatternNode bind) {
         // Possible binds are,
         //   capture-binding-pattern, wildcard-binding-pattern, list-binding-pattern,
         //   mapping-binding-pattern, error-binding-pattern
@@ -161,12 +164,14 @@ public class VariableDeclarationSnippet extends Snippet {
         // Additionally rest-binding-pattern/named-arg-binding-pattern are also candidates
         // for binding pattern. But these cannot exist without map/list binding patterns.
         // So they are unexpected.
+        // error-binding-pattern or wildcard-binding-pattern can appear on module level.
+        // But these should be taken as module level/statements instead.
+        // TODO: Is this correct?
 
-        if (bind instanceof ErrorBindingPatternNode || bind instanceof WildcardBindingPatternNode) {
-            return Optional.empty();
-        } else if (bind instanceof CaptureBindingPatternNode) {
-            String variableName = ((CaptureBindingPatternNode) bind).variableName().text();
-            return Optional.of(variableName);
+        if (bind instanceof CaptureBindingPatternNode) {
+            return ((CaptureBindingPatternNode) bind).variableName().text();
+        } else if (bind instanceof ErrorBindingPatternNode || bind instanceof WildcardBindingPatternNode) {
+            throw new SnippetException("Invalid wild-card/error binding pattern.");
         } else if (bind instanceof MappingBindingPatternNode) {
             throw new SnippetException("" +
                     "Map/Record bindings are disabled in module level.\n" +
@@ -184,13 +189,26 @@ public class VariableDeclarationSnippet extends Snippet {
         }
     }
 
-    @SuppressWarnings("unused")
+    public VariableDeclarationSnippet withInitializer(String initializer) {
+        ExpressionNode initializerNode = ExpressionSnippet.fromStringToExpression(initializer);
+        ModuleVariableDeclarationNode newDclnNode = NodeFactory.createModuleVariableDeclarationNode(
+                moduleVariableDeclarationNode.metadata().orElse(null),
+                moduleVariableDeclarationNode.finalKeyword().orElse(null),
+                moduleVariableDeclarationNode.typedBindingPattern(),
+                NodeFactory.createToken(SyntaxKind.EQUAL_TOKEN),
+                initializerNode, NodeFactory.createToken(SyntaxKind.SEMICOLON_TOKEN));
+        return new VariableDeclarationSnippet(newDclnNode, this.variableName, this.isSerializable);
+    }
+
     public String getVariableName() {
         return variableName;
     }
 
-    @SuppressWarnings("unused")
     public boolean isSerializable() {
         return isSerializable;
+    }
+
+    public ModuleVariableDeclarationNode getModuleVariableDeclarationNode() {
+        return moduleVariableDeclarationNode;
     }
 }

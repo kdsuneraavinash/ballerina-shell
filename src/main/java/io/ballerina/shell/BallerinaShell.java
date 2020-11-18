@@ -101,4 +101,11 @@ public class BallerinaShell {
     public void reset() {
         executor.reset();
     }
+
+    /**
+     * Dump state to debug.
+     */
+    public void dumpState() {
+        executor.dumpState();
+    }
 }

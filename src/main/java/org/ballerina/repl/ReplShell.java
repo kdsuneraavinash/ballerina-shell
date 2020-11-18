@@ -59,6 +59,7 @@ public class ReplShell {
     private static final String EXIT_COMMAND = "exit";
     private static final String TOGGLE_DEBUG = "debug";
     private static final String RESET_COMMAND = "reset";
+    private static final String STATE_DUMP_COMMAND = "debug_state";
 
     private static final String REPL_PROMPT = "=$ ";
     private static final String REPL_EXIT_MESSAGE = "Bye!!";
@@ -159,6 +160,7 @@ public class ReplShell {
         this.handler.attachHandler(HELP_COMMAND, (w) -> outputResource(HELP_FILE, w));
         this.handler.attachHandler(TOGGLE_DEBUG, (w) -> configuration.toggleDiagnosticOutputMode());
         this.handler.attachHandler(RESET_COMMAND, (w) -> ballerinaShell.reset());
+        this.handler.attachHandler(STATE_DUMP_COMMAND, (w) -> ballerinaShell.dumpState());
     }
 
     /**
