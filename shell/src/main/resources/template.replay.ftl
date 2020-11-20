@@ -14,7 +14,7 @@ function statements() {
         <#if stmt.second>
            ${stmt.first}
         <#else>
-           _reserved = ${stmt.first};
+           _reserved = (${stmt.first});
         </#if>
     </#list>
 }
@@ -28,7 +28,7 @@ public function main() {
     <#if lastExpr.second>
        ${lastExpr.first}
     <#else>
-       expr = trap ${lastExpr.first};
+       expr = trap (${lastExpr.first});
     </#if>
 
     if (expr is ()){
