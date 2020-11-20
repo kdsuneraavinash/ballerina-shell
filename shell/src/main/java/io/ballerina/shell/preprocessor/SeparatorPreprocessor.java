@@ -66,30 +66,61 @@ public class SeparatorPreprocessor extends Preprocessor {
             // If not in a string literal, process brackets.
             if (!isInStringLiteral) {
                 if (character == SEMICOLON && brackets.isEmpty()) {
-                    snippets.add(builder.toString());
+                    addToList(snippets, builder);
                     builder.setLength(0);
                 } else if (isOpeningBracket(character)) {
                     brackets.push(character);
                 } else if (!brackets.isEmpty() && isBracketPair(brackets.peek(), character)) {
                     brackets.pop();
+                } else if (isClosingBracket(character)) {
+                    if (brackets.isEmpty()) {
+                        addDiagnostic(Diagnostic.error("" +
+                                "Syntax Error. " +
+                                "Found closing brackets but opening one not found."));
+                        throw new PreprocessorException();
+                    }
                 }
             }
         }
 
         if (!brackets.isEmpty()) {
-            addDiagnostic(Diagnostic.error("Syntax Error. Brackets/Parenthesis must match."));
+            addDiagnostic(Diagnostic.error("" +
+                    "Syntax Error. " +
+                    "Brackets/Parenthesis must match."));
             throw new PreprocessorException();
         }
 
         // Append remaining string to the statements.
-        // If there is a remainder then there wasn't a semicolon at end.
-        // So, add missing semicolon as well.
         if (builder.length() > 0) {
-            builder.append(SEMICOLON);
-            snippets.add(builder.toString());
+            addToList(snippets, builder);
         }
 
         return snippets;
+    }
+
+    /**
+     * Adds the builders string representation
+     * to stack if string is not empty.
+     * Adds a semicolon to end if not present.
+     *
+     * @param stack   Stack list.
+     * @param builder Builder to add.
+     */
+    private void addToList(List<String> stack, StringBuilder builder) {
+        String string = builder.toString().trim();
+        // If empty string, pass
+        if (string.isBlank()) {
+            return;
+        }
+        // Add semicolon if there is none
+        if (!string.endsWith(String.valueOf(SEMICOLON))) {
+            string = string + SEMICOLON;
+        }
+        // If only semicolon present, pass
+        if (string.length() == 1) {
+            return;
+        }
+        stack.add(string);
     }
 
     /**
@@ -113,6 +144,18 @@ public class SeparatorPreprocessor extends Preprocessor {
         return character == PARENTHESIS_OPEN
                 || character == SQUARE_BR_OPEN
                 || character == CURLY_BR_OPEN;
+    }
+
+    /**
+     * Whether the character is a closing bracket type.
+     *
+     * @param character Character to check.
+     * @return Whether the input is a closing bracket.
+     */
+    private boolean isClosingBracket(char character) {
+        return character == PARENTHESIS_CLOSE
+                || character == SQUARE_BR_CLOSE
+                || character == CURLY_BR_CLOSE;
     }
 
     /**
