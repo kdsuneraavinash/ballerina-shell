@@ -41,7 +41,7 @@ public abstract class DiagnosticReporter {
      *
      * @param diagnostic Diagnostic to add.
      */
-    protected void addDiagnostic(Diagnostic diagnostic) {
+    public void addDiagnostic(Diagnostic diagnostic) {
         if (diagnostic.getKind() == DiagnosticKind.ERROR) {
             hasErrors = true;
         }
@@ -54,7 +54,7 @@ public abstract class DiagnosticReporter {
      *
      * @param diagnostics Diagnostics to add.
      */
-    protected void addAllDiagnostics(Collection<Diagnostic> diagnostics) {
+    public void addAllDiagnostics(Collection<Diagnostic> diagnostics) {
         diagnostics.forEach(this::addDiagnostic);
     }
 

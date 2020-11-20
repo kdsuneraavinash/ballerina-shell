@@ -25,6 +25,7 @@ import io.ballerina.shell.parser.TreeParser;
 import io.ballerina.shell.preprocessor.Preprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.factory.SnippetFactory;
+import io.ballerina.shell.utils.timeit.TimeIt;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -60,11 +61,11 @@ public class Evaluator extends DiagnosticReporter {
         Objects.requireNonNull(invoker, "Invoker not set");
 
         try {
-            Collection<String> statements = preprocessor.process(source);
+            Collection<String> statements = TimeIt.timeIt(preprocessor, () -> preprocessor.process(source));
             for (String statement : statements) {
-                Node rootNode = treeParser.parse(statement);
-                Snippet snippet = snippetFactory.createSnippet(rootNode);
-                boolean isSuccess = invoker.execute(snippet);
+                Node rootNode = TimeIt.timeIt(treeParser, () -> treeParser.parse(statement));
+                Snippet snippet = TimeIt.timeIt(snippetFactory, () -> snippetFactory.createSnippet(rootNode));
+                boolean isSuccess = TimeIt.timeIt(invoker, () -> invoker.execute(snippet));
                 if (!isSuccess) {
                     return;
                 }
