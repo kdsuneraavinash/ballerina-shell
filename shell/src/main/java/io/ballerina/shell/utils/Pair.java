@@ -18,6 +18,13 @@
 
 package io.ballerina.shell.utils;
 
+/**
+ * A simple immutable data structure
+ * that holds a pair of values.
+ *
+ * @param <P> The type of first value.
+ * @param <Q> The type of second value.
+ */
 public class Pair<P, Q> {
     private final P first;
     private final Q second;

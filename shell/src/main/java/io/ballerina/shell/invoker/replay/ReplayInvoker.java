@@ -52,7 +52,7 @@ import java.util.StringJoiner;
  * Re evaluates the snippet by generating a file containing all snippets
  * and executing it. The Project API will be used to compile the file.
  */
-public class ReplayInvoker extends Invoker<ReplayContext> {
+public class ReplayInvoker extends Invoker {
     private static final String MODULE_INIT_CLASS_NAME = "$_init";
     // TODO: Add a better way to set these
     private static final String BALLERINA_HOME = "ballerina.home";
@@ -62,6 +62,9 @@ public class ReplayInvoker extends Invoker<ReplayContext> {
     private final List<Snippet> imports;
     private final List<Snippet> varDclns;
     private final List<Snippet> moduleDclns;
+    // TODO: Find a better alternative than a pair
+    // The second value of the pair signifies whether the statement is a
+    // statement snippet. (It could also be a expression)
     private final List<Pair<Snippet, Boolean>> stmts;
     private final String generatedBallerinaFile;
     private final String templateName;
@@ -269,7 +272,7 @@ public class ReplayInvoker extends Invoker<ReplayContext> {
 
     @Override
     public String toString() {
-        return String.format("Replay Invoker [ imports = %s,  varDclns = %s,  moduleDclns = %s,  stmts = %s ]",
+        return String.format("Replay Invoker State[imports = %s,  varDclns = %s,  moduleDclns = %s,  stmts = %s]",
                 imports.size(), varDclns.size(), moduleDclns.size(), stmts.size());
     }
 }

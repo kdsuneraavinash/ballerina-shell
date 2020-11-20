@@ -25,6 +25,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Context that is used to populate the template
+ * of {@link ReplayInvoker} objects.
+ */
 public class ReplayContext {
     private static final Pair<String, Boolean> DEFAULT_RETURN_EXPR = new Pair<>("()", false);
     private final Collection<String> imports;

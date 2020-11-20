@@ -59,7 +59,7 @@ public class BallerinaShell {
     private final Configuration configuration;
     private final TerminalAdapter terminal;
     private final Evaluator evaluator;
-    private final Map<String, Consumer<String>> handlers;
+    private final Map<String, Consumer<Void>> handlers;
     private boolean continueLoop;
 
     public BallerinaShell(Configuration configuration, TerminalAdapter terminal) {
@@ -70,11 +70,11 @@ public class BallerinaShell {
 
         // Register default handlers
         this.handlers = Map.of(
-                HELP_COMMAND, s -> outputResource(HELP_FILE),
-                EXIT_COMMAND, s -> continueLoop = false,
-                TOGGLE_DEBUG, s -> configuration.toggleDebug(),
-                RESET_COMMAND, s -> evaluator.reset(),
-                STATE_COMMAND, s -> terminal.writer().println(terminal.color(evaluator.toString(), TerminalAdapter.CYAN))
+                HELP_COMMAND, v -> outputResource(HELP_FILE),
+                EXIT_COMMAND, v -> this.continueLoop = false,
+                TOGGLE_DEBUG, v -> this.configuration.toggleDebug(),
+                RESET_COMMAND, v -> this.evaluator.reset(),
+                STATE_COMMAND, v -> this.terminal.info(evaluator.toString())
         );
     }
 
@@ -83,7 +83,7 @@ public class BallerinaShell {
      */
     public void run() {
         String banner = String.format(readFile(HEADER_FILE), REPL_VERSION);
-        terminal.writer().println(banner);
+        terminal.println(banner);
 
         Duration previousDuration = Duration.ZERO;
         while (continueLoop) {
@@ -94,14 +94,14 @@ public class BallerinaShell {
             try {
                 if (!source.isBlank()) {
                     if (this.handlers.containsKey(source)) {
-                        this.handlers.get(source).accept(source);
+                        this.handlers.get(source).accept(null);
                     } else {
                         evaluator.evaluate(source);
                     }
                 }
             } catch (Exception e) {
                 if (!evaluator.hasErrors()) {
-                    terminal.writer().println(terminal.color("Invalid syntax.", TerminalAdapter.RED));
+                    terminal.fatalError("Something went wrong: " + e.getMessage());
                 }
                 outputException(e);
             } finally {
@@ -112,8 +112,7 @@ public class BallerinaShell {
             }
 
         }
-        terminal.writer().println(REPL_EXIT_MESSAGE);
-        terminal.writer().flush();
+        terminal.println(REPL_EXIT_MESSAGE);
     }
 
     /**
@@ -155,7 +154,7 @@ public class BallerinaShell {
      */
     private void outputResource(@SuppressWarnings("SameParameterValue") String path) {
         String content = readFile(path);
-        terminal.writer().println(terminal.color(content, TerminalAdapter.BRIGHT));
+        terminal.debug(content);
     }
 
     /**
@@ -168,13 +167,13 @@ public class BallerinaShell {
             return;
         }
 
-        int color = TerminalAdapter.BRIGHT;
         if (diagnostic.getKind() == DiagnosticKind.ERROR) {
-            color = TerminalAdapter.RED;
+            terminal.error(diagnostic.toString());
         } else if (diagnostic.getKind() == DiagnosticKind.WARN) {
-            color = TerminalAdapter.YELLOW;
+            terminal.warn(diagnostic.toString());
+        } else {
+            terminal.debug(diagnostic.toString());
         }
-        terminal.writer().println(terminal.color(diagnostic.toString(), color));
     }
 
     /**
@@ -187,10 +186,7 @@ public class BallerinaShell {
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
             e.printStackTrace(printWriter);
-            String stackTrace = terminal.color(stringWriter.toString(),
-                    TerminalAdapter.RED | TerminalAdapter.BRIGHT);
-            terminal.writer().println(stackTrace);
+            terminal.fatalError(stringWriter.toString());
         }
-        terminal.writer().flush();
     }
 }

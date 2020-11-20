@@ -19,7 +19,7 @@
 package io.ballerina.shell.cli;
 
 
-import io.ballerina.shell.cli.jline.JlineConfiguration;
+import io.ballerina.shell.cli.jline.ApplicationConfiguration;
 import io.ballerina.shell.cli.jline.JlineTerminalAdapter;
 import io.ballerina.shell.cli.jline.KeywordCompleter;
 import org.apache.commons.cli.CommandLine;
@@ -51,7 +51,7 @@ public class ReplShellApplication {
      * @throws IOException If terminal initialization failed.
      */
     public static void main(String[] args) throws IOException {
-        Options options = JlineConfiguration.getConfigurationOptions();
+        Options options = ApplicationConfiguration.getConfigurationOptions();
         CommandLineParser commandLineParser = new org.apache.commons.cli.DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -61,7 +61,7 @@ public class ReplShellApplication {
 
         try {
             cmd = commandLineParser.parse(options, args);
-            configuration = new JlineConfiguration(cmd, terminal);
+            configuration = new ApplicationConfiguration(cmd);
         } catch (ParseException e) {
             formatter.printHelp(HELP_MESSAGE, options);
             terminal.writer().println(e.getMessage());

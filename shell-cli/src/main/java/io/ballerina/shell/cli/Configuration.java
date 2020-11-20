@@ -24,6 +24,10 @@ package io.ballerina.shell.cli;
  * Independent of third party libraries.
  */
 public abstract class Configuration {
+    /**
+     * Enum representing all available
+     * evaluator modes.
+     */
     public enum EvaluatorType {
         REPLAY
     }

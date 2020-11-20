@@ -27,7 +27,10 @@ import org.jline.utils.AttributedStyle;
 
 import java.io.PrintWriter;
 
-public class JlineTerminalAdapter implements TerminalAdapter {
+/**
+ * Terminal adapter which encapsulates Jline.
+ */
+public class JlineTerminalAdapter extends TerminalAdapter {
     private final LineReader lineReader;
 
     public JlineTerminalAdapter(LineReader lineReader) {
@@ -35,12 +38,12 @@ public class JlineTerminalAdapter implements TerminalAdapter {
     }
 
     @Override
-    public PrintWriter writer() {
+    protected PrintWriter writer() {
         return lineReader.getTerminal().writer();
     }
 
     @Override
-    public String color(String text, int color) {
+    protected String color(String text, int color) {
         return new AttributedStringBuilder()
                 .style(AttributedStyle.DEFAULT.foreground(color))
                 .append(text).toAnsi();

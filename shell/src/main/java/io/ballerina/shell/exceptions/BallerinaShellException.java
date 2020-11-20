@@ -20,6 +20,8 @@ package io.ballerina.shell.exceptions;
 
 /**
  * Base exception class for all exceptions in the ballerina shell.
+ * Every inherit exception that is thrown in this project are of this base type.
+ * All other exceptions will be unhandled exceptions.
  */
 public abstract class BallerinaShellException extends Exception {
     public BallerinaShellException(String message) {

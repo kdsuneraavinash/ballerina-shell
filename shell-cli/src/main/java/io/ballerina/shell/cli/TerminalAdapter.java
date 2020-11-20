@@ -23,29 +23,28 @@ import java.io.PrintWriter;
 /**
  * A library independent adapter for ballerina shell.
  */
-public interface TerminalAdapter {
-    int BLACK = 0;
-    int RED = 1;
-    int GREEN = 2;
-    int YELLOW = 3;
-    int BLUE = 4;
-    int MAGENTA = 5;
-    int CYAN = 6;
-    int WHITE = 7;
-    int BRIGHT = 8;
-
-    /**
-     * Adapter exception for user exit exceptions.
-     */
-    class UserException extends Exception {
-    }
+public abstract class TerminalAdapter {
+    @SuppressWarnings("unused")
+    protected static final int BLACK = 0;
+    protected static final int RED = 1;
+    @SuppressWarnings("unused")
+    protected static final int GREEN = 2;
+    protected static final int YELLOW = 3;
+    @SuppressWarnings("unused")
+    protected static final int BLUE = 4;
+    @SuppressWarnings("unused")
+    protected static final int MAGENTA = 5;
+    protected static final int CYAN = 6;
+    @SuppressWarnings("unused")
+    protected static final int WHITE = 7;
+    protected static final int BRIGHT = 8;
 
     /**
      * Returns the writer object to write.
      *
      * @return Writer to write.
      */
-    PrintWriter writer();
+    protected abstract PrintWriter writer();
 
     /**
      * Colors a text by the given color.
@@ -54,7 +53,7 @@ public interface TerminalAdapter {
      * @param color Color to use.
      * @return Colored string.
      */
-    String color(String text, int color);
+    protected abstract String color(String text, int color);
 
     /**
      * Reads a line of input from user.
@@ -63,5 +62,30 @@ public interface TerminalAdapter {
      * @param postfix Postfix of the input prompt.
      * @return Input string.
      */
-    String readLine(String prefix, String postfix);
+    public abstract String readLine(String prefix, String postfix);
+
+    public void error(String text) {
+        this.println(this.color(text, RED | BRIGHT));
+    }
+
+    public void warn(String text) {
+        this.println(this.color(text, YELLOW));
+    }
+
+    public void debug(String text) {
+        this.println(this.color(text, BRIGHT));
+    }
+
+    public void fatalError(String text) {
+        this.println(this.color(text, RED));
+    }
+
+    public void info(String text) {
+        this.println(this.color(text, CYAN));
+    }
+
+    public void println(String text) {
+        this.writer().println(text);
+        this.writer().flush();
+    }
 }

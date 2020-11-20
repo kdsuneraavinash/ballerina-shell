@@ -71,6 +71,7 @@ public enum ApplicationOption {
      * @param defaultValue Default value in case no value is set.
      * @return Option value.
      */
+    @SuppressWarnings("unused")
     public String getOptionValue(CommandLine cli, String defaultValue) {
         assert this.hasArg;
         return cli.getOptionValue(code, defaultValue);

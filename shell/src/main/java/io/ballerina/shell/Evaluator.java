@@ -39,7 +39,7 @@ public class Evaluator extends DiagnosticReporter {
     private Preprocessor preprocessor;
     private TreeParser treeParser;
     private SnippetFactory snippetFactory;
-    private Invoker<?> invoker;
+    private Invoker invoker;
 
     /**
      * Base evaluation function which evaluates an input line.
@@ -93,7 +93,7 @@ public class Evaluator extends DiagnosticReporter {
         invoker.reset();
     }
 
-    public void setInvoker(Invoker<?> invoker) {
+    public void setInvoker(Invoker invoker) {
         this.invoker = invoker;
     }
 

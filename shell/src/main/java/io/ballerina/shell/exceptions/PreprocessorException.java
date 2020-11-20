@@ -20,7 +20,7 @@ package io.ballerina.shell.exceptions;
 
 /**
  * Preprocessor found a error in the input.
- * Mismatching brackets or similar.
+ * Mismatching brackets or similar error.
  */
 public class PreprocessorException extends BallerinaShellException {
     public PreprocessorException() {

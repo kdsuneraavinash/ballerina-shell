@@ -32,6 +32,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * Snippet factory that is expected to generate snippets from given nodes.
+ * Each implemented method except {@code createSnippet} will return null
+ * if the snippet creation failed.
+ */
 public abstract class SnippetFactory extends DiagnosticReporter {
     /**
      * Creates a snippet from the given node.

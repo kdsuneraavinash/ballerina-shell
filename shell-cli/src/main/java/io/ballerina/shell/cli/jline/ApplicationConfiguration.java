@@ -23,14 +23,15 @@ import io.ballerina.shell.cli.HelpException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.jline.terminal.Terminal;
 
 import java.util.Objects;
 
-public class JlineConfiguration extends Configuration {
-    public JlineConfiguration(CommandLine cmd, Terminal terminal) throws HelpException {
+/**
+ * Configuration that uses command utils to provide options.
+ */
+public class ApplicationConfiguration extends Configuration {
+    public ApplicationConfiguration(CommandLine cmd) throws HelpException {
         Objects.requireNonNull(cmd, "Command line arguments were not received.");
-        Objects.requireNonNull(terminal, "Terminal objects were not received.");
         if (ApplicationOption.HELP.hasOptionSet(cmd)) {
             throw new HelpException();
         }

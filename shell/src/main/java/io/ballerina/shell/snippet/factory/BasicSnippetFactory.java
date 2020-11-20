@@ -59,7 +59,6 @@ import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.WhileStatementNode;
 import io.ballerina.compiler.syntax.tree.XMLNamespaceDeclarationNode;
 import io.ballerina.shell.Diagnostic;
-import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.ExpressionSnippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
@@ -69,7 +68,7 @@ import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import java.util.Map;
 
 /**
- * A static factory that will create snippets from given nodes.
+ * A factory that will create snippets from given nodes.
  */
 public class BasicSnippetFactory extends SnippetFactory {
     // TODO: Instead of booleans, map to subkinds later.
@@ -81,6 +80,7 @@ public class BasicSnippetFactory extends SnippetFactory {
             Map.entry(TypeDefinitionNode.class, true),
             Map.entry(ServiceDeclarationNode.class, false), // Error
             Map.entry(ConstantDeclarationNode.class, true),
+            Map.entry(ModuleVariableDeclarationNode.class, false), // Ignored
             Map.entry(AnnotationDeclarationNode.class, true),
             Map.entry(ModuleXMLNamespaceDeclarationNode.class, true),
             Map.entry(EnumDeclarationNode.class, true),
@@ -170,7 +170,7 @@ public class BasicSnippetFactory extends SnippetFactory {
     }
 
     @Override
-    public Snippet createExpressionSnippet(Node node) {
+    public ExpressionSnippet createExpressionSnippet(Node node) {
         // TODO: Add all subtypes later.
         if (node instanceof ExpressionNode) {
             return new ExpressionSnippet((ExpressionNode) node);

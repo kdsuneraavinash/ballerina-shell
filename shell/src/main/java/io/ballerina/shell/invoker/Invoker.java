@@ -31,10 +31,8 @@ import io.ballerina.shell.snippet.Snippet;
  * Context of an executor is the context that will be used to
  * fill the template. This should be a logic-less as much as possible.
  * Invoker and its context may be tightly coupled.
- *
- * @param <T> Context that the executor uses.
  */
-public abstract class Invoker<T> extends DiagnosticReporter {
+public abstract class Invoker extends DiagnosticReporter {
     /**
      * Reset executor state so that the execution can be start over.
      */
