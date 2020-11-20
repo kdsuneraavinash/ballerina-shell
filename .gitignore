@@ -109,11 +109,9 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/java,gradle,intellij
 
 main.bal
-
 state.dump
-ballerina/home
 stdout.txt
 main.jar
 *.lck
 *.log.*
-libs/*.jar
+

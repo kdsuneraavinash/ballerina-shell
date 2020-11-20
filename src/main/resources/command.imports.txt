@@ -1,5 +1,0 @@
-Following standard modules are available without importing.
-Any other import needs to be imported with a prefix.
-|   crypto, encoding, io, java, java.arrays (as jarrays),
-|   jsonutils, jwt, math, reflect, runtime, stringutils,
-|   system, time, xmlutils, xslt

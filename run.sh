@@ -6,7 +6,7 @@
 # Build and run
 # shellcheck disable=SC2048
 # shellcheck disable=SC2086
-./gradlew fatJar -q && clear && java -jar build/libs/ballerina-shell-0.0.1-SNAPSHOT.jar $*
+./gradlew fatJar -q && clear && java -jar shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar $*
 
 # Pause till user input
 echo
