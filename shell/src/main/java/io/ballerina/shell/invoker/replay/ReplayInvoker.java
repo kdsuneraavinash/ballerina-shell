@@ -101,7 +101,11 @@ public class ReplayInvoker extends Invoker<ReplayContext> {
 
         SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
         JBallerinaBackend jBallerinaBackend = compile(project);
-        boolean isSuccess = execute(project, jBallerinaBackend);
+
+        boolean isSuccess = true;
+        if (newSnippet.isExecutable()) {
+            isSuccess = execute(project, jBallerinaBackend);
+        }
 
         if (isSuccess) {
             addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
@@ -213,7 +217,7 @@ public class ReplayInvoker extends Invoker<ReplayContext> {
     /**
      * Executes a compiled project.
      * It is expected that the project had no compiler errors.
-     * Will run the process usign the same IO and wait for it to finish.
+     * Will run the process using the same IO and wait for it to finish.
      *
      * @param project           Project to run.
      * @param jBallerinaBackend Backed to use.

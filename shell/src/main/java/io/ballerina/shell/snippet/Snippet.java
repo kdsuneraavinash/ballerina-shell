@@ -60,6 +60,16 @@ public abstract class Snippet {
         return kind;
     }
 
+    /**
+     * Whether the snippet needs to be executed as well.
+     * Most module level declarations do not need to be executed.
+     *
+     * @return Whether the snippet is executable.
+     */
+    public boolean isExecutable() {
+        return isExecutable;
+    }
+
     public boolean isImport() {
         return this.getKind() == SnippetKind.IMPORT_DECLARATION;
     }
