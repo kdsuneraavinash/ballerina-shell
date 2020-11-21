@@ -124,5 +124,79 @@
     "input": "'Hello('",
     "expected": [],
     "isException": true
+  },
+  {
+    "name": "Comments are not detected",
+    "input": "Hello // comment",
+    "expected": [
+      "Hello;"
+    ]
+  },
+  {
+    "name": "Comments cant be closed",
+    "input": "Hello // comment // Hi",
+    "expected": [
+      "Hello;"
+    ]
+  },
+  {
+    "name": "Comment stop on new line",
+    "input": "Hello // comment \n Hi // another comment",
+    "expected": [
+      "Hello \n Hi;"
+    ]
+  },
+  {
+    "name": "Comments inside strings not detected",
+    "input": "Hello \"// comment\" // Real comment",
+    "expected": [
+      "Hello \"// comment\";"
+    ]
+  },
+  {
+    "name": "Comments inside parenthesis removed",
+    "input": "A (Hello // comment)\nB( // DDD \n))",
+    "expected": [
+      "A (Hello \nB( \n));"
+    ]
+  },
+  {
+    "name": "Quoted Identifier Case I",
+    "input": "function 'get_ɱȇşşağę_for_\\#(int val) returns string {}",
+    "expected": [
+      "function 'get_ɱȇşşağę_for_\\#(int val) returns string {};"
+    ]
+  },
+  {
+    "name": "Quoted Identifier Case II",
+    "input": "type 'Person_\\{name\\&Ȧɢέ\\} record {}",
+    "expected": [
+      "type 'Person_\\{name\\&Ȧɢέ\\} record {};"
+    ]
+  },
+  {
+    "name": "Quoted Identifier Case III",
+    "input": "int i = 'function('int);",
+    "expected": [
+      "int i = 'function('int);"
+    ]
+  },
+  {
+    "name": "Sample Program I",
+    "input": "import ballerina/io;\npublic function main() {\n    string name = \"Ballerina\";\n    string template = string `Hello ${name}!!!`;\n\n    io:println(template);\n};",
+    "expected": [
+      "import ballerina/io;",
+      "public function main() {\n    string name = \"Ballerina\";\n    string template = string `Hello ${name}!!!`;\n\n    io:println(template);\n};"
+    ]
+  },
+  {
+    "name": "Sample Program II",
+    "input": "import ballerina/io;\ntype Person record {|\n    readonly int id;\n    string name;\n    int age;\n|};\ntype Employee record {\n    readonly int id;\n    string name;\n    float salary;\n};\n\ntype EmployeeTable table<Employee> key(id);",
+    "expected": [
+      "import ballerina/io;",
+      "type Person record {|\n    readonly int id;\n    string name;\n    int age;\n|};",
+      "type Employee record {\n    readonly int id;\n    string name;\n    float salary;\n};",
+      "type EmployeeTable table<Employee> key(id);"
+    ]
   }
 ]

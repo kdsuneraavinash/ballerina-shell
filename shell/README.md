@@ -8,7 +8,7 @@
 
 ## Preprocessor
 
-The preprocessor is the first transformational phase of the program. Any input is sent through the preprocessor to convert the input into a list of individually processable statements. For example, any multiple statement input will be split into the relevant list of string counterpart at the end of this phase. The implemented `SeparatorPreprocessor` currently splits the statements into separated lists depending on the semicolons that are in the root bracket level. The motivation of a preprocessor is to divide the input into separately identifiable sections so each can be individually processed.
+The preprocessor is the first transformational phase of the program. Any input is sent through the preprocessor to convert the input into a list of individually processable statements. For example, any multiple statement input will be split into the relevant list of string counterpart at the end of this phase. The implemented `SeparatorPreprocessor` currently splits the statements into separated lists depending on the semicolons that are in the root bracket level. The motivation of a preprocessor is to divide the input into separately identifiable sections so each can be individually processed. Removing comments is also a task done by the preprocessor.
 
 ![Preprocessor](../docs/preprocessor.png)
 
@@ -16,7 +16,7 @@ Currently, following preprocessors are implemented.
 
 | Preprocessor Name      | Description                                                  |
 | ---------------------- | ------------------------------------------------------------ |
-| Separator preprocessor | Preprocessor to split the input into several statements based on the semicolons and brackets. |
+| Separator preprocessor | Preprocessor to split the input into several statements based on the semicolons and brackets and remove the comments. |
 
 Following are some inputs and expected output of the preprocessor for reference.
 

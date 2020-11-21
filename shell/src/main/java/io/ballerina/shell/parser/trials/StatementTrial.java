@@ -31,10 +31,11 @@ import io.ballerina.tools.text.TextDocuments;
 /**
  * Attempts to parse source as a statement.
  * Puts in the main function statement level and checks for the the entry.
+ * TODO: Improve performance.
  */
-public class StatementTrial extends TreeParserTrial {
+public class StatementTrial extends DualTreeParserTrial {
     @Override
-    public Node parse(String source) throws ParserTrialFailedException {
+    public Node parseSource(String source) throws ParserTrialFailedException {
         String sourceCode = String.format("function main(){%s}", source);
         TextDocument document = TextDocuments.from(sourceCode);
         SyntaxTree tree = SyntaxTree.from(document);

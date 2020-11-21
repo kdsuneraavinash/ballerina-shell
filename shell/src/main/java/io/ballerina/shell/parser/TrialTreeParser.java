@@ -40,8 +40,8 @@ public class TrialTreeParser extends TreeParser {
     private static final List<TreeParserTrial> NODE_PARSER_TRIALS = List.of(
             new ImportDeclarationTrial(),
             new ExpressionTrial(),
-            new StatementTrial(),
             new ModuleMemberTrial(),
+            new StatementTrial(),
             new EmptyExpressionTrial()
     );
 
@@ -49,17 +49,13 @@ public class TrialTreeParser extends TreeParser {
     public Node parse(String source) throws TreeParserException {
         for (TreeParserTrial trial : NODE_PARSER_TRIALS) {
             try {
-                Node node = trial.parse(source);
-                Objects.requireNonNull(node, "trial returned no nodes");
-                return node;
+                return Objects.requireNonNull(trial.parse(source), "trial returned no nodes");
             } catch (Exception e) {
-                String message = String.format("Failed %s because %s",
-                        trial.getClass().getSimpleName(), e.getMessage());
-                addDiagnostic(Diagnostic.debug(message));
+                addDiagnostic(Diagnostic.debug(String.format("Failed %s because %s",
+                        trial.getClass().getSimpleName(), e.getMessage())));
             }
         }
-        addDiagnostic(Diagnostic.error("" +
-                "Invalid statement. Could not parse the expression."));
+        addDiagnostic(Diagnostic.error("Invalid statement. Could not parse the expression."));
         throw new TreeParserException();
     }
 }

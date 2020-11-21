@@ -28,8 +28,8 @@ import java.util.Stack;
 
 /**
  * Preprocessor to split the input into several statements
- * based on the semicolons and brackets.
- * Outputs the split input.
+ * based on the semicolons and brackets. Outputs the split input.
+ * If a comment starting is detected, this will ignore anything upto a new line.
  * TODO: Find more errors to catch at this stage.
  */
 public class SeparatorPreprocessor extends Preprocessor {
@@ -43,6 +43,8 @@ public class SeparatorPreprocessor extends Preprocessor {
     private static final char SQUARE_BR_CLOSE = ']';
     private static final char CURLY_BR_OPEN = '{';
     private static final char CURLY_BR_CLOSE = '}';
+    private static final char COMMENT_START = '/';
+    private static final char NEW_LINE = '\n';
 
     @Override
     public Collection<String> process(String input) throws PreprocessorException {
@@ -52,32 +54,42 @@ public class SeparatorPreprocessor extends Preprocessor {
         Stack<Character> brackets = new Stack<>();
 
         boolean isInStringLiteral = false;
+        boolean isInComment = false;
         for (int i = 0; i < input.length(); i++) {
             char character = input.charAt(i);
-            builder.append(character);
 
-            // Switch in and out of string literal.
-            if (character == BACK_TICK || character == DOUBLE_QUOTE) {
-                if (!isEscaped(input, i)) {
-                    isInStringLiteral = !isInStringLiteral;
-                }
+            if (isInComment && character == NEW_LINE) {
+                isInComment = false;
             }
 
-            // If not in a string literal, process brackets.
-            if (!isInStringLiteral) {
-                if (character == SEMICOLON && brackets.isEmpty()) {
-                    addToList(snippets, builder);
-                    builder.setLength(0);
-                } else if (isOpeningBracket(character)) {
-                    brackets.push(character);
-                } else if (!brackets.isEmpty() && isBracketPair(brackets.peek(), character)) {
-                    brackets.pop();
-                } else if (isClosingBracket(character)) {
-                    if (brackets.isEmpty()) {
-                        addDiagnostic(Diagnostic.error("" +
-                                "Syntax Error. " +
-                                "Found closing brackets but opening one not found."));
-                        throw new PreprocessorException();
+            if (!isInComment) {
+                builder.append(character);
+                // Switch in and out of string literal.
+                if (character == BACK_TICK || character == DOUBLE_QUOTE) {
+                    if (!isEscaped(input, i)) {
+                        isInStringLiteral = !isInStringLiteral;
+                    }
+                }
+
+                // If not in a string literal, process brackets.
+                if (!isInStringLiteral) {
+                    if (isInComment = isCommentStart(input, i)) {
+                        // First character of comment is already added
+                        builder.deleteCharAt(builder.length() - 1);
+                    } else if (character == SEMICOLON && brackets.isEmpty()) {
+                        addToList(snippets, builder);
+                        builder.setLength(0);
+                    } else if (isOpeningBracket(character)) {
+                        brackets.push(character);
+                    } else if (!brackets.isEmpty() && isBracketPair(brackets.peek(), character)) {
+                        brackets.pop();
+                    } else if (isClosingBracket(character)) {
+                        if (brackets.isEmpty()) {
+                            addDiagnostic(Diagnostic.error("" +
+                                    "Syntax Error. " +
+                                    "Found closing brackets but opening one not found."));
+                            throw new PreprocessorException();
+                        }
                     }
                 }
             }
@@ -121,6 +133,19 @@ public class SeparatorPreprocessor extends Preprocessor {
             return;
         }
         stack.add(string);
+    }
+
+    /**
+     * Whether a comment started.
+     *
+     * @param input    Whole input string.
+     * @param position Position of character to check.
+     * @return Whether a comment started.
+     */
+    private boolean isCommentStart(String input, int position) {
+        return position < input.length() - 1
+                && input.charAt(position) == COMMENT_START
+                && input.charAt(position + 1) == COMMENT_START;
     }
 
     /**

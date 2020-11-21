@@ -18,25 +18,25 @@
 
 package io.ballerina.shell.parser.trials;
 
-import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.compiler.syntax.tree.SyntaxTree;
-import io.ballerina.tools.text.TextDocument;
-import io.ballerina.tools.text.TextDocuments;
 
 /**
- * Attempts to capture a module member declaration.
- * Puts in the module level and checks for module level entries.
+ * Trial which is run with and without trailing semicolon.
  */
-public class ModuleMemberTrial extends DualTreeParserTrial {
-    @Override
-    public Node parseSource(String source) throws ParserTrialFailedException {
-        TextDocument document = TextDocuments.from(source);
-        SyntaxTree tree = SyntaxTree.from(document);
-        assertTree(tree);
+public abstract class DualTreeParserTrial extends TreeParserTrial {
+    private static final String SEMICOLON = ";";
 
-        ModulePartNode node = tree.rootNode();
-        assertIf(!node.members().isEmpty(), "expected at least one member");
-        return node.members().get(0);
+    @Override
+    public Node parse(String source) throws ParserTrialFailedException {
+        try {
+            return parseSource(source);
+        } catch (ParserTrialFailedException e) {
+            if (source.endsWith(SEMICOLON)) {
+                return parseSource(source.substring(0, source.length() - 1));
+            }
+            throw e;
+        }
     }
+
+    public abstract Node parseSource(String source) throws ParserTrialFailedException;
 }
