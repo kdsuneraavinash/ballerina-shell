@@ -73,7 +73,9 @@ public class BasicSnippetFactoryTest {
         testProcess(EXPRESSION_TESTCASES, SnippetKind.EXPRESSION);
     }
 
-    public void testProcess(String fileName, SnippetKind kind) {
+    private void testProcess(String fileName, SnippetKind kind) {
+        // TODO: Improve this test to check for the sub kinds, errors and ignores
+        //  after implementing them in the Snippets.
         List<TestCase> testCases = TestUtils.loadTestCases(fileName, TestCases.class);
         TreeParser treeParser = new TrialTreeParser();
         SnippetFactory snippetFactory = new BasicSnippetFactory();
