@@ -16,8 +16,10 @@
  * under the License.
  */
 
-package io.ballerina.shell;
+package io.ballerina.shell.evaluator;
 
+import io.ballerina.shell.Evaluator;
+import io.ballerina.shell.TestUtils;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.invoker.replay.ReplayInvoker;
@@ -25,7 +27,6 @@ import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
 import org.testng.Assert;
-import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -34,10 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class EvaluatorTest {
-    private static final String BASIC_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.basic.json";
-    private static final String LITERALS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.basic.json";
-
+public abstract class AbstractEvaluatorTest {
     private static final Path BALLERINA_RUNTIME = Paths.get("../home/bre/lib/*");
     private static final Path BALLERINA_HOME_PATH = Paths.get("../home");
 
@@ -70,17 +68,7 @@ public class EvaluatorTest {
         }
     }
 
-    @Test
-    public void testEvaluateBasic() throws BallerinaShellException, IOException {
-        testEvaluate(BASIC_EVALUATOR_TESTCASE);
-    }
-
-    @Test
-    public void testEvaluateLiterals() throws BallerinaShellException, IOException {
-        testEvaluate(LITERALS_EVALUATOR_TESTCASE);
-    }
-
-    private void testEvaluate(String fileName) throws BallerinaShellException, IOException {
+    protected void testEvaluate(String fileName) throws BallerinaShellException {
         TestInvoker invoker = getInvoker();
         Evaluator evaluator = getEvaluator(invoker);
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);

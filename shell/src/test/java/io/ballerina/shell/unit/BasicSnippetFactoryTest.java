@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.snippet.factory;
+package io.ballerina.shell.unit;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.TestUtils;
@@ -26,6 +26,8 @@ import io.ballerina.shell.parser.TreeParser;
 import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
+import io.ballerina.shell.snippet.factory.SnippetFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

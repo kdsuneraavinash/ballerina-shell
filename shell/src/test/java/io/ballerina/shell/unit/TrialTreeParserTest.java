@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.parser;
+package io.ballerina.shell.unit;
 
 import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
@@ -25,6 +25,8 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.shell.TestUtils;
 import io.ballerina.shell.exceptions.TreeParserException;
+import io.ballerina.shell.parser.TreeParser;
+import io.ballerina.shell.parser.TrialTreeParser;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

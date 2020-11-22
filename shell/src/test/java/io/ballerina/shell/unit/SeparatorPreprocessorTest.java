@@ -16,10 +16,12 @@
  * under the License.
  */
 
-package io.ballerina.shell.preprocessor;
+package io.ballerina.shell.unit;
 
 import io.ballerina.shell.TestUtils;
 import io.ballerina.shell.exceptions.PreprocessorException;
+import io.ballerina.shell.preprocessor.Preprocessor;
+import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
