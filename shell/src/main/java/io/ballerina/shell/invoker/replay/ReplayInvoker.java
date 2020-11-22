@@ -56,8 +56,6 @@ public class ReplayInvoker extends Invoker {
     private static final String MODULE_INIT_CLASS_NAME = "$_init";
     // TODO: Add a better way to set these
     private static final String BALLERINA_HOME = "ballerina.home";
-    private static final Path BALLERINA_RUNTIME = Paths.get("home/bre/lib/*");
-    private static final Path BALLERINA_HOME_PATH = Paths.get("home");
 
     private final List<Snippet> imports;
     private final List<Snippet> varDclns;
@@ -66,18 +64,20 @@ public class ReplayInvoker extends Invoker {
     // The second value of the pair signifies whether the statement is a
     // statement snippet. (It could also be a expression)
     private final List<Pair<Snippet, Boolean>> stmts;
+    private final Path ballerinaRuntime;
     private final String generatedBallerinaFile;
     private final String templateName;
     private Template template;
 
-    public ReplayInvoker(String templateName, String generatedBallerinaFile) {
-        System.setProperty(BALLERINA_HOME, BALLERINA_HOME_PATH.toString());
+    public ReplayInvoker(String templateName, String tmpFileName, Path ballerinaRuntime, Path ballerinaHome) {
+        System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
         this.imports = new ArrayList<>();
         this.varDclns = new ArrayList<>();
         this.moduleDclns = new ArrayList<>();
         this.stmts = new ArrayList<>();
         this.templateName = templateName;
-        this.generatedBallerinaFile = generatedBallerinaFile;
+        this.generatedBallerinaFile = tmpFileName;
+        this.ballerinaRuntime = ballerinaRuntime;
     }
 
     @Override
@@ -243,10 +243,8 @@ public class ReplayInvoker extends Invoker {
                     MODULE_INIT_CLASS_NAME);
 
             List<String> commands = List.of("java", "-cp", getAllClassPaths(jarResolver), initClassName);
-            ProcessBuilder processBuilder = new ProcessBuilder(commands).inheritIO();
-            Process process = processBuilder.start();
-            process.waitFor();
-            return process.exitValue() == 0;
+            int exitCode = runCommand(commands);
+            return exitCode == 0;
         } catch (IOException e) {
             addDiagnostic(Diagnostic.error("Starting the executable failed: " + e.getMessage()));
             throw new InvokerException(e);
@@ -254,6 +252,21 @@ public class ReplayInvoker extends Invoker {
             addDiagnostic(Diagnostic.error("Exception while waiting for process to finish: " + e.getMessage()));
             throw new InvokerException(e);
         }
+    }
+
+    /**
+     * Runs a command given. Returns the exit code from the execution.
+     *
+     * @param commands Command to run.
+     * @return Exit code of the command.
+     * @throws IOException          If process starting failed.
+     * @throws InterruptedException If interrupted.
+     */
+    protected int runCommand(List<String> commands) throws IOException, InterruptedException {
+        ProcessBuilder processBuilder = new ProcessBuilder(commands).inheritIO();
+        Process process = processBuilder.start();
+        process.waitFor();
+        return process.exitValue();
     }
 
     /**
@@ -266,7 +279,7 @@ public class ReplayInvoker extends Invoker {
     private String getAllClassPaths(JarResolver jarResolver) {
         StringJoiner cp = new StringJoiner(File.pathSeparator);
         jarResolver.getJarFilePathsRequiredForExecution().stream().map(Path::toString).forEach(cp::add);
-        cp.add(BALLERINA_RUNTIME.toAbsolutePath().toString());
+        cp.add(ballerinaRuntime.toAbsolutePath().toString());
         return cp.toString();
     }
 

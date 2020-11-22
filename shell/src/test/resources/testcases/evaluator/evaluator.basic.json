@@ -1,0 +1,20 @@
+[
+  {
+    "code": "int i = 4"
+  },
+  {
+    "code": "i",
+    "output": "4\n"
+  },
+  {
+    "code": "i = 100"
+  },
+  {
+    "code": "i",
+    "output": "100\n"
+  },
+  {
+    "code": "i+1",
+    "output": "101\n"
+  }
+]

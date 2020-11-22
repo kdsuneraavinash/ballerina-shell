@@ -1,0 +1,22 @@
+[
+  {
+    "code": "12",
+    "output": "12\n"
+  },
+  {
+    "code": "\"Hello\"",
+    "output": "\"Hello\"\n"
+  },
+  {
+    "code": "12.3",
+    "output": "12.3\n"
+  },
+  {
+    "code": "string `hello world`",
+    "output": "hello world\n"
+  },
+  {
+    "code": "false",
+    "output": "false\n"
+  }
+]
