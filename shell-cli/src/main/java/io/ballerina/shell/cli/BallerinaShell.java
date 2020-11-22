@@ -21,19 +21,12 @@ package io.ballerina.shell.cli;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticKind;
 import io.ballerina.shell.Evaluator;
-import io.ballerina.shell.invoker.Invoker;
-import io.ballerina.shell.invoker.replay.ReplayInvoker;
-import io.ballerina.shell.parser.TrialTreeParser;
-import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
-import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -59,11 +52,6 @@ public class BallerinaShell {
     private static final String RESET_COMMAND = "/reset";
     private static final String STATE_COMMAND = "/state";
 
-    private static final Path BALLERINA_RUNTIME = Paths.get("home/bre/lib/*");
-    private static final Path BALLERINA_HOME_PATH = Paths.get("home");
-    private static final String TEMPLATE_FILE = "template.replay.ftl";
-    private static final String TEMP_FILE_NAME = "main.bal";
-
     private final Configuration configuration;
     private final TerminalAdapter terminal;
     private final Evaluator evaluator;
@@ -74,7 +62,7 @@ public class BallerinaShell {
         this.configuration = configuration;
         this.terminal = terminal;
         this.continueLoop = true;
-        this.evaluator = createEvaluator();
+        this.evaluator = configuration.getEvaluator();
 
         // Register default handlers
         this.handlers = Map.of(
@@ -121,26 +109,6 @@ public class BallerinaShell {
 
         }
         terminal.println(REPL_EXIT_MESSAGE);
-    }
-
-    /**
-     * Creates and returns an evaluator based on the config.
-     *
-     * @return Created evaluator.
-     */
-    private Evaluator createEvaluator() {
-        if (configuration.getEvaluator() == Configuration.EvaluatorType.REPLAY) {
-            Invoker invoker = new ReplayInvoker(
-                    TEMPLATE_FILE, TEMP_FILE_NAME,
-                    BALLERINA_RUNTIME, BALLERINA_HOME_PATH);
-            Evaluator evaluator = new Evaluator();
-            evaluator.setPreprocessor(new SeparatorPreprocessor());
-            evaluator.setTreeParser(new TrialTreeParser());
-            evaluator.setSnippetFactory(new BasicSnippetFactory());
-            evaluator.setInvoker(invoker);
-            return evaluator;
-        }
-        throw new RuntimeException("Unknown evaluator type.");
     }
 
     /**

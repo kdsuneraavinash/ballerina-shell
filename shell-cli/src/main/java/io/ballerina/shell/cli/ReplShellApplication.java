@@ -22,11 +22,6 @@ package io.ballerina.shell.cli;
 import io.ballerina.shell.cli.jline.ApplicationConfiguration;
 import io.ballerina.shell.cli.jline.JlineTerminalAdapter;
 import io.ballerina.shell.cli.jline.KeywordCompleter;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -34,43 +29,30 @@ import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import picocli.CommandLine;
 
-import java.io.IOException;
+import java.util.concurrent.Callable;
 
 /**
  * Ballerina base shell REPL.
  * Executes a interactive shell to let the user interact with Ballerina Shell.
  */
-public class ReplShellApplication {
-    private static final String HELP_MESSAGE = "./run.sh [OPTIONS]";
+@CommandLine.Command(name = "repl", mixinStandardHelpOptions = true, version = "checksum 0.01",
+        description = "Shell program for Ballerina.")
+public class ReplShellApplication implements Callable<Integer> {
+    @SuppressWarnings("FieldMayBeFinal")
+    @CommandLine.Option(names = {"-m", "--mode"}, description = "Mode to operate the REPL.",
+            type = ApplicationConfiguration.EvaluatorMode.class)
+    private ApplicationConfiguration.EvaluatorMode mode = ApplicationConfiguration.EvaluatorMode.REPLAY;
 
-    /**
-     * Read the optional args and launch the REPL.
-     *
-     * @param args Optional arguments.
-     * @throws IOException If terminal initialization failed.
-     */
-    public static void main(String[] args) throws IOException {
-        Options options = ApplicationConfiguration.getConfigurationOptions();
-        CommandLineParser commandLineParser = new org.apache.commons.cli.DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-        CommandLine cmd;
+    @SuppressWarnings("FieldMayBeFinal")
+    @CommandLine.Option(names = {"-d", "--debug"}, description = "Whether to enable debug mode from start.")
+    private boolean isDebug = false;
 
-        Configuration configuration;
+    @Override
+    public Integer call() throws Exception {
+        Configuration configuration = new ApplicationConfiguration(isDebug, mode);
         Terminal terminal = TerminalBuilder.terminal();
-
-        try {
-            cmd = commandLineParser.parse(options, args);
-            configuration = new ApplicationConfiguration(cmd);
-        } catch (ParseException e) {
-            formatter.printHelp(HELP_MESSAGE, options);
-            terminal.writer().println(e.getMessage());
-            return;
-        } catch (HelpException e) {
-            formatter.printHelp(HELP_MESSAGE, options);
-            return;
-        }
-
         DefaultParser parser = new DefaultParser();
         parser.setEofOnUnclosedBracket(DefaultParser.Bracket.CURLY,
                 DefaultParser.Bracket.ROUND, DefaultParser.Bracket.SQUARE);
@@ -90,5 +72,17 @@ public class ReplShellApplication {
 
         BallerinaShell shell = new BallerinaShell(configuration, new JlineTerminalAdapter(lineReader));
         shell.run();
+        return 0;
+    }
+
+    /**
+     * Launch the REPL.
+     *
+     * @param args Optional arguments.
+     */
+    public static void main(String... args) {
+        int exitCode = new CommandLine(new ReplShellApplication())
+                .setCaseInsensitiveEnumValuesAllowed(true).execute(args);
+        System.exit(exitCode);
     }
 }

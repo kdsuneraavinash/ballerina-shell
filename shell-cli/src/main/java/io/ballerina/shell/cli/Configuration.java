@@ -18,22 +18,16 @@
 
 package io.ballerina.shell.cli;
 
+import io.ballerina.shell.Evaluator;
+
 /**
  * Configuration base class.
  * Holds information required for the application to run.
  * Independent of third party libraries.
  */
 public abstract class Configuration {
-    /**
-     * Enum representing all available
-     * evaluator modes.
-     */
-    public enum EvaluatorType {
-        REPLAY
-    }
-
     protected boolean isDebug;
-    protected EvaluatorType evaluator;
+    protected Evaluator evaluator;
 
     public Configuration() {
         this.isDebug = false;
@@ -50,11 +44,11 @@ public abstract class Configuration {
     }
 
     /**
-     * Get the evaluator selected by the user.
+     * Get the evaluator set by the user.
      *
-     * @return Evaluator type.
+     * @return Evaluator.
      */
-    public EvaluatorType getEvaluator() {
+    public Evaluator getEvaluator() {
         return evaluator;
     }
 

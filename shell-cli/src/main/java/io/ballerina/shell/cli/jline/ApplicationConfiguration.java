@@ -18,52 +18,58 @@
 
 package io.ballerina.shell.cli.jline;
 
+import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.cli.Configuration;
-import io.ballerina.shell.cli.HelpException;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
+import io.ballerina.shell.invoker.Invoker;
+import io.ballerina.shell.invoker.replay.ReplayInvoker;
+import io.ballerina.shell.parser.TrialTreeParser;
+import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
+import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
  * Configuration that uses command utils to provide options.
  */
 public class ApplicationConfiguration extends Configuration {
-    public ApplicationConfiguration(CommandLine cmd) throws HelpException {
-        Objects.requireNonNull(cmd, "Command line arguments were not received.");
-        if (ApplicationOption.HELP.hasOptionSet(cmd)) {
-            throw new HelpException();
-        }
-        isDebug = ApplicationOption.DEBUG.hasOptionSet(cmd);
-        evaluator = EvaluatorType.REPLAY;
+    private static final Path BALLERINA_RUNTIME = Paths.get("home/bre/lib/*");
+    private static final Path BALLERINA_HOME_PATH = Paths.get("home");
+    private static final String TEMPLATE_FILE = "template.replay.ftl";
+    private static final String TEMP_FILE_NAME = "main.bal";
+
+    /**
+     * Modes to create the evaluator.
+     */
+    public enum EvaluatorMode {
+        REPLAY
     }
 
-    public boolean isDebug() {
-        return isDebug;
-    }
-
-    public EvaluatorType getEvaluator() {
-        return evaluator;
-    }
-
-    public void toggleDebug() {
-        isDebug = !isDebug;
+    public ApplicationConfiguration(boolean isDebug, EvaluatorMode mode) {
+        Objects.requireNonNull(mode, "Mode is a required parameter.");
+        this.isDebug = isDebug;
+        this.evaluator = createEvaluator(mode);
     }
 
     /**
-     * Generate the CLI options.
-     * These options will be used by the CLI parser to
-     * get the necessary configurations.
+     * Creates and returns an evaluator based on the config.
      *
-     * @return Generated CLI options.
+     * @param mode Mode to create the evaluator on.
+     * @return Created evaluator.
      */
-    public static Options getConfigurationOptions() {
-        Options options = new Options();
-        for (ApplicationOption op : ApplicationOption.values()) {
-            Option option = op.toOption();
-            options.addOption(option);
+    private Evaluator createEvaluator(EvaluatorMode mode) {
+        if (mode == EvaluatorMode.REPLAY) {
+            Invoker invoker = new ReplayInvoker(
+                    TEMPLATE_FILE, TEMP_FILE_NAME,
+                    BALLERINA_RUNTIME, BALLERINA_HOME_PATH);
+            Evaluator evaluator = new Evaluator();
+            evaluator.setPreprocessor(new SeparatorPreprocessor());
+            evaluator.setTreeParser(new TrialTreeParser());
+            evaluator.setSnippetFactory(new BasicSnippetFactory());
+            evaluator.setInvoker(invoker);
+            return evaluator;
         }
-        return options;
+        throw new RuntimeException("Unknown mode given.");
     }
 }
