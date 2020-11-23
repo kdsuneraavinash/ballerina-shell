@@ -18,7 +18,6 @@
 
 package io.ballerina.shell.invoker.replay;
 
-import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.ballerina.projects.DiagnosticResult;
@@ -53,29 +52,30 @@ import java.util.StringJoiner;
  * and executing it. The Project API will be used to compile the file.
  */
 public class ReplayInvoker extends Invoker {
-    private static final String MODULE_INIT_CLASS_NAME = "$_init";
+    protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     // TODO: Add a better way to set these
-    private static final String BALLERINA_HOME = "ballerina.home";
+    protected static final String BALLERINA_HOME = "ballerina.home";
+    private static final String TEMPLATE_FILE = "template.replay.ftl";
 
-    private final List<Snippet> imports;
-    private final List<Snippet> varDclns;
-    private final List<Snippet> moduleDclns;
+    protected final List<Snippet> imports;
+    protected final List<Snippet> varDclns;
+    protected final List<Snippet> moduleDclns;
     // TODO: Find a better alternative than a pair
     // The second value of the pair signifies whether the statement is a
     // statement snippet. (It could also be a expression)
-    private final List<Pair<Snippet, Boolean>> stmts;
-    private final Path ballerinaRuntime;
-    private final String generatedBallerinaFile;
-    private final String templateName;
-    private Template template;
+    protected final List<Pair<Snippet, Boolean>> stmts;
+    protected final Path ballerinaRuntime;
+    protected final String generatedBallerinaFile;
+    protected final String templateName;
+    protected Template template;
 
-    public ReplayInvoker(String templateName, String tmpFileName, Path ballerinaRuntime, Path ballerinaHome) {
+    public ReplayInvoker(String tmpFileName, Path ballerinaRuntime, Path ballerinaHome) {
         System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
         this.imports = new ArrayList<>();
         this.varDclns = new ArrayList<>();
         this.moduleDclns = new ArrayList<>();
         this.stmts = new ArrayList<>();
-        this.templateName = templateName;
+        this.templateName = TEMPLATE_FILE;
         this.generatedBallerinaFile = tmpFileName;
         this.ballerinaRuntime = ballerinaRuntime;
     }
@@ -188,51 +188,7 @@ public class ReplayInvoker extends Invoker {
      * @throws InvokerException If reading template failed.
      */
     protected Template getTemplate(String templateName) throws InvokerException {
-        if (this.template != null) {
-            return this.template;
-        }
-
-        Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
-        cfg.setClassForTemplateLoading(getClass(), "/");
-        cfg.setDefaultEncoding("UTF-8");
-        try {
-            Template template = cfg.getTemplate(templateName);
-            String message = String.format("Using %s invoker on %s file.", getClass().getSimpleName(), templateName);
-            addDiagnostic(Diagnostic.debug(message));
-            return template;
-        } catch (IOException e) {
-            addDiagnostic(Diagnostic.error("Template file read failed: " + e.getMessage()));
-            throw new InvokerException();
-        }
-    }
-
-    /**
-     * Compile a project and report any errors.
-     *
-     * @param project Project to compile.
-     * @return Created backend.
-     * @throws InvokerException If compilation failed.
-     */
-    protected JBallerinaBackend compile(Project project) throws InvokerException {
-        PackageCompilation packageCompilation = project.currentPackage().getCompilation();
-        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JdkVersion.JAVA_11);
-        DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
-        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
-            DiagnosticSeverity severity = diagnostic.diagnosticInfo().severity();
-            // TODO: Add smart error highlighting.
-            if (severity == DiagnosticSeverity.ERROR) {
-                addDiagnostic(Diagnostic.error(diagnostic.message()));
-            } else if (severity == DiagnosticSeverity.WARNING) {
-                addDiagnostic(Diagnostic.warn(diagnostic.message()));
-            } else {
-                addDiagnostic(Diagnostic.debug(diagnostic.message()));
-            }
-        }
-        if (diagnosticResult.hasErrors()) {
-            addDiagnostic(Diagnostic.error("Compilation aborted because of errors."));
-            throw new InvokerException();
-        }
-        return jBallerinaBackend;
+        return Objects.requireNonNullElse(this.template, super.getTemplate(templateName));
     }
 
     /**

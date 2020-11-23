@@ -18,9 +18,20 @@
 
 package io.ballerina.shell.invoker;
 
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import io.ballerina.projects.DiagnosticResult;
+import io.ballerina.projects.JBallerinaBackend;
+import io.ballerina.projects.JdkVersion;
+import io.ballerina.projects.PackageCompilation;
+import io.ballerina.projects.Project;
+import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticReporter;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.tools.diagnostics.DiagnosticSeverity;
+
+import java.io.IOException;
 
 /**
  * Invoker that invokes a command to evaluate a list of snippets.
@@ -28,7 +39,7 @@ import io.ballerina.shell.snippet.Snippet;
  * State of an invoker persists all the information required.
  * {@code reset} function will clear the invoker state.
  * <p>
- * Context of an executor is the context that will be used to
+ * Context of an invoker is the context that will be used to
  * fill the template. This should be a logic-less as much as possible.
  * Invoker and its context may be tightly coupled.
  */
@@ -55,4 +66,55 @@ public abstract class Invoker extends DiagnosticReporter {
      * @return Execution output lines.
      */
     public abstract boolean execute(Snippet newSnippet) throws InvokerException;
+
+    /**
+     * Helper method that creates the template reference.
+     *
+     * @param templateName Name of the template.
+     * @return Created template
+     * @throws InvokerException If reading template failed.
+     */
+    protected Template getTemplate(String templateName) throws InvokerException {
+        Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
+        cfg.setClassForTemplateLoading(getClass(), "/");
+        cfg.setDefaultEncoding("UTF-8");
+        try {
+            Template template = cfg.getTemplate(templateName);
+            String message = String.format("Using %s invoker on %s file.", getClass().getSimpleName(), templateName);
+            addDiagnostic(Diagnostic.debug(message));
+            return template;
+        } catch (IOException e) {
+            addDiagnostic(Diagnostic.error("Template file read failed: " + e.getMessage()));
+            throw new InvokerException();
+        }
+    }
+
+    /**
+     * Helper method to compile a project and report any errors.
+     *
+     * @param project Project to compile.
+     * @return Created backend.
+     * @throws InvokerException If compilation failed.
+     */
+    protected JBallerinaBackend compile(Project project) throws InvokerException {
+        PackageCompilation packageCompilation = project.currentPackage().getCompilation();
+        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JdkVersion.JAVA_11);
+        DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
+        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
+            DiagnosticSeverity severity = diagnostic.diagnosticInfo().severity();
+            // TODO: Add smart error highlighting.
+            if (severity == DiagnosticSeverity.ERROR) {
+                addDiagnostic(Diagnostic.error(diagnostic.message()));
+            } else if (severity == DiagnosticSeverity.WARNING) {
+                addDiagnostic(Diagnostic.warn(diagnostic.message()));
+            } else {
+                addDiagnostic(Diagnostic.debug(diagnostic.message()));
+            }
+        }
+        if (diagnosticResult.hasErrors()) {
+            addDiagnostic(Diagnostic.error("Compilation aborted because of errors."));
+            throw new InvokerException();
+        }
+        return jBallerinaBackend;
+    }
 }
