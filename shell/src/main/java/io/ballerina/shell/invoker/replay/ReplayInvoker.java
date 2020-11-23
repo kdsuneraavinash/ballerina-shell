@@ -81,6 +81,24 @@ public class ReplayInvoker extends Invoker {
     }
 
     @Override
+    public void initialize() throws InvokerException {
+        // Runs so that a demo file is loaded and compiled
+        // so the required caches will be ready once the user gives input.
+        // Any error is an indication of a failure in template of base compilation.
+        // Throw if that happens.
+        this.template = getTemplate(templateName);
+        ReplayContext emptyContext = new ReplayContext(List.of(), List.of(), List.of(), List.of(), null);
+        try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
+            template.process(emptyContext, fileWriter);
+            SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+            execute(project, compile(project));
+        } catch (TemplateException | IOException | InvokerException e) {
+            addDiagnostic(Diagnostic.error("Invoker initialization failed: " + e.getMessage()));
+            throw new InvokerException(e);
+        }
+    }
+
+    @Override
     public void reset() {
         imports.clear();
         varDclns.clear();

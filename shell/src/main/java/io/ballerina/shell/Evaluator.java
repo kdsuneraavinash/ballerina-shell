@@ -42,6 +42,18 @@ public class Evaluator extends DiagnosticReporter {
     private Invoker invoker;
 
     /**
+     * Initialized the required components.
+     * Calling this first is not required.
+     * However if called, this will make subsequent runs faster.
+     *
+     * @throws BallerinaShellException If initialization failed.
+     */
+    public void initialize() throws BallerinaShellException {
+        invoker.initialize();
+        this.reset();
+    }
+
+    /**
      * Base evaluation function which evaluates an input line.
      * <p>
      * An input line may contain one or more statements separated by semicolons.

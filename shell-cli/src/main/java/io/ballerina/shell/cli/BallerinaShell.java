@@ -21,6 +21,7 @@ package io.ballerina.shell.cli;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticKind;
 import io.ballerina.shell.Evaluator;
+import io.ballerina.shell.exceptions.BallerinaShellException;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -82,11 +83,21 @@ public class BallerinaShell {
         String banner = String.format(readFile(HEADER_FILE), REPL_VERSION);
         terminal.println(banner);
 
-        Duration previousDuration = Duration.ZERO;
+        // Initialize. This must not fail.
+        // If this fails, an error would be directly thrown.
+        Instant start = Instant.now();
+        try {
+            evaluator.initialize();
+        } catch (BallerinaShellException e) {
+            throw new RuntimeException("Shell initialization failed.", e);
+        }
+        Instant end = Instant.now();
+
         while (continueLoop) {
+            Duration previousDuration = Duration.between(start, end);
             String rightPrompt = String.format("took %s ms", previousDuration.toMillis());
             String source = terminal.readLine(replPrompt, rightPrompt).trim();
-            Instant start = Instant.now();
+            start = Instant.now();
 
             try {
                 if (!source.isBlank()) {
@@ -102,8 +113,7 @@ public class BallerinaShell {
                 }
                 outputException(e);
             } finally {
-                Instant end = Instant.now();
-                previousDuration = Duration.between(start, end);
+                end = Instant.now();
                 evaluator.diagnostics().forEach(this::outputDiagnostic);
                 evaluator.resetDiagnostics();
             }

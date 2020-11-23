@@ -34,6 +34,14 @@ import io.ballerina.shell.snippet.Snippet;
  */
 public abstract class Invoker extends DiagnosticReporter {
     /**
+     * Initializes the invoker. This can be used to load required files
+     * and create caches. Calling this is not a requirement.
+     *
+     * @throws InvokerException If initialization failed.
+     */
+    public abstract void initialize() throws InvokerException;
+
+    /**
      * Reset executor state so that the execution can be start over.
      */
     public abstract void reset();
