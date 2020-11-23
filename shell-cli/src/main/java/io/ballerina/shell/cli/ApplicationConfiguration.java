@@ -19,8 +19,8 @@
 package io.ballerina.shell.cli;
 
 import io.ballerina.shell.Evaluator;
-import io.ballerina.shell.cli.Configuration;
 import io.ballerina.shell.invoker.Invoker;
+import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
 import io.ballerina.shell.invoker.replay.ReplayInvoker;
 import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
@@ -36,14 +36,14 @@ import java.util.Objects;
 public class ApplicationConfiguration extends Configuration {
     private static final Path BALLERINA_RUNTIME = Paths.get("home/bre/lib/*");
     private static final Path BALLERINA_HOME_PATH = Paths.get("home");
-    private static final String TEMPLATE_FILE = "template.replay.ftl";
     private static final String TEMP_FILE_NAME = "main.bal";
 
     /**
      * Modes to create the evaluator.
      */
     public enum EvaluatorMode {
-        REPLAY
+        REPLAY,
+        CLASSLOAD
     }
 
     public ApplicationConfiguration(boolean isDebug, EvaluatorMode mode) {
@@ -60,9 +60,16 @@ public class ApplicationConfiguration extends Configuration {
      */
     private Evaluator createEvaluator(EvaluatorMode mode) {
         if (mode == EvaluatorMode.REPLAY) {
-            Invoker invoker = new ReplayInvoker(
-                    TEMPLATE_FILE, TEMP_FILE_NAME,
-                    BALLERINA_RUNTIME, BALLERINA_HOME_PATH);
+            Invoker invoker = new ReplayInvoker(TEMP_FILE_NAME, BALLERINA_RUNTIME,
+                    BALLERINA_HOME_PATH);
+            Evaluator evaluator = new Evaluator();
+            evaluator.setPreprocessor(new SeparatorPreprocessor());
+            evaluator.setTreeParser(new TrialTreeParser());
+            evaluator.setSnippetFactory(new BasicSnippetFactory());
+            evaluator.setInvoker(invoker);
+            return evaluator;
+        } else if (mode == EvaluatorMode.CLASSLOAD) {
+            Invoker invoker = new ClassLoadInvoker(TEMP_FILE_NAME, BALLERINA_HOME_PATH);
             Evaluator evaluator = new Evaluator();
             evaluator.setPreprocessor(new SeparatorPreprocessor());
             evaluator.setTreeParser(new TrialTreeParser());

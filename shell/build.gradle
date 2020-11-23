@@ -38,6 +38,7 @@ dependencies {
     implementation name: 'ballerina-tools-api-2.0.0-Preview6-SNAPSHOT'
     implementation name: 'ballerina-lang-2.0.0-Preview6-SNAPSHOT'
     implementation name: 'ballerina-rt-2.0.0-Preview6-SNAPSHOT'
+    implementation name: 'ballerina-io-2.0.0-Preview6-SNAPSHOT'
 
     // Required transitive dependencies
     implementation name: 'asm-9.0'

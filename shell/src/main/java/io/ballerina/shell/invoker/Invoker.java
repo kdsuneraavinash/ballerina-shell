@@ -47,6 +47,11 @@ public abstract class Invoker extends DiagnosticReporter {
     /**
      * Initializes the invoker. This can be used to load required files
      * and create caches. Calling this is not a requirement.
+     * <p>
+     * Runs so that a demo file is loaded and compiled
+     * so the required caches will be ready once the user gives input.
+     * Any error is an indication of a failure in template of base compilation.
+     * Throw if that happens.
      *
      * @throws InvokerException If initialization failed.
      */

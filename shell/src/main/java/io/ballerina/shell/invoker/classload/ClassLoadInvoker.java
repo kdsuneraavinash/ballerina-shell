@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.invoker.replay;
+package io.ballerina.shell.invoker.classload;
 
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -27,115 +27,97 @@ import io.ballerina.projects.Project;
 import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
+import io.ballerina.shell.exceptions.SnippetException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.StringJoiner;
 
 /**
  * Executes the snippet given.
- * Re evaluates the snippet by generating a file containing all snippets
- * and executing it. The Project API will be used to compile the file.
+ * This invoker will save all the variable values in a static class and
+ * load them into the generated class effectively managing any side-effects.
+ * TODO: Test this with various sessions.
  */
-public class ReplayInvoker extends Invoker {
+public class ClassLoadInvoker extends Invoker {
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
-    // TODO: Add a better way to set these
+    protected static final String MODULE_MAIN_METHOD_NAME = "main";
+    private static final String TEMPLATE_FILE = "template.classload.ftl";
+    // TODO: Set ballerina home using system prop.
     protected static final String BALLERINA_HOME = "ballerina.home";
-    private static final String TEMPLATE_FILE = "template.replay.ftl";
 
     protected final List<Snippet> imports;
-    protected final List<Snippet> varDclns;
     protected final List<Snippet> moduleDclns;
-    // TODO: Find a better alternative than a pair
-    // The second value of the pair signifies whether the statement is a
-    // statement snippet. (It could also be a expression)
-    protected final List<Pair<Snippet, Boolean>> stmts;
-    protected final Path ballerinaRuntime;
+    protected final List<VariableDeclarationDetails> varDclns;
     protected final String generatedBallerinaFile;
     protected final String templateName;
     protected Template template;
 
-    public ReplayInvoker(String tmpFileName, Path ballerinaRuntime, Path ballerinaHome) {
+    public ClassLoadInvoker(String tmpFileName, Path ballerinaHome) {
         System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
         this.imports = new ArrayList<>();
         this.varDclns = new ArrayList<>();
         this.moduleDclns = new ArrayList<>();
-        this.stmts = new ArrayList<>();
         this.templateName = TEMPLATE_FILE;
         this.generatedBallerinaFile = tmpFileName;
-        this.ballerinaRuntime = ballerinaRuntime;
     }
 
     @Override
     public void initialize() throws InvokerException {
         this.template = getTemplate(templateName);
-        ReplayContext emptyContext = new ReplayContext(List.of(), List.of(), List.of(), List.of(), null);
+        ClassLoadContext emptyContext = new ClassLoadContext(List.of(), List.of(), null,
+                List.of(), List.of(), null);
         try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
             template.process(emptyContext, fileWriter);
             SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
             execute(project, compile(project));
         } catch (TemplateException | IOException | InvokerException e) {
-            addDiagnostic(Diagnostic.error("Replay Invoker initialization failed: " + e.getMessage()));
+            addDiagnostic(Diagnostic.error("Classload Invoker initialization failed: " + e.getMessage()));
             throw new InvokerException(e);
         }
     }
 
     @Override
-    public void reset() {
-        imports.clear();
-        varDclns.clear();
-        moduleDclns.clear();
-        stmts.clear();
-    }
-
-    @Override
     public boolean execute(Snippet newSnippet) throws InvokerException {
         this.template = getTemplate(templateName);
-        ReplayContext context = createContext(newSnippet);
+        ClassLoadContext context = createContext(newSnippet);
         try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
             template.process(context, fileWriter);
-        } catch (TemplateException e) {
-            addDiagnostic(Diagnostic.error("Template processing failed: " + e.getMessage()));
-            throw new InvokerException(e);
-        } catch (IOException e) {
+        } catch (TemplateException | IOException e) {
             addDiagnostic(Diagnostic.error("File generation failed: " + e.getMessage()));
             throw new InvokerException(e);
         }
 
         SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
         JBallerinaBackend jBallerinaBackend = compile(project);
-
-        boolean isSuccess = true;
-        if (newSnippet.isExecutable()) {
-            isSuccess = execute(project, jBallerinaBackend);
-        }
+        boolean isSuccess = execute(project, jBallerinaBackend);
 
         if (isSuccess) {
             addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
             if (newSnippet.isImport()) {
                 imports.add(newSnippet);
             } else if (newSnippet.isVariableDeclaration()) {
-                varDclns.add(newSnippet);
+                varDclns.add(getVariableDetails(newSnippet));
             } else if (newSnippet.isModuleMemberDeclaration()) {
                 moduleDclns.add(newSnippet);
-            } else if (newSnippet.isStatement()) {
-                stmts.add(new Pair<>(newSnippet, true));
-            } else if (newSnippet.isExpression()) {
-                stmts.add(new Pair<>(newSnippet, false));
             }
         }
         return isSuccess;
     }
+
 
     /**
      * Creates the context object to be passed to template.
@@ -144,22 +126,29 @@ public class ReplayInvoker extends Invoker {
      * @param newSnippet New snippet from user.
      * @return Created context.
      */
-    protected ReplayContext createContext(Snippet newSnippet) {
+    protected ClassLoadContext createContext(Snippet newSnippet) throws InvokerException {
         List<String> importStrings = new ArrayList<>();
-        List<String> varDclnStrings = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>();
-        List<Pair<String, Boolean>> stmtStrings = new ArrayList<>();
-
+        List<Pair<String, String>> initVarDclns = new ArrayList<>();
+        List<Pair<String, String>> saveVarDclns = new ArrayList<>();
         imports.stream().map(Objects::toString).forEach(importStrings::add);
-        varDclns.stream().map(Objects::toString).forEach(varDclnStrings::add);
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
-        stmts.stream().map(p -> new Pair<>(p.getFirst().toString(), p.getSecond())).forEach(stmtStrings::add);
+        varDclns.stream().map(VariableDeclarationDetails::varNameAndType).forEach(initVarDclns::add);
+        varDclns.stream().map(VariableDeclarationDetails::varNameAndType).forEach(saveVarDclns::add);
+
+        // Variable declarations are handled differently.
+        // If current snippet is a var dcln, it is added to saveVarDclns but not to initVarDclns.
+        // All other var dclns are added to both.
+        // Last expr is the last snippet if it was either a stmt or an expression.
 
         Pair<String, Boolean> lastExpr = null;
+        String lastVarDcln = null;
         if (newSnippet.isImport()) {
             importStrings.add(newSnippet.toString());
         } else if (newSnippet.isVariableDeclaration()) {
-            varDclnStrings.add(newSnippet.toString());
+            VariableDeclarationDetails varDetails = getVariableDetails(newSnippet);
+            lastVarDcln = newSnippet.toString();
+            saveVarDclns.add(varDetails.varNameAndType());
         } else if (newSnippet.isModuleMemberDeclaration()) {
             moduleDclnStrings.add(newSnippet.toString());
         } else if (newSnippet.isStatement()) {
@@ -168,7 +157,8 @@ public class ReplayInvoker extends Invoker {
             lastExpr = new Pair<>(newSnippet.toString(), false);
         }
 
-        return new ReplayContext(importStrings, varDclnStrings, moduleDclnStrings, stmtStrings, lastExpr);
+        return new ClassLoadContext(importStrings, moduleDclnStrings, lastVarDcln,
+                initVarDclns, saveVarDclns, lastExpr);
     }
 
     /**
@@ -183,10 +173,23 @@ public class ReplayInvoker extends Invoker {
         return Objects.requireNonNullElse(this.template, super.getTemplate(templateName));
     }
 
+    @Override
+    public void reset() {
+        imports.clear();
+        varDclns.clear();
+        moduleDclns.clear();
+        // We need to clear the memory as well.
+        ClassLoadMemory.forgetAll();
+    }
+
     /**
      * Executes a compiled project.
      * It is expected that the project had no compiler errors.
-     * Will run the process using the same IO and wait for it to finish.
+     * The process is run and the stdout is collected and printed.
+     * TODO: Collect and print stdout as the program runs. (Not after exit)
+     * Due to ballerina calling system.exit(), we need to disable these calls and
+     * remove system error logs as well.
+     * TODO: Fix these issues.
      *
      * @param project           Project to run.
      * @param jBallerinaBackend Backed to use.
@@ -207,51 +210,58 @@ public class ReplayInvoker extends Invoker {
                     executableModule.packageInstance().packageName().toString(),
                     executableModule.packageInstance().packageVersion().toString(),
                     MODULE_INIT_CLASS_NAME);
+            ClassLoader classLoader = jarResolver.getClassLoaderWithRequiredJarFilesForExecution();
+            Class<?> clazz = classLoader.loadClass(initClassName);
 
-            List<String> commands = List.of("java", "-cp", getAllClassPaths(jarResolver), initClassName);
-            int exitCode = runCommand(commands);
-            return exitCode == 0;
-        } catch (IOException e) {
-            addDiagnostic(Diagnostic.error("Starting the executable failed: " + e.getMessage()));
+            Method method = clazz.getDeclaredMethod(MODULE_MAIN_METHOD_NAME, String[].class);
+            String[] args = new String[0];
+
+            PrintStream stdErr = System.err;
+            PrintStream stdOut = System.out;
+            ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
+            try {
+                System.setErr(new PrintStream(new ByteArrayOutputStream()));
+                System.setOut(new PrintStream(stdOutBaOs));
+                System.setSecurityManager(new NoExitVmSecManager(System.getSecurityManager()));
+                method.invoke(null, new Object[]{args});
+            } catch (InvocationTargetException ignored) {
+            } finally {
+                // Restore everything
+                stdOut.print(new String(stdOutBaOs.toByteArray()));
+                System.setSecurityManager(null);
+                System.setErr(stdErr);
+                System.setOut(stdOut);
+            }
+
+            return true;
+        } catch (ClassNotFoundException e) {
+            addDiagnostic(Diagnostic.error("Main class not found: " + e.getMessage()));
             throw new InvokerException(e);
-        } catch (InterruptedException e) {
-            addDiagnostic(Diagnostic.error("Exception while waiting for process to finish: " + e.getMessage()));
+        } catch (NoSuchMethodException e) {
+            addDiagnostic(Diagnostic.error("Main method not found: " + e.getMessage()));
+            throw new InvokerException(e);
+        } catch (IllegalAccessException e) {
+            addDiagnostic(Diagnostic.error("Access for the method failed: " + e.getMessage()));
             throw new InvokerException(e);
         }
     }
 
     /**
-     * Runs a command given. Returns the exit code from the execution.
+     * Gets the variable information.
      *
-     * @param commands Command to run.
-     * @return Exit code of the command.
-     * @throws IOException          If process starting failed.
-     * @throws InterruptedException If interrupted.
+     * @param variableDeclaration Snippet to get info. This must be a var dcln snippet.
+     * @return Collected details.
+     * @throws InvokerException If snippet was invalid or of unexpected type.
      */
-    protected int runCommand(List<String> commands) throws IOException, InterruptedException {
-        ProcessBuilder processBuilder = new ProcessBuilder(commands).inheritIO();
-        Process process = processBuilder.start();
-        process.waitFor();
-        return process.exitValue();
-    }
-
-    /**
-     * Construct the joined class path required to execute the jar created by resolver.
-     * Need to add the BRE location to the class path as well.
-     *
-     * @param jarResolver Jar resolver of the project.
-     * @return Joined classpath.
-     */
-    private String getAllClassPaths(JarResolver jarResolver) {
-        StringJoiner cp = new StringJoiner(File.pathSeparator);
-        jarResolver.getJarFilePathsRequiredForExecution().stream().map(Path::toString).forEach(cp::add);
-        cp.add(ballerinaRuntime.toAbsolutePath().toString());
-        return cp.toString();
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Replay Invoker State[imports = %s,  varDclns = %s,  moduleDclns = %s,  stmts = %s]",
-                imports.size(), varDclns.size(), moduleDclns.size(), stmts.size());
+    protected VariableDeclarationDetails getVariableDetails(Snippet variableDeclaration) throws InvokerException {
+        try {
+            assert variableDeclaration instanceof VariableDeclarationSnippet;
+            return new VariableDeclarationDetails((VariableDeclarationSnippet) variableDeclaration);
+        } catch (SnippetException e) {
+            addDiagnostic(Diagnostic.error("" +
+                    "Global variables should be of type name = value; format. " +
+                    "No metadata or qualifiers are allowed. The variable should also be initialized."));
+            throw new InvokerException(e);
+        }
     }
 }
