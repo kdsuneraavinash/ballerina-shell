@@ -20,7 +20,7 @@ package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * These are expressions that are executable. These do not have to contain semicolons.
@@ -28,6 +28,6 @@ import io.ballerina.shell.snippet.SnippetKind;
  */
 public class ExpressionSnippet extends Snippet {
     public ExpressionSnippet(ExpressionNode rootNode) {
-        super(SnippetKind.EXPRESSION, rootNode, true);
+        super(SnippetSubKind.EXPRESSION, rootNode);
     }
 }

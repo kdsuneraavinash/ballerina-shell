@@ -78,13 +78,14 @@ public class BallerinaShell {
      * Runs the terminal application using the given config.
      */
     public void run() {
+        String replPrompt = terminal.color(REPL_PROMPT, TerminalAdapter.GREEN);
         String banner = String.format(readFile(HEADER_FILE), REPL_VERSION);
         terminal.println(banner);
 
         Duration previousDuration = Duration.ZERO;
         while (continueLoop) {
             String rightPrompt = String.format("took %s ms", previousDuration.toMillis());
-            String source = terminal.readLine(REPL_PROMPT, rightPrompt).trim();
+            String source = terminal.readLine(replPrompt, rightPrompt).trim();
             Instant start = Instant.now();
 
             try {

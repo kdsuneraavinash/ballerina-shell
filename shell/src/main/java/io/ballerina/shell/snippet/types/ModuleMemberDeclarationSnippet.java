@@ -20,14 +20,14 @@ package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * Module level declarations. These are not active or runnable.
  * Any undefined variable in these declarations are ignored.
  */
 public class ModuleMemberDeclarationSnippet extends Snippet {
-    public ModuleMemberDeclarationSnippet(ModuleMemberDeclarationNode rootNode) {
-        super(SnippetKind.MODULE_MEMBER_DECLARATION, rootNode, false);
+    public ModuleMemberDeclarationSnippet(SnippetSubKind subKind, ModuleMemberDeclarationNode rootNode) {
+        super(subKind, rootNode);
     }
 }

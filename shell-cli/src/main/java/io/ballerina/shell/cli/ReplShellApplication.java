@@ -19,7 +19,6 @@
 package io.ballerina.shell.cli;
 
 
-import io.ballerina.shell.cli.jline.ApplicationConfiguration;
 import io.ballerina.shell.cli.jline.JlineTerminalAdapter;
 import io.ballerina.shell.cli.jline.KeywordCompleter;
 import org.jline.reader.Completer;
@@ -37,7 +36,7 @@ import java.util.concurrent.Callable;
  * Ballerina base shell REPL.
  * Executes a interactive shell to let the user interact with Ballerina Shell.
  */
-@CommandLine.Command(name = "repl", mixinStandardHelpOptions = true, version = "checksum 0.01",
+@CommandLine.Command(name = "ballerina shell", mixinStandardHelpOptions = true, version = "ballerina shell 0.01",
         description = "Shell program for Ballerina.")
 public class ReplShellApplication implements Callable<Integer> {
     @SuppressWarnings("FieldMayBeFinal")

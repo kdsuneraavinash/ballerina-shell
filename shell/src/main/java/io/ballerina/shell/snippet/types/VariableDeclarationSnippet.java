@@ -20,7 +20,7 @@ package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * These will be variable declarations.
@@ -28,6 +28,6 @@ import io.ballerina.shell.snippet.SnippetKind;
  */
 public class VariableDeclarationSnippet extends Snippet {
     public VariableDeclarationSnippet(ModuleVariableDeclarationNode rootNode) {
-        super(SnippetKind.VARIABLE_DECLARATION, rootNode, true);
+        super(SnippetSubKind.VARIABLE_DECLARATION, rootNode);
     }
 }

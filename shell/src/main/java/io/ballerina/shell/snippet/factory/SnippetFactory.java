@@ -30,7 +30,6 @@ import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * Snippet factory that is expected to generate snippets from given nodes.
@@ -38,6 +37,13 @@ import java.util.function.Function;
  * if the snippet creation failed.
  */
 public abstract class SnippetFactory extends DiagnosticReporter {
+    /**
+     * Snippet creation helper interface.
+     */
+    private interface SnippetCreator {
+        Snippet create(Node node) throws SnippetException;
+    }
+
     /**
      * Creates a snippet from the given node.
      * This will throw and error if the resultant snippet is an erroneous snippet.
@@ -48,15 +54,15 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @throws SnippetException If couldn't identify the snippet.
      */
     public Snippet createSnippet(Node node) throws SnippetException {
-        List<Function<Node, Snippet>> functions = new ArrayList<>();
+        List<SnippetCreator> functions = new ArrayList<>();
         functions.add(this::createImportSnippet);
         functions.add(this::createVariableDeclarationSnippet);
         functions.add(this::createModuleMemberDeclarationSnippet);
         functions.add(this::createStatementSnippet);
         functions.add(this::createExpressionSnippet);
         Snippet snippet;
-        for (Function<Node, Snippet> function : functions) {
-            snippet = function.apply(node);
+        for (SnippetCreator function : functions) {
+            snippet = function.create(node);
             if (snippet != null) {
                 String message = String.format("Node identified as a %s snippet.", snippet.getKind());
                 addDiagnostic(Diagnostic.debug(message));
@@ -76,7 +82,7 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract ImportDeclarationSnippet createImportSnippet(Node node);
+    public abstract ImportDeclarationSnippet createImportSnippet(Node node) throws SnippetException;
 
     /**
      * Create a variable declaration snippet from the given node.
@@ -85,7 +91,7 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract VariableDeclarationSnippet createVariableDeclarationSnippet(Node node);
+    public abstract VariableDeclarationSnippet createVariableDeclarationSnippet(Node node) throws SnippetException;
 
     /**
      * Create a module member declaration snippet from the given node.
@@ -94,7 +100,8 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract ModuleMemberDeclarationSnippet createModuleMemberDeclarationSnippet(Node node);
+    public abstract ModuleMemberDeclarationSnippet createModuleMemberDeclarationSnippet(Node node)
+            throws SnippetException;
 
     /**
      * Create a statement snippet from the given node.
@@ -103,7 +110,7 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract StatementSnippet createStatementSnippet(Node node);
+    public abstract StatementSnippet createStatementSnippet(Node node) throws SnippetException;
 
     /**
      * Create a expression snippet from the given node.
@@ -112,5 +119,5 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract Snippet createExpressionSnippet(Node node);
+    public abstract Snippet createExpressionSnippet(Node node) throws SnippetException;
 }

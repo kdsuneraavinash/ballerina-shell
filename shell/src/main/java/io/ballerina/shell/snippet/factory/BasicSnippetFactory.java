@@ -59,6 +59,8 @@ import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.WhileStatementNode;
 import io.ballerina.compiler.syntax.tree.XMLNamespaceDeclarationNode;
 import io.ballerina.shell.Diagnostic;
+import io.ballerina.shell.exceptions.SnippetException;
+import io.ballerina.shell.snippet.SnippetSubKind;
 import io.ballerina.shell.snippet.types.ExpressionSnippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
@@ -71,44 +73,43 @@ import java.util.Map;
  * A factory that will create snippets from given nodes.
  */
 public class BasicSnippetFactory extends SnippetFactory {
-    // TODO: Instead of booleans, map to subkinds later.
     // Create a caches of Syntax kind -> Variable types/Sub snippets that are known.
     // These will be used when identifying the variable type/snippet type.
-    protected static final Map<Class<?>, Boolean> MODULE_MEM_DCLNS = Map.ofEntries(
-            Map.entry(FunctionDefinitionNode.class, true),
-            Map.entry(ListenerDeclarationNode.class, true),
-            Map.entry(TypeDefinitionNode.class, true),
-            Map.entry(ServiceDeclarationNode.class, false), // Error
-            Map.entry(ConstantDeclarationNode.class, true),
-            Map.entry(ModuleVariableDeclarationNode.class, false), // Ignored
-            Map.entry(AnnotationDeclarationNode.class, true),
-            Map.entry(ModuleXMLNamespaceDeclarationNode.class, true),
-            Map.entry(EnumDeclarationNode.class, true),
-            Map.entry(ClassDefinitionNode.class, true)
+    protected static final Map<Class<?>, SnippetSubKind> MODULE_MEM_DCLNS = Map.ofEntries(
+            Map.entry(FunctionDefinitionNode.class, SnippetSubKind.FUNCTION_DEFINITION),
+            Map.entry(ListenerDeclarationNode.class, SnippetSubKind.LISTENER_DECLARATION),
+            Map.entry(TypeDefinitionNode.class, SnippetSubKind.TYPE_DEFINITION),
+            Map.entry(ServiceDeclarationNode.class, SnippetSubKind.SERVICE_DECLARATION), // Error
+            Map.entry(ConstantDeclarationNode.class, SnippetSubKind.CONSTANT_DECLARATION),
+            Map.entry(ModuleVariableDeclarationNode.class, SnippetSubKind.MODULE_VARIABLE_DECLARATION), // Ignored
+            Map.entry(AnnotationDeclarationNode.class, SnippetSubKind.ANNOTATION_DECLARATION),
+            Map.entry(ModuleXMLNamespaceDeclarationNode.class, SnippetSubKind.MODULE_XML_NAMESPACE_DECLARATION),
+            Map.entry(EnumDeclarationNode.class, SnippetSubKind.ENUM_DECLARATION),
+            Map.entry(ClassDefinitionNode.class, SnippetSubKind.CLASS_DEFINITION)
     );
-    protected static final Map<Class<?>, Boolean> STATEMENTS = Map.ofEntries(
-            Map.entry(AssignmentStatementNode.class, true),
-            Map.entry(CompoundAssignmentStatementNode.class, true),
-            Map.entry(VariableDeclarationNode.class, false), // Ignore
-            Map.entry(BlockStatementNode.class, true),
-            Map.entry(BreakStatementNode.class, false), // Error
-            Map.entry(FailStatementNode.class, false), // Error
-            Map.entry(ExpressionStatementNode.class, false), // Ignore
-            Map.entry(ContinueStatementNode.class, false), // Error
-            Map.entry(IfElseStatementNode.class, true),
-            Map.entry(WhileStatementNode.class, true),
-            Map.entry(PanicStatementNode.class, true),
-            Map.entry(ReturnStatementNode.class, false), // Error
-            Map.entry(LocalTypeDefinitionStatementNode.class, false), // Ignore
-            Map.entry(LockStatementNode.class, true),
-            Map.entry(ForkStatementNode.class, true),
-            Map.entry(ForEachStatementNode.class, true),
-            Map.entry(XMLNamespaceDeclarationNode.class, false), // Ignore
-            Map.entry(TransactionStatementNode.class, true),
-            Map.entry(RollbackStatementNode.class, false), // Error
-            Map.entry(RetryStatementNode.class, true),
-            Map.entry(MatchStatementNode.class, true),
-            Map.entry(DoStatementNode.class, true)
+    protected static final Map<Class<?>, SnippetSubKind> STATEMENTS = Map.ofEntries(
+            Map.entry(AssignmentStatementNode.class, SnippetSubKind.ASSIGNMENT_STATEMENT),
+            Map.entry(CompoundAssignmentStatementNode.class, SnippetSubKind.COMPOUND_ASSIGNMENT_STATEMENT),
+            Map.entry(VariableDeclarationNode.class, SnippetSubKind.VARIABLE_DECLARATION_STATEMENT), // Ignore
+            Map.entry(BlockStatementNode.class, SnippetSubKind.BLOCK_STATEMENT),
+            Map.entry(BreakStatementNode.class, SnippetSubKind.BREAK_STATEMENT), // Error
+            Map.entry(FailStatementNode.class, SnippetSubKind.FAIL_STATEMENT), // Error
+            Map.entry(ExpressionStatementNode.class, SnippetSubKind.EXPRESSION_STATEMENT), // Ignore
+            Map.entry(ContinueStatementNode.class, SnippetSubKind.CONTINUE_STATEMENT), // Error
+            Map.entry(IfElseStatementNode.class, SnippetSubKind.IF_ELSE_STATEMENT),
+            Map.entry(WhileStatementNode.class, SnippetSubKind.WHILE_STATEMENT),
+            Map.entry(PanicStatementNode.class, SnippetSubKind.PANIC_STATEMENT),
+            Map.entry(ReturnStatementNode.class, SnippetSubKind.RETURN_STATEMENT), // Error
+            Map.entry(LocalTypeDefinitionStatementNode.class, SnippetSubKind.LOCAL_TYPE_DEFINITION_STATEMENT), // Ignore
+            Map.entry(LockStatementNode.class, SnippetSubKind.LOCK_STATEMENT),
+            Map.entry(ForkStatementNode.class, SnippetSubKind.FORK_STATEMENT),
+            Map.entry(ForEachStatementNode.class, SnippetSubKind.FOR_EACH_STATEMENT),
+            Map.entry(XMLNamespaceDeclarationNode.class, SnippetSubKind.XML_NAMESPACE_DECLARATION_STATEMENT), // Ignore
+            Map.entry(TransactionStatementNode.class, SnippetSubKind.TRANSACTION_STATEMENT),
+            Map.entry(RollbackStatementNode.class, SnippetSubKind.ROLLBACK_STATEMENT), // Error
+            Map.entry(RetryStatementNode.class, SnippetSubKind.RETRY_STATEMENT),
+            Map.entry(MatchStatementNode.class, SnippetSubKind.MATCH_STATEMENT),
+            Map.entry(DoStatementNode.class, SnippetSubKind.DO_STATEMENT)
     );
 
     @Override
@@ -148,22 +149,31 @@ public class BasicSnippetFactory extends SnippetFactory {
     }
 
     @Override
-    public ModuleMemberDeclarationSnippet createModuleMemberDeclarationSnippet(Node node) {
+    public ModuleMemberDeclarationSnippet createModuleMemberDeclarationSnippet(Node node)
+            throws SnippetException {
         if (node instanceof ModuleMemberDeclarationNode) {
             assert MODULE_MEM_DCLNS.containsKey(node.getClass());
-            if (MODULE_MEM_DCLNS.get(node.getClass())) {
-                return new ModuleMemberDeclarationSnippet((ModuleMemberDeclarationNode) node);
+            SnippetSubKind subKind = MODULE_MEM_DCLNS.get(node.getClass());
+            if (subKind.hasError()) {
+                addDiagnostic(Diagnostic.error(subKind.getError()));
+                throw new SnippetException();
+            } else if (!subKind.isIgnored()) {
+                return new ModuleMemberDeclarationSnippet(subKind, (ModuleMemberDeclarationNode) node);
             }
         }
         return null;
     }
 
     @Override
-    public StatementSnippet createStatementSnippet(Node node) {
+    public StatementSnippet createStatementSnippet(Node node) throws SnippetException {
         if (node instanceof StatementNode) {
             assert STATEMENTS.containsKey(node.getClass());
-            if (STATEMENTS.get(node.getClass())) {
-                return new StatementSnippet((StatementNode) node);
+            SnippetSubKind subKind = STATEMENTS.get(node.getClass());
+            if (subKind.hasError()) {
+                addDiagnostic(Diagnostic.error(subKind.getError()));
+                throw new SnippetException();
+            } else if (!subKind.isIgnored()) {
+                return new StatementSnippet(subKind, (StatementNode) node);
             }
         }
         return null;

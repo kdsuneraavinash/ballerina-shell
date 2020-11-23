@@ -40,14 +40,12 @@ import io.ballerina.compiler.syntax.tree.Node;
  * However, any valid redeclaration in a different scope may be possible.
  */
 public abstract class Snippet {
-    protected final SnippetKind kind;
+    protected final SnippetSubKind subKind;
     protected final Node rootNode;
-    protected final boolean isExecutable;
 
-    protected Snippet(SnippetKind kind, Node rootNode, boolean isExecutable) {
-        this.kind = kind;
+    protected Snippet(SnippetSubKind subKind, Node rootNode) {
+        this.subKind = subKind;
         this.rootNode = rootNode;
-        this.isExecutable = isExecutable;
     }
 
     /**
@@ -57,7 +55,7 @@ public abstract class Snippet {
      * @return Snippet kind value.
      */
     public SnippetKind getKind() {
-        return kind;
+        return subKind.getKind();
     }
 
     /**
@@ -67,7 +65,11 @@ public abstract class Snippet {
      * @return Whether the snippet is executable.
      */
     public boolean isExecutable() {
-        return isExecutable;
+        return subKind.isExecutable();
+    }
+
+    public boolean isIgnored() {
+        return subKind.isIgnored();
     }
 
     public boolean isImport() {

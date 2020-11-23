@@ -20,7 +20,7 @@ package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.SnippetKind;
+import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * Snippet that represent a import statement.
@@ -29,6 +29,6 @@ import io.ballerina.shell.snippet.SnippetKind;
  */
 public class ImportDeclarationSnippet extends Snippet {
     public ImportDeclarationSnippet(ImportDeclarationNode rootNode) {
-        super(SnippetKind.IMPORT_DECLARATION, rootNode, false);
+        super(SnippetSubKind.IMPORT_DECLARATION, rootNode);
     }
 }

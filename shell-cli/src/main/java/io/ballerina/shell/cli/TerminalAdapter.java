@@ -27,7 +27,6 @@ public abstract class TerminalAdapter {
     @SuppressWarnings("unused")
     protected static final int BLACK = 0;
     protected static final int RED = 1;
-    @SuppressWarnings("unused")
     protected static final int GREEN = 2;
     protected static final int YELLOW = 3;
     @SuppressWarnings("unused")

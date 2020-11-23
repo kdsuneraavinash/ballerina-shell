@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.cli.jline;
+package io.ballerina.shell.cli;
 
 import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.cli.Configuration;
