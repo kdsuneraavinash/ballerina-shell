@@ -31,6 +31,7 @@ import java.util.Objects;
  */
 public class ClassLoadContext {
     private static final Pair<String, Boolean> DEFAULT_RETURN_EXPR = new Pair<>("()", false);
+    private final String contextId;
     private final Collection<String> imports;
     private final Collection<String> moduleDclns;
     private final String lastVarDcln;
@@ -44,6 +45,7 @@ public class ClassLoadContext {
      * Of {@code initVarDclns} and {@code saveVarDclns}, the first value
      * should be the type descriptor. Second value should be the variable name.
      *
+     * @param contextId    Id of the context to use in memory.
      * @param imports      Import declarations.
      * @param moduleDclns  Module level declaration.
      * @param lastVarDcln  Last variable declaration if the last snippet was a var dcln.
@@ -51,14 +53,15 @@ public class ClassLoadContext {
      * @param initVarDclns Variable declarations to initialize with values.
      * @param saveVarDclns Variable declarations to save.
      * @param lastExpr     Last expression if last value was a statement or an expression.
-     *                     The second value should be a boolean indicating whether the last one was an statement.
      */
-    public ClassLoadContext(Collection<String> imports,
+    public ClassLoadContext(String contextId,
+                            Collection<String> imports,
                             Collection<String> moduleDclns,
                             String lastVarDcln,
                             List<Pair<String, String>> initVarDclns,
                             List<Pair<String, String>> saveVarDclns,
                             Pair<String, Boolean> lastExpr) {
+        this.contextId = contextId;
         this.lastExpr = Objects.requireNonNullElse(lastExpr, DEFAULT_RETURN_EXPR);
         this.imports = imports;
         this.lastVarDcln = Objects.requireNonNullElse(lastVarDcln, "");
@@ -95,5 +98,10 @@ public class ClassLoadContext {
     @TemplateAccessible
     public List<Pair<String, String>> getSaveVarDclns() {
         return saveVarDclns;
+    }
+
+    @TemplateAccessible
+    public String getContextId() {
+        return contextId;
     }
 }

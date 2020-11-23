@@ -45,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Executes the snippet given.
@@ -64,6 +65,7 @@ public class ClassLoadInvoker extends Invoker {
     protected final List<VariableDeclarationDetails> varDclns;
     protected final String generatedBallerinaFile;
     protected final String templateName;
+    protected final String contextId;
     protected Template template;
 
     public ClassLoadInvoker(String tmpFileName, Path ballerinaHome) {
@@ -73,12 +75,13 @@ public class ClassLoadInvoker extends Invoker {
         this.moduleDclns = new ArrayList<>();
         this.templateName = TEMPLATE_FILE;
         this.generatedBallerinaFile = tmpFileName;
+        this.contextId = UUID.randomUUID().toString();
     }
 
     @Override
     public void initialize() throws InvokerException {
         this.template = getTemplate(templateName);
-        ClassLoadContext emptyContext = new ClassLoadContext(List.of(), List.of(), null,
+        ClassLoadContext emptyContext = new ClassLoadContext(contextId, List.of(), List.of(), null,
                 List.of(), List.of(), null);
         try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
             template.process(emptyContext, fileWriter);
@@ -88,6 +91,15 @@ public class ClassLoadInvoker extends Invoker {
             addDiagnostic(Diagnostic.error("Classload Invoker initialization failed: " + e.getMessage()));
             throw new InvokerException(e);
         }
+    }
+
+    @Override
+    public void reset() {
+        imports.clear();
+        varDclns.clear();
+        moduleDclns.clear();
+        // We need to clear the memory as well.
+        ClassLoadMemory.forgetAll(contextId);
     }
 
     @Override
@@ -157,7 +169,7 @@ public class ClassLoadInvoker extends Invoker {
             lastExpr = new Pair<>(newSnippet.toString(), false);
         }
 
-        return new ClassLoadContext(importStrings, moduleDclnStrings, lastVarDcln,
+        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, lastVarDcln,
                 initVarDclns, saveVarDclns, lastExpr);
     }
 
@@ -171,15 +183,6 @@ public class ClassLoadInvoker extends Invoker {
      */
     protected Template getTemplate(String templateName) throws InvokerException {
         return Objects.requireNonNullElse(this.template, super.getTemplate(templateName));
-    }
-
-    @Override
-    public void reset() {
-        imports.clear();
-        varDclns.clear();
-        moduleDclns.clear();
-        // We need to clear the memory as well.
-        ClassLoadMemory.forgetAll();
     }
 
     /**

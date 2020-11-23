@@ -7,11 +7,11 @@ import ballerina/java;
 ${import}
 </#list>
 
-function recall(handle name) returns any|error = @java:Method {
+function recall(handle context_id, handle name) returns any|error = @java:Method {
     'class: "io.ballerina.shell.invoker.classload.ClassLoadMemory"
 } external;
 
-function memorize(handle name, any|error value) = @java:Method {
+function memorize(handle context_id, handle name, any|error value) = @java:Method {
     'class: "io.ballerina.shell.invoker.classload.ClassLoadMemory"
 } external;
 
@@ -20,17 +20,18 @@ function memorize(handle name, any|error value) = @java:Method {
 ${dcln}
 </#list>
 
+handle context_id = java:fromString("${contextId}");
 ${lastVarDcln}
 
 // Variable initialization
 <#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall(java:fromString("${varNameType.first}"));
+${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall(context_id, java:fromString("${varNameType.first}"));
 </#list>
 
 // Saving variables
 function save(){
 <#list saveVarDclns as varNameType>
-    memorize(java:fromString("${varNameType.first}"), ${varNameType.first});
+    memorize(context_id, java:fromString("${varNameType.first}"), ${varNameType.first});
 </#list>
 }
 
