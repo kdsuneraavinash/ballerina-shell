@@ -35,19 +35,22 @@ function save(){
 </#list>
 }
 
-// Helper: print error message
 function print_err(error err){
     io:println("Exception occurred: ", err.message());
 }
 
-public function main() returns error? {
+function run() returns @untainted any|error {
     any|error expr = ();
     <#if lastExpr.second>
     ${lastExpr.first}
     <#else>
     expr = trap (${lastExpr.first});
     </#if>
+    return expr;
+}
 
+public function main() returns error? {
+    any|error expr = run();
     if (expr is ()){
     } else if (expr is error){
         print_err(expr);

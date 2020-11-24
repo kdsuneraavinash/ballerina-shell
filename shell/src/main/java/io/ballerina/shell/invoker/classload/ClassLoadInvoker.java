@@ -53,7 +53,6 @@ import java.util.UUID;
  * Executes the snippet given.
  * This invoker will save all the variable values in a static class and
  * load them into the generated class effectively managing any side-effects.
- * TODO: Test this with various sessions.
  */
 public class ClassLoadInvoker extends Invoker {
     private static final String TEMPLATE_FILE = "template.classload.ftl";
@@ -235,7 +234,6 @@ public class ClassLoadInvoker extends Invoker {
      * Executes a compiled project.
      * It is expected that the project had no compiler errors.
      * The process is run and the stdout is collected and printed.
-     * TODO: Collect and print stdout as the program runs. (Not after exit)
      * Due to ballerina calling system.exit(), we need to disable these calls and
      * remove system error logs as well.
      *
@@ -308,7 +306,6 @@ public class ClassLoadInvoker extends Invoker {
      * Runs a method given. Returns the exit code from the execution.
      * Method should be a static method which returns an int.
      * Its signature should be, {@code static int name(String[] args)}.
-     * TODO: Catch errors and handle IO correctly.
      *
      * @param method Method to run (should be a static method).
      * @return Exit code of the method.
@@ -317,23 +314,21 @@ public class ClassLoadInvoker extends Invoker {
     protected int invokeMethod(Method method) throws IllegalAccessException {
         String[] args = new String[0];
 
+        // STDERR is completely ignored because Security Exceptions are thrown
+        // So real errors will not be visible via STDERR.
+        // Security manager is set to stop VM exits.
+
         PrintStream stdErr = System.err;
-        PrintStream stdOut = System.out;
         NoExitVmSecManager secManager = new NoExitVmSecManager(System.getSecurityManager());
-        ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
         try {
             System.setErr(new PrintStream(new ByteArrayOutputStream()));
-            System.setOut(new PrintStream(stdOutBaOs));
             System.setSecurityManager(secManager);
             return (int) method.invoke(null, new Object[]{args});
         } catch (InvocationTargetException e) {
             return secManager.getExitCode();
         } finally {
-            // Restore everything
-            stdOut.print(new String(stdOutBaOs.toByteArray()));
             System.setSecurityManager(null);
             System.setErr(stdErr);
-            System.setOut(stdOut);
         }
     }
 }
