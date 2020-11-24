@@ -90,10 +90,6 @@ public abstract class Snippet {
         return subKind.isExecutable();
     }
 
-    public boolean isIgnored() {
-        return subKind.isIgnored();
-    }
-
     public boolean isImport() {
         return this.getKind() == SnippetKind.IMPORT_DECLARATION;
     }

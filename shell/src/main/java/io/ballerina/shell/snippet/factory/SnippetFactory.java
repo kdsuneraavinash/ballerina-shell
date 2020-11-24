@@ -82,7 +82,7 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract ImportDeclarationSnippet createImportSnippet(Node node) throws SnippetException;
+    public abstract ImportDeclarationSnippet createImportSnippet(Node node);
 
     /**
      * Create a variable declaration snippet from the given node.
@@ -91,7 +91,7 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract VariableDeclarationSnippet createVariableDeclarationSnippet(Node node) throws SnippetException;
+    public abstract VariableDeclarationSnippet createVariableDeclarationSnippet(Node node);
 
     /**
      * Create a module member declaration snippet from the given node.
@@ -119,5 +119,5 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract Snippet createExpressionSnippet(Node node) throws SnippetException;
+    public abstract Snippet createExpressionSnippet(Node node);
 }

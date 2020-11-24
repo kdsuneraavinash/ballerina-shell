@@ -102,8 +102,8 @@ public enum SnippetSubKind {
         return isExecutable;
     }
 
-    public boolean isIgnored() {
-        return isIgnored;
+    public boolean isValid() {
+        return !isIgnored;
     }
 
     public boolean hasError() {

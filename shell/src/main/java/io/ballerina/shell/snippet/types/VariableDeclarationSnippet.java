@@ -30,16 +30,4 @@ public class VariableDeclarationSnippet extends Snippet {
     public VariableDeclarationSnippet(ModuleVariableDeclarationNode rootNode) {
         super(SnippetSubKind.VARIABLE_DECLARATION, rootNode);
     }
-
-    /**
-     * Returns the root node of the variable declaration.
-     * Root node must be a {@link ModuleVariableDeclarationNode}.
-     * If the snippet was created through the constructor, this condition is satisfied.
-     *
-     * @return Root node of the syntax tree referring to this declaration.
-     */
-    public ModuleVariableDeclarationNode getRootNode() {
-        assert rootNode instanceof ModuleVariableDeclarationNode;
-        return (ModuleVariableDeclarationNode) rootNode;
-    }
 }

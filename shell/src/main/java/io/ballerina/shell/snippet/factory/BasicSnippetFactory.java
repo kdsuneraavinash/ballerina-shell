@@ -162,7 +162,7 @@ public class BasicSnippetFactory extends SnippetFactory {
             if (subKind.hasError()) {
                 addDiagnostic(Diagnostic.error(subKind.getError()));
                 throw new SnippetException();
-            } else if (!subKind.isIgnored()) {
+            } else if (subKind.isValid()) {
                 return new ModuleMemberDeclarationSnippet(subKind, (ModuleMemberDeclarationNode) node);
             }
         }
@@ -177,7 +177,7 @@ public class BasicSnippetFactory extends SnippetFactory {
             if (subKind.hasError()) {
                 addDiagnostic(Diagnostic.error(subKind.getError()));
                 throw new SnippetException();
-            } else if (!subKind.isIgnored()) {
+            } else if (subKind.isValid()) {
                 return new StatementSnippet(subKind, (StatementNode) node);
             }
         }

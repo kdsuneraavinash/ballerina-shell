@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -174,11 +175,11 @@ public class ClassLoadInvoker extends Invoker {
         // Imports with prefixes
         List<String> importStrings = new ArrayList<>();
         Map<String, String> importMapped = new HashMap<>(INIT_IMPORTS);
-        for (String prefix : imports.keySet()) {
-            importMapped.put(prefix, imports.get(prefix).toString());
+        for (Map.Entry<String, Snippet> entry : imports.entrySet()) {
+            importMapped.put(entry.getKey(), entry.getValue().toString());
         }
-        for (String prefix : importMapped.keySet()) {
-            String importString = String.format("%s (prefix: %s)", importMapped.get(prefix), prefix);
+        for (Map.Entry<String, String> entry : importMapped.entrySet()) {
+            String importString = String.format("%s (prefix: %s)", entry.getValue(), entry.getKey());
             importStrings.add(importString);
         }
         return String.join("\n", importStrings);
@@ -188,9 +189,9 @@ public class ClassLoadInvoker extends Invoker {
     public String availableVariables() {
         // Available variables and values as string.
         List<String> varStrings = new ArrayList<>();
-        for (String name : globalVars.keySet()) {
-            String value = shortenedString(ClassLoadMemory.recall(contextId, name));
-            String varString = String.format("%s %s = %s", globalVars.get(name), name, value);
+        for (Map.Entry<String, String> entry : globalVars.entrySet()) {
+            String value = shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
+            String varString = String.format("%s %s = %s", entry.getValue(), entry.getKey(), value);
             varStrings.add(varString);
         }
         return String.join("\n", varStrings);
@@ -373,7 +374,7 @@ public class ClassLoadInvoker extends Invoker {
         PrintStream stdErr = System.err;
         NoExitVmSecManager secManager = new NoExitVmSecManager(System.getSecurityManager());
         try {
-            System.setErr(new PrintStream(new ByteArrayOutputStream()));
+            System.setErr(new PrintStream(new ByteArrayOutputStream(), true, Charset.defaultCharset()));
             System.setSecurityManager(secManager);
             return (int) method.invoke(null, new Object[]{args});
         } catch (InvocationTargetException e) {

@@ -169,7 +169,7 @@ public abstract class Invoker extends DiagnosticReporter {
         Document document = module.document(documentId.get());
         String sourceLine = document.textDocument().line(diagnostic.location().lineRange().startLine().line()).text();
         int position = diagnostic.location().lineRange().startLine().offset();
-        return String.format("%s\n%s^", sourceLine, space.repeat(position));
+        return String.format("%s%n%s^", sourceLine, space.repeat(position));
     }
 
     /**
