@@ -43,6 +43,7 @@ public abstract class AbstractEvaluatorTest {
     private static class TestCaseLine {
         String code;
         String output = "";
+        int exitCode = 0;
     }
 
     private static class TestCase extends ArrayList<TestCaseLine> {
@@ -50,6 +51,7 @@ public abstract class AbstractEvaluatorTest {
 
     private static class TestInvoker extends ClassLoadInvoker {
         private String output;
+        private int expectingExitCode;
 
         public TestInvoker(Path ballerinaHome) {
             super(ballerinaHome);
@@ -69,7 +71,7 @@ public abstract class AbstractEvaluatorTest {
                 System.setSecurityManager(secManager);
                 return (int) method.invoke(null, new Object[]{args});
             } catch (InvocationTargetException ignored) {
-                Assert.assertEquals(secManager.getExitCode(), 0, "Exit code was non-zero");
+                Assert.assertEquals(secManager.getExitCode(), expectingExitCode, "Exit code was unexpected");
                 return 0;
             } finally {
                 // Restore everything
@@ -86,6 +88,7 @@ public abstract class AbstractEvaluatorTest {
         Evaluator evaluator = getEvaluator(invoker);
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
         for (TestCaseLine testCaseLine : testCase) {
+            invoker.expectingExitCode = testCaseLine.exitCode;
             evaluator.evaluate(testCaseLine.code);
             Assert.assertEquals(invoker.output, testCaseLine.output);
         }

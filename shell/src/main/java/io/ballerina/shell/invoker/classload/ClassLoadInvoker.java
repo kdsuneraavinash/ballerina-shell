@@ -144,6 +144,8 @@ public class ClassLoadInvoker extends Invoker {
             } else if (newSnippet.isModuleMemberDeclaration()) {
                 moduleDclns.add(newSnippet);
             }
+        } else {
+            addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
         }
         return isSuccess;
     }

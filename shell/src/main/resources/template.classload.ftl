@@ -37,12 +37,10 @@ function save(){
 
 // Helper: print error message
 function print_err(error err){
-    var color_start = "\u{001b}[33;1m";
-    var color_end = "\u{001b}[0m";
-    io:println(color_start, "Exception occurred: ", err.message(), color_end);
+    io:println("Exception occurred: ", err.message());
 }
 
-public function main() {
+public function main() returns error? {
     any|error expr = ();
     <#if lastExpr.second>
     ${lastExpr.first}
@@ -53,12 +51,10 @@ public function main() {
     if (expr is ()){
     } else if (expr is error){
         print_err(expr);
+        return expr;
     } else {
         io:println(expr);
     }
 
-    error? err = trap save();
-    if (err is error){
-        print_err(err);
-    }
+    return trap save();
 }

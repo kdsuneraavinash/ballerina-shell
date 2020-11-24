@@ -33,9 +33,7 @@ public function main() {
 
     if (expr is ()){
     } else if (expr is error){
-        var color_start = "\u{001b}[33;1m";
-        var color_end = "\u{001b}[0m";
-        _io:println(color_start, "Exception occurred: ", expr.message(), color_end);
+        _io:println("Exception occurred: ", expr.message());
     } else {
         _io:println(expr);
     }
