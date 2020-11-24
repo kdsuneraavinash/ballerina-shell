@@ -1,0 +1,50 @@
+[
+  {
+    "code": "json j = {name: \"apple\", color: \"red\", price: 100};"
+  },
+  {
+    "code": "j.toJsonString()",
+    "output": "{\"name\":\"apple\", \"color\":\"red\", \"price\":100}\n"
+  },
+  {
+    "code": "io:println(\"j is map<json>: \", j is map<json>);",
+    "output": "j is map<json>: true\n"
+  },
+  {
+    "code": "json empty = {};"
+  },
+  {
+    "code": "int age = 30;"
+  },
+  {
+    "code": "json p = {fname: \"John\", lname: \"Stallone\", \"age\": age};"
+  },
+  {
+    "code": "p.toJsonString()",
+    "output": "{\"fname\":\"John\", \"lname\":\"Stallone\", \"age\":30}\n"
+  },
+  {
+    "code": "map<json> mp = <map<json>>p;"
+  },
+  {
+    "code": "mp[\"age\"] = 31;"
+  },
+  {
+    "code": "p.toJsonString()",
+    "output": "{\"fname\":\"John\", \"lname\":\"Stallone\", \"age\":31}\n"
+  },
+  {
+    "code": "map<json> p2 = {\n        fname: \"Peter\",\n        lname: \"Stallone\",\n        address: {\n            line: \"20 Palm Grove\",\n            city: \"Colombo 03\",\n            country: \"Sri Lanka\"\n        }\n    };"
+  },
+  {
+    "code": "p2.toJsonString()",
+    "output": "{\"fname\":\"Peter\", \"lname\":\"Stallone\", \"address\":{\"line\":\"20 Palm Grove\", \"city\":\"Colombo 03\", \"country\":\"Sri Lanka\"}}\n"
+  },
+  {
+    "code": "json lastName = p2[\"lname\"];"
+  },
+  {
+    "code": "lastName",
+    "output": "Stallone\n"
+  }
+]

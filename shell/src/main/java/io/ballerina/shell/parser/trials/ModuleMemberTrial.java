@@ -18,7 +18,10 @@
 
 package io.ballerina.shell.parser.trials;
 
+import io.ballerina.compiler.syntax.tree.CaptureBindingPatternNode;
+import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
+import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.tools.text.TextDocument;
@@ -37,6 +40,16 @@ public class ModuleMemberTrial extends DualTreeParserTrial {
 
         ModulePartNode node = tree.rootNode();
         assertIf(!node.members().isEmpty(), "expected at least one member");
-        return node.members().get(0);
+
+        ModuleMemberDeclarationNode dclnNode = node.members().get(0);
+
+        // Only captured binding patterns can be global variables
+        if (dclnNode instanceof ModuleVariableDeclarationNode) {
+            assertIf(((ModuleVariableDeclarationNode) dclnNode).typedBindingPattern().bindingPattern()
+                            instanceof CaptureBindingPatternNode,
+                    "Only captured binding patterns can be global variables");
+        }
+
+        return dclnNode;
     }
 }

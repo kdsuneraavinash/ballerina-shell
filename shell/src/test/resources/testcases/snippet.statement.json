@@ -5,6 +5,11 @@
     "accepted": true
   },
   {
+    "name": "Assignment Statement",
+    "input": "mp[\"age\"] = 32;",
+    "accepted": true
+  },
+  {
     "name": "Compound Assignment Statement",
     "input": "var1 += 3;",
     "accepted": true

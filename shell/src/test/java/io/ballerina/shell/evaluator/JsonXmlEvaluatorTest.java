@@ -23,9 +23,21 @@ import org.testng.annotations.Test;
 
 public class JsonXmlEvaluatorTest extends AbstractEvaluatorTest {
     private static final String JSON_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json.json";
+    private static final String JSON_OBJECTS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json-objects.json";
+    private static final String XML_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.xml.json";
 
     @Test
     public void testEvaluateJson() throws BallerinaShellException {
         testEvaluate(JSON_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateJsonObjects() throws BallerinaShellException {
+        testEvaluate(JSON_OBJECTS_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateXml() throws BallerinaShellException {
+        testEvaluate(XML_EVALUATOR_TESTCASE);
     }
 }
