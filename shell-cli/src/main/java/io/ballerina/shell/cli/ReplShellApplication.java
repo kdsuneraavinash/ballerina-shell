@@ -42,7 +42,7 @@ public class ReplShellApplication implements Callable<Integer> {
     @SuppressWarnings("FieldMayBeFinal")
     @CommandLine.Option(names = {"-m", "--mode"}, description = "Mode to operate the REPL.",
             type = ApplicationConfiguration.EvaluatorMode.class)
-    private ApplicationConfiguration.EvaluatorMode mode = ApplicationConfiguration.EvaluatorMode.REPLAY;
+    private ApplicationConfiguration.EvaluatorMode mode = ApplicationConfiguration.EvaluatorMode.CLASSLOAD;
 
     @SuppressWarnings("FieldMayBeFinal")
     @CommandLine.Option(names = {"-d", "--debug"}, description = "Whether to enable debug mode from start.")
