@@ -8,80 +8,30 @@ The Ballerina-shell tool is an interactive tool for learning the Ballerina progr
 
 ![Recording](./docs/demo.gif)
 
-## Current Approach
-
-Current approach with the ballerina-shell is a Replay-Based approach.  With this approach, each time the user enters a line of code, a file is generated containing the snippet and the whole program is compiled and executed again/replayed, and any new output is printed. 
-
-Following is the template for the code generation. Once the program is run, any compiler errors/warnings are displayed to the user. A print guard is used so that the user will not see previous print statements. 
-
-```ballerina
-import ballerina/io as _io;
-<#list imports as import>
-    ${import}
-</#list>
-
-<#list varDclns + moduleDclns as dcln>
-    ${dcln}
-</#list>
-
-function statements() {
-    any|error _reserved = ();
-    <#list stmts as stmt>
-        <#if stmt.second>
-           ${stmt.first}
-        <#else>
-           _reserved = ${stmt.first};
-        </#if>
-    </#list>
-}
-
-any|error _reserved = ();
-
-public function main() {
-    statements();
-
-    any|error expr = ();
-    <#if lastExpr.second>
-       ${lastExpr.first}
-    <#else>
-       expr = trap ${lastExpr.first};
-    </#if>
-
-    if (expr is ()){
-    } else if (expr is error){
-        var color_start = "\u{001b}[33;1m";
-        var color_end = "\u{001b}[0m";
-        _io:println(color_start, "Exception occurred: ", expr.message(), color_end);
-    } else {
-        _io:println(expr);
-    }
-}
-```
-
 ## Modules
 
 The project is implemented in two base modules.
 
-- `shell` - Module including all the base evaluation classes. This merely evaluated strings.
-- `shell-cli` - A CLI built on top of `shell`.
+- **shell** - Module including all the base evaluation classes. This has all the base components to evaluate and run a string. All other components are built on top of this module. You may find the source code for this module [here](shell).
+- **shell-cli** - A command-line interface built on top of shell. Includes multi-line inputs, color-coded outputs, keyword-based auto-completion, etc... You may find the source code for this module [here](shell-cli).
 
-## Limitations
+## Limitations and Known Issues
 
-Obvious limitation is the **interpretation performance**. Because of this approach, the compilation has to be done in every step. This is significantly slow and affects the user experience. Even if this approach is used by some other projects as well, because of the current efficiency of the ballerina compiler, any statement evaluation takes a considerable amount of time.
+- **Imports must be done with a prefix** - All the imports must be done by explicitly stating the snippet.  The following syntax must be used to declare an import. Also, the import library should also be in the class-path. (TODO) 
 
-Another limitation is **randomness**, because of the replaying approach, any statement that involves randomness will result in different evaluation each time. This will also include any statement that interacts with the external environment such as network calls, user inputs, etc... This can be mitigated by persisting global variable values at the end of the execution. However, since some of the types do not support serialization, this issue can only be mitigated via serializing any value that supports and de-serializing  at the next execution startup just before the evaluation of the new statement.
+  ```
+    import [org-name /] module-name [version sem-ver] as import-prefix;
+  ```
 
-Another limitation is **re-evaluation** of performance heavy snippets. For an example, a loop containing a significant amount of iteration will cause the execution to be extremely slow because it needs to be evaluated at the each execution. To fix this we can use the serializing approach together with removing any statements of which the state afterwards is correctly preserved. So if the statement did not change the program state (values of global variables) or the changes were correctly persisted, we can remove these statements.
+- **The parser is imperfect** - Current parser is imperfect and is sometimes unable to detect the type of statement. Please file an issue if you come across any wrong categorization of a snippet. The parser is also relatively slow compared to the compilation phase, acting as a bottle-neck.
 
-Other limitations include, race conditions involving parallel execution, service declarations not being supported, etc...
+- **Ctrl+C while an execution causes the program to exit** - While the execution is happening if a `sigint` or a similar call is done, the VM will exit directly.
 
-In the current implementation due to the integration with the project API, imports are not supported.
+- **Ballerina Home must be set correctly** - Ballerina home is currently set as `home` directory. (TODO) 
 
-## Possible approaches
+## Implementation
 
-Other than this, there are few other approaches possible that are used by other similar projects.
-
-> TODO: Add possible approaches
+For implementation details please refer [this](shell/README.md)
 
 ## References
 
@@ -89,3 +39,4 @@ Other than this, there are few other approaches possible that are used by other 
 
 [JShell](https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm#JSHEL-GUID-630F27C8-1195-4989-9F6B-2C51D46F52C8) - A REPL for Java programming language.
 
+[RCRL](https://github.com/onqtam/rcrl) - Read-Compile-Run-Loop: tiny and powerful interactive C++ compiler (REPL)
