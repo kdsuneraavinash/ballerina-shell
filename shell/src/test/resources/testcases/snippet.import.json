@@ -2,7 +2,7 @@
   {
     "name": "Import Statement",
     "input": "import ballerina/abc;",
-    "accepted": true
+    "accepted": false
   },
   {
     "name": "Import Statement With Prefix",
@@ -17,6 +17,11 @@
   {
     "name": "Import Statement Module",
     "input": "import org/lang.'string;",
+    "accepted": false
+  },
+  {
+    "name": "Import Statement Module",
+    "input": "import org/lang.'string as 'string;",
     "accepted": true
   }
 ]
