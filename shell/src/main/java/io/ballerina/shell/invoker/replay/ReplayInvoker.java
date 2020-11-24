@@ -35,7 +35,6 @@ import io.ballerina.shell.utils.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -60,18 +59,16 @@ public class ReplayInvoker extends Invoker {
     // statement snippet. (It could also be a expression)
     protected final List<Pair<Snippet, Boolean>> stmts;
     protected final Path ballerinaRuntime;
-    protected final String generatedBallerinaFile;
     protected final String templateName;
     protected Template template;
 
-    public ReplayInvoker(String tmpFileName, Path ballerinaRuntime, Path ballerinaHome) {
+    public ReplayInvoker(Path ballerinaRuntime, Path ballerinaHome) {
         System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
         this.imports = new ArrayList<>();
         this.varDclns = new ArrayList<>();
         this.moduleDclns = new ArrayList<>();
         this.stmts = new ArrayList<>();
         this.templateName = TEMPLATE_FILE;
-        this.generatedBallerinaFile = tmpFileName;
         this.ballerinaRuntime = ballerinaRuntime;
     }
 
@@ -79,8 +76,8 @@ public class ReplayInvoker extends Invoker {
     public void initialize() throws InvokerException {
         this.template = getTemplate(templateName);
         ReplayContext emptyContext = new ReplayContext(List.of(), List.of(), List.of(), List.of(), null);
-        writeToFile(generatedBallerinaFile, template, emptyContext);
-        SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+        File mainBal = writeToFile(template, emptyContext);
+        SingleFileProject project = SingleFileProject.load(mainBal.toPath());
         execute(project, JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11));
     }
 
@@ -96,9 +93,9 @@ public class ReplayInvoker extends Invoker {
     public boolean execute(Snippet newSnippet) throws InvokerException {
         this.template = getTemplate(templateName);
         ReplayContext context = createContext(newSnippet);
-        writeToFile(generatedBallerinaFile, template, context);
+        File mainBal = writeToFile(template, context);
 
-        SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+        SingleFileProject project = SingleFileProject.load(mainBal.toPath());
         PackageCompilation compilation = compile(project);
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
 

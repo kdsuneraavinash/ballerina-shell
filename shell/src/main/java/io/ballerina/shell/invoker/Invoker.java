@@ -32,6 +32,7 @@ import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -128,16 +129,21 @@ public abstract class Invoker extends DiagnosticReporter {
 
     /**
      * Helper method to write a template populated with context to a file.
-     * TODO: Use a temp file to write into and return file name.
+     * Writes to a temporary file and returns the file obj.
      *
-     * @param fileName File to create.
      * @param template Template name.
      * @param context  Context object to use to populate.
+     * @return The created temp file.
      * @throws InvokerException If writing was unsuccessful.
      */
-    protected void writeToFile(String fileName, Template template, Object context) throws InvokerException {
-        try (FileWriter fileWriter = new FileWriter(fileName, Charset.defaultCharset())) {
-            template.process(context, fileWriter);
+    protected File writeToFile(Template template, Object context) throws InvokerException {
+        try {
+            File createdFile = File.createTempFile("main-", ".bal");
+            try (FileWriter fileWriter = new FileWriter(createdFile, Charset.defaultCharset())) {
+                template.process(context, fileWriter);
+            }
+            createdFile.deleteOnExit();
+            return createdFile;
         } catch (TemplateException e) {
             addDiagnostic(Diagnostic.error("Template processing failed: " + e.getMessage()));
             throw new InvokerException(e);

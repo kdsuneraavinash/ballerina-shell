@@ -60,8 +60,7 @@ public class ApplicationConfiguration extends Configuration {
      */
     private Evaluator createEvaluator(EvaluatorMode mode) {
         if (mode == EvaluatorMode.REPLAY) {
-            Invoker invoker = new ReplayInvoker(TEMP_FILE_NAME, BALLERINA_RUNTIME,
-                    BALLERINA_HOME_PATH);
+            Invoker invoker = new ReplayInvoker(BALLERINA_RUNTIME, BALLERINA_HOME_PATH);
             Evaluator evaluator = new Evaluator();
             evaluator.setPreprocessor(new SeparatorPreprocessor());
             evaluator.setTreeParser(new TrialTreeParser());
@@ -69,7 +68,7 @@ public class ApplicationConfiguration extends Configuration {
             evaluator.setInvoker(invoker);
             return evaluator;
         } else if (mode == EvaluatorMode.CLASSLOAD) {
-            Invoker invoker = new ClassLoadInvoker(TEMP_FILE_NAME, BALLERINA_HOME_PATH);
+            Invoker invoker = new ClassLoadInvoker(BALLERINA_HOME_PATH);
             Evaluator evaluator = new Evaluator();
             evaluator.setPreprocessor(new SeparatorPreprocessor());
             evaluator.setTreeParser(new TrialTreeParser());

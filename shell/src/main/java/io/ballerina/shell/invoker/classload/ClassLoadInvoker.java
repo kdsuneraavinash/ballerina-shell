@@ -35,11 +35,11 @@ import io.ballerina.shell.utils.Pair;
 import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -66,18 +66,16 @@ public class ClassLoadInvoker extends Invoker {
     // First is name, second is type
     protected final List<Pair<String, String>> varDclns;
     protected final Set<String> globalVarNames;
-    protected final String generatedBallerinaFile;
     protected final String templateName;
     protected final String contextId;
     protected Template template;
 
-    public ClassLoadInvoker(String tmpFileName, Path ballerinaHome) {
+    public ClassLoadInvoker(Path ballerinaHome) {
         System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
         this.imports = new ArrayList<>();
         this.varDclns = new ArrayList<>();
         this.moduleDclns = new ArrayList<>();
         this.templateName = TEMPLATE_FILE;
-        this.generatedBallerinaFile = tmpFileName;
         this.contextId = UUID.randomUUID().toString();
         this.globalVarNames = new HashSet<>(INIT_VAR_NAMES);
 
@@ -86,10 +84,9 @@ public class ClassLoadInvoker extends Invoker {
     @Override
     public void initialize() throws InvokerException {
         this.template = getTemplate(templateName);
-        ClassLoadContext emptyContext = new ClassLoadContext(contextId, List.of(), List.of(), null,
-                List.of(), List.of(), null);
-        writeToFile(generatedBallerinaFile, template, emptyContext);
-        SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+        ClassLoadContext emptyContext = new ClassLoadContext(contextId);
+        File mainBal = writeToFile(template, emptyContext);
+        SingleFileProject project = SingleFileProject.load(mainBal.toPath());
         execute(project, JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11));
     }
 
@@ -110,8 +107,8 @@ public class ClassLoadInvoker extends Invoker {
         if (newSnippet.isVariableDeclaration()) {
             VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
             ClassLoadContext varTypeInferContext = createVarTypeInferContext(varDcln);
-            writeToFile(generatedBallerinaFile, template, varTypeInferContext);
-            SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+            File mainBal = writeToFile(template, varTypeInferContext);
+            SingleFileProject project = SingleFileProject.load(mainBal.toPath());
             PackageCompilation compilation = compile(project);
             List<BLangSimpleVariable> globalVariables = compilation.defaultModuleBLangPackage().getGlobalVariables();
             for (BLangSimpleVariable variable : globalVariables) {
@@ -122,9 +119,9 @@ public class ClassLoadInvoker extends Invoker {
         }
 
         ClassLoadContext context = createContext(newSnippet, newVariables);
-        writeToFile(generatedBallerinaFile, template, context);
+        File mainBal = writeToFile(template, context);
 
-        SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+        SingleFileProject project = SingleFileProject.load(mainBal.toPath());
         PackageCompilation compilation = compile(project);
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
         boolean isSuccess = execute(project, jBallerinaBackend);

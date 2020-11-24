@@ -31,6 +31,7 @@ import java.util.Objects;
  */
 public class ClassLoadContext {
     private static final Pair<String, Boolean> DEFAULT_RETURN_EXPR = new Pair<>("()", false);
+
     private final String contextId;
     private final Collection<String> imports;
     private final Collection<String> moduleDclns;
@@ -61,13 +62,28 @@ public class ClassLoadContext {
                             List<Pair<String, String>> initVarDclns,
                             List<Pair<String, String>> saveVarDclns,
                             Pair<String, Boolean> lastExpr) {
-        this.contextId = contextId;
         this.lastExpr = Objects.requireNonNullElse(lastExpr, DEFAULT_RETURN_EXPR);
-        this.imports = imports;
         this.lastVarDcln = Objects.requireNonNullElse(lastVarDcln, "");
-        this.initVarDclns = initVarDclns;
-        this.saveVarDclns = saveVarDclns;
-        this.moduleDclns = moduleDclns;
+        this.contextId = Objects.requireNonNull(contextId);
+        this.imports = Objects.requireNonNull(imports);
+        this.initVarDclns = Objects.requireNonNull(initVarDclns);
+        this.saveVarDclns = Objects.requireNonNull(saveVarDclns);
+        this.moduleDclns = Objects.requireNonNull(moduleDclns);
+    }
+
+    /**
+     * Creates an empty context for class load invoker.
+     *
+     * @param contextId Id of the context to use in memory.
+     */
+    public ClassLoadContext(String contextId) {
+        this.contextId = Objects.requireNonNull(contextId);
+        this.lastVarDcln = "";
+        this.lastExpr = DEFAULT_RETURN_EXPR;
+        this.imports = List.of();
+        this.initVarDclns = List.of();
+        this.saveVarDclns = List.of();
+        this.moduleDclns = List.of();
     }
 
     @TemplateAccessible
@@ -96,7 +112,7 @@ public class ClassLoadContext {
     }
 
     @TemplateAccessible
-    public List<Pair<String, String>> getSaveVarDclns() {
+    public Collection<Pair<String, String>> getSaveVarDclns() {
         return saveVarDclns;
     }
 
