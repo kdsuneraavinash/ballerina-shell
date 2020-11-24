@@ -120,4 +120,9 @@ public class ClassLoadContext {
     public String getContextId() {
         return contextId;
     }
+
+    @TemplateAccessible
+    public String getMemoryRef() {
+        return ClassLoadMemory.class.getCanonicalName();
+    }
 }

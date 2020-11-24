@@ -8,11 +8,11 @@ ${import}
 </#list>
 
 function recall(handle context_id, handle name) returns any|error = @java:Method {
-    'class: "io.ballerina.shell.invoker.classload.ClassLoadMemory"
+    'class: "${memoryRef}"
 } external;
 
 function memorize(handle context_id, handle name, any|error value) = @java:Method {
-    'class: "io.ballerina.shell.invoker.classload.ClassLoadMemory"
+    'class: "${memoryRef}"
 } external;
 
 // Module level declarations

@@ -270,6 +270,7 @@ public class ClassLoadInvoker extends Invoker {
     protected SingleFileProject getProject(Object context) throws InvokerException {
         this.template = Objects.requireNonNullElse(this.template, super.getTemplate(TEMPLATE_FILE));
         File mainBal = writeToFile(this.template, context);
+        addDiagnostic(Diagnostic.debug("Using main file: " + mainBal));
         return SingleFileProject.load(mainBal.toPath());
     }
 
