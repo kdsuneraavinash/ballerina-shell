@@ -115,7 +115,14 @@ public class BasicSnippetFactory extends SnippetFactory {
     @Override
     public ImportDeclarationSnippet createImportSnippet(Node node) {
         if (node instanceof ImportDeclarationNode) {
-            return new ImportDeclarationSnippet((ImportDeclarationNode) node);
+            ImportDeclarationNode importDeclarationNode = (ImportDeclarationNode) node;
+            if (importDeclarationNode.prefix().isEmpty()) {
+                // TODO: Even if no prefix, detect the prefix
+                addDiagnostic(Diagnostic.error("Imports without prefixes are not allowed in the REPL."));
+                return null;
+            }
+            String prefix = importDeclarationNode.prefix().get().prefix().text();
+            return new ImportDeclarationSnippet(prefix, importDeclarationNode);
         }
         return null;
     }

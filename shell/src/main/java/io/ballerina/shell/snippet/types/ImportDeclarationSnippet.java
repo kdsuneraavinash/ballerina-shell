@@ -28,7 +28,14 @@ import io.ballerina.shell.snippet.SnippetSubKind;
  * TODO: Other imports are not supported because BRE is not supported.
  */
 public class ImportDeclarationSnippet extends Snippet {
-    public ImportDeclarationSnippet(ImportDeclarationNode rootNode) {
+    private final String prefix;
+
+    public ImportDeclarationSnippet(String prefix, ImportDeclarationNode rootNode) {
         super(SnippetSubKind.IMPORT_DECLARATION, rootNode);
+        this.prefix = prefix;
+    }
+
+    public String getPrefix() {
+        return prefix;
     }
 }

@@ -19,6 +19,11 @@
 package io.ballerina.shell.snippet;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeVisitor;
+import io.ballerina.compiler.syntax.tree.QualifiedNameReferenceNode;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Snippets are individual statements.
@@ -46,6 +51,23 @@ public abstract class Snippet {
     protected Snippet(SnippetSubKind subKind, Node rootNode) {
         this.subKind = subKind;
         this.rootNode = rootNode;
+    }
+
+    /**
+     * Finds all the used imports in this snippet.
+     *
+     * @return Set of all the used import module prefixes.
+     */
+    public Set<String> usedImports() {
+        Set<String> imports = new HashSet<>();
+        rootNode.accept(new NodeVisitor() {
+            @Override
+            public void visit(QualifiedNameReferenceNode qualifiedNameReferenceNode) {
+                super.visit(qualifiedNameReferenceNode);
+                imports.add(qualifiedNameReferenceNode.modulePrefix().text());
+            }
+        });
+        return imports;
     }
 
     /**

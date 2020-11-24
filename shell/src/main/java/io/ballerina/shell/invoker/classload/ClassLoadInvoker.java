@@ -30,6 +30,7 @@ import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
@@ -61,9 +62,10 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
     // Variables that are set from the start. These should not be cached.
+    protected static final Set<String> INIT_IMPORTS = Set.of("io", "java");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("context_id", "$annotation_data");
 
-    protected final List<Snippet> imports;
+    protected final Map<String, Snippet> imports;
     protected final List<Snippet> moduleDclns;
     protected final Map<String, String> globalVars;
     protected final String contextId;
@@ -80,7 +82,7 @@ public class ClassLoadInvoker extends Invoker {
         // TODO: Set ballerina home using system prop.
         System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
         this.contextId = UUID.randomUUID().toString();
-        this.imports = new ArrayList<>();
+        this.imports = new HashMap<>();
         this.moduleDclns = new ArrayList<>();
         this.globalVars = new HashMap<>();
     }
@@ -109,6 +111,9 @@ public class ClassLoadInvoker extends Invoker {
     @Override
     public boolean execute(Snippet newSnippet) throws InvokerException {
         List<Pair<String, String>> newVariables = new ArrayList<>();
+
+        addDiagnostic(Diagnostic.debug(newSnippet.usedImports().toString()));
+
         if (newSnippet.isVariableDeclaration()) {
             // This is a variable declaration.
             // So we have to compile once and know the names and types of variables.
@@ -125,6 +130,21 @@ public class ClassLoadInvoker extends Invoker {
                     newVariables.add(new Pair<>(variable.name.value, variable.type.toString()));
                 }
             }
+        } else if (newSnippet.isImport()) {
+            ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
+            if (imports.containsKey(importDcln.getPrefix())) {
+                addDiagnostic(Diagnostic.error("Module was previously imported with the same prefix."));
+                return false;
+            } else {
+                // TODO: Validate if import can really be done.
+                if (INIT_IMPORTS.contains(importDcln.getPrefix())) {
+                    addDiagnostic(Diagnostic.error("Import is already available by default."));
+                    return false;
+                } else {
+                    imports.put(importDcln.getPrefix(), importDcln);
+                    return true;
+                }
+            }
         }
 
         // Compile and execute the real program.
@@ -137,9 +157,7 @@ public class ClassLoadInvoker extends Invoker {
         // Save required data if execution was successful
         if (isSuccess) {
             addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
-            if (newSnippet.isImport()) {
-                imports.add(newSnippet);
-            } else if (newSnippet.isVariableDeclaration()) {
+            if (newSnippet.isVariableDeclaration()) {
                 newVariables.forEach(v -> globalVars.put(v.getFirst(), v.getSecond()));
             } else if (newSnippet.isModuleMemberDeclaration()) {
                 moduleDclns.add(newSnippet);
@@ -158,14 +176,14 @@ public class ClassLoadInvoker extends Invoker {
      * @return Context with type information inferring code.
      */
     protected ClassLoadContext createVarTypeInferContext(VariableDeclarationSnippet newSnippet) {
-        List<String> importStrings = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>();
         List<Pair<String, String>> initVarDclns = new ArrayList<>();
         List<Pair<String, String>> saveVarDclns = new ArrayList<>();
+        List<String> importStrings = getUsedImportStrings(newSnippet);
         globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
         globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
-        imports.stream().map(Objects::toString).forEach(importStrings::add);
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
+
         String lastVarDcln = newSnippet.toString();
 
         return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings,
@@ -188,9 +206,8 @@ public class ClassLoadInvoker extends Invoker {
 
         List<Pair<String, String>> initVarDclns = new ArrayList<>();
         List<Pair<String, String>> saveVarDclns = new ArrayList<>();
-        List<String> importStrings = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>();
-        imports.stream().map(Objects::toString).forEach(importStrings::add);
+        List<String> importStrings = getUsedImportStrings(newSnippet);
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
         globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
         globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
@@ -272,6 +289,19 @@ public class ClassLoadInvoker extends Invoker {
         File mainBal = writeToFile(this.template, context);
         addDiagnostic(Diagnostic.debug("Using main file: " + mainBal));
         return SingleFileProject.load(mainBal.toPath());
+    }
+
+    /**
+     * Return import strings used by this snippet.
+     *
+     * @param snippet Snippet to check.
+     * @return List of imports.
+     */
+    protected List<String> getUsedImportStrings(Snippet snippet) {
+        List<String> importStrings = new ArrayList<>();
+        snippet.usedImports().stream().map(imports::get).filter(Objects::nonNull)
+                .map(Snippet::toString).forEach(importStrings::add);
+        return importStrings;
     }
 
     /**
