@@ -19,6 +19,8 @@
 package io.ballerina.shell.invoker.classload;
 
 import java.security.Permission;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A helper class for class load invoker so that
@@ -26,19 +28,43 @@ import java.security.Permission;
  * TODO: Remove this and fix VM exit bug.
  */
 public class NoExitVmSecManager extends SecurityManager {
+    private static final String EXIT_VM_REGEXP = "exitVM\\.([0-9]+)";
+
     private final SecurityManager baseSecurityManager;
+    private int exitCode;
+    private boolean isExitCodeSet;
 
     public NoExitVmSecManager(SecurityManager baseSecurityManager) {
         this.baseSecurityManager = baseSecurityManager;
+        this.isExitCodeSet = false;
+        this.exitCode = 1;
     }
 
     @Override
     public void checkPermission(Permission permission) {
+        // We check for exitVM permission.
+        // According to docs: https://docs.oracle.com/javase/9/docs/api/java/lang/RuntimePermission.html
+        // format is exitVM.{exit status} So we can extract the exit code.
+        // Only the first time exit counts. All others are panics caused by the security exception.
         if (permission.getName().startsWith("exitVM")) {
-            throw new SecurityException("System exit not allowed");
+            if (!isExitCodeSet) {
+                // Set exit code
+                Pattern pattern = Pattern.compile(EXIT_VM_REGEXP);
+                Matcher matcher = pattern.matcher(permission.getName());
+                if (matcher.matches()) { // According to docs, this should pass.
+                    String exitCodeStr = matcher.group(1);
+                    exitCode = Integer.parseInt(exitCodeStr);
+                    isExitCodeSet = true;
+                }
+            }
+            throw new SecurityException();
         }
         if (baseSecurityManager != null) {
             baseSecurityManager.checkPermission(permission);
         }
+    }
+
+    public int getExitCode() {
+        return exitCode;
     }
 }

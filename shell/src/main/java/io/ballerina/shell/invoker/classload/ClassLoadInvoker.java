@@ -219,7 +219,6 @@ public class ClassLoadInvoker extends Invoker {
      * TODO: Collect and print stdout as the program runs. (Not after exit)
      * Due to ballerina calling system.exit(), we need to disable these calls and
      * remove system error logs as well.
-     * TODO: Fix these issues.
      *
      * @param project           Project to run.
      * @param jBallerinaBackend Backed to use.
@@ -244,7 +243,9 @@ public class ClassLoadInvoker extends Invoker {
             Class<?> clazz = classLoader.loadClass(initClassName);
 
             Method method = clazz.getDeclaredMethod(MODULE_MAIN_METHOD_NAME, String[].class);
-            return invokeMethod(method) == 0;
+            int exitCode = invokeMethod(method);
+            addDiagnostic(Diagnostic.debug("Exit code was " + exitCode));
+            return exitCode == 0;
         } catch (ClassNotFoundException e) {
             addDiagnostic(Diagnostic.error("Main class not found: " + e.getMessage()));
             throw new InvokerException(e);
@@ -285,14 +286,15 @@ public class ClassLoadInvoker extends Invoker {
 
         PrintStream stdErr = System.err;
         PrintStream stdOut = System.out;
+        NoExitVmSecManager secManager = new NoExitVmSecManager(System.getSecurityManager());
         ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
         try {
             System.setErr(new PrintStream(new ByteArrayOutputStream()));
             System.setOut(new PrintStream(stdOutBaOs));
-            System.setSecurityManager(new NoExitVmSecManager(System.getSecurityManager()));
+            System.setSecurityManager(secManager);
             return (int) method.invoke(null, new Object[]{args});
-        } catch (InvocationTargetException ignored) {
-            return 0;
+        } catch (InvocationTargetException e) {
+            return secManager.getExitCode();
         } finally {
             // Restore everything
             stdOut.print(new String(stdOutBaOs.toByteArray()));

@@ -62,12 +62,14 @@ public abstract class AbstractEvaluatorTest {
             PrintStream stdErr = System.err;
             PrintStream stdOut = System.out;
             ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
+            NoExitVmSecManager secManager = new NoExitVmSecManager(System.getSecurityManager());
             try {
                 System.setErr(new PrintStream(new ByteArrayOutputStream()));
                 System.setOut(new PrintStream(stdOutBaOs));
-                System.setSecurityManager(new NoExitVmSecManager(System.getSecurityManager()));
+                System.setSecurityManager(secManager);
                 return (int) method.invoke(null, new Object[]{args});
             } catch (InvocationTargetException ignored) {
+                Assert.assertEquals(secManager.getExitCode(), 0, "Exit code was non-zero");
                 return 0;
             } finally {
                 // Restore everything
