@@ -41,8 +41,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -54,85 +55,92 @@ import java.util.UUID;
  * TODO: Test this with various sessions.
  */
 public class ClassLoadInvoker extends Invoker {
+    private static final String TEMPLATE_FILE = "template.classload.ftl";
+    protected static final String BALLERINA_HOME = "ballerina.home";
+    // Main class and method names to invoke
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
-    private static final String TEMPLATE_FILE = "template.classload.ftl";
-    // TODO: Set ballerina home using system prop.
-    protected static final String BALLERINA_HOME = "ballerina.home";
+    // Variables that are set from the start. These should not be cached.
     protected static final Set<String> INIT_VAR_NAMES = Set.of("context_id", "$annotation_data");
 
     protected final List<Snippet> imports;
     protected final List<Snippet> moduleDclns;
-    // First is name, second is type
-    protected final List<Pair<String, String>> varDclns;
-    protected final Set<String> globalVarNames;
-    protected final String templateName;
+    protected final Map<String, String> globalVars;
     protected final String contextId;
     protected Template template;
 
+    /**
+     * Creates a class load invoker from the given ballerina home.
+     * Ballerina home should be tha path that contains repo directory.
+     * It is expected that the runtime is added in the class path.
+     *
+     * @param ballerinaHome Ballerina home directory.
+     */
     public ClassLoadInvoker(Path ballerinaHome) {
+        // TODO: Set ballerina home using system prop.
         System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
-        this.imports = new ArrayList<>();
-        this.varDclns = new ArrayList<>();
-        this.moduleDclns = new ArrayList<>();
-        this.templateName = TEMPLATE_FILE;
         this.contextId = UUID.randomUUID().toString();
-        this.globalVarNames = new HashSet<>(INIT_VAR_NAMES);
-
+        this.imports = new ArrayList<>();
+        this.moduleDclns = new ArrayList<>();
+        this.globalVars = new HashMap<>();
     }
 
     @Override
     public void initialize() throws InvokerException {
-        this.template = getTemplate(templateName);
+        // Creates an empty context and loads the project.
+        // This will allow compiler to cache necessary data so that
+        // subsequent runs will be much more faster.
         ClassLoadContext emptyContext = new ClassLoadContext(contextId);
-        File mainBal = writeToFile(template, emptyContext);
-        SingleFileProject project = SingleFileProject.load(mainBal.toPath());
-        execute(project, JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11));
+        SingleFileProject project = getProject(emptyContext);
+        JBallerinaBackend loadedBackend = JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11);
+        execute(project, loadedBackend);
     }
 
     @Override
     public void reset() {
-        imports.clear();
-        varDclns.clear();
-        moduleDclns.clear();
-        // We need to clear the memory as well.
+        // Clear everything in memory
+        // data wrt the memory context is also removed.
+        this.imports.clear();
+        this.moduleDclns.clear();
+        this.globalVars.clear();
         ClassLoadMemory.forgetAll(contextId);
     }
 
     @Override
     public boolean execute(Snippet newSnippet) throws InvokerException {
-        this.template = getTemplate(templateName);
-
         List<Pair<String, String>> newVariables = new ArrayList<>();
         if (newSnippet.isVariableDeclaration()) {
+            // This is a variable declaration.
+            // So we have to compile once and know the names and types of variables.
+            // The reason is some types (var) are determined at compile time.
+            // Only compilation is done.
             VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
             ClassLoadContext varTypeInferContext = createVarTypeInferContext(varDcln);
-            File mainBal = writeToFile(template, varTypeInferContext);
-            SingleFileProject project = SingleFileProject.load(mainBal.toPath());
+            SingleFileProject project = getProject(varTypeInferContext);
             PackageCompilation compilation = compile(project);
-            List<BLangSimpleVariable> globalVariables = compilation.defaultModuleBLangPackage().getGlobalVariables();
-            for (BLangSimpleVariable variable : globalVariables) {
-                if (!globalVarNames.contains(variable.name.value)) {
+
+            for (BLangSimpleVariable variable : compilation.defaultModuleBLangPackage().getGlobalVariables()) {
+                // If the variable is a init var or a known global var, add it.
+                if (!INIT_VAR_NAMES.contains(variable.name.value) && !globalVars.containsKey(variable.name.value)) {
                     newVariables.add(new Pair<>(variable.name.value, variable.type.toString()));
                 }
             }
         }
 
+        // Compile and execute the real program.
         ClassLoadContext context = createContext(newSnippet, newVariables);
-        File mainBal = writeToFile(template, context);
-
-        SingleFileProject project = SingleFileProject.load(mainBal.toPath());
+        SingleFileProject project = getProject(context);
         PackageCompilation compilation = compile(project);
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
         boolean isSuccess = execute(project, jBallerinaBackend);
 
+        // Save required data if execution was successful
         if (isSuccess) {
             addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
             if (newSnippet.isImport()) {
                 imports.add(newSnippet);
             } else if (newSnippet.isVariableDeclaration()) {
-                varDclns.addAll(newVariables);
-                newVariables.stream().map(Pair::getFirst).forEach(globalVarNames::add);
+                newVariables.forEach(v -> globalVars.put(v.getFirst(), v.getSecond()));
             } else if (newSnippet.isModuleMemberDeclaration()) {
                 moduleDclns.add(newSnippet);
             }
@@ -150,13 +158,16 @@ public class ClassLoadInvoker extends Invoker {
     protected ClassLoadContext createVarTypeInferContext(VariableDeclarationSnippet newSnippet) {
         List<String> importStrings = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>();
-        List<Pair<String, String>> initVarDclns = new ArrayList<>(varDclns);
-        List<Pair<String, String>> saveVarDclns = new ArrayList<>(varDclns);
+        List<Pair<String, String>> initVarDclns = new ArrayList<>();
+        List<Pair<String, String>> saveVarDclns = new ArrayList<>();
+        globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
+        globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
         imports.stream().map(Objects::toString).forEach(importStrings::add);
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
         String lastVarDcln = newSnippet.toString();
-        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, lastVarDcln,
-                initVarDclns, saveVarDclns, null);
+
+        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings,
+                initVarDclns, saveVarDclns, lastVarDcln, null);
     }
 
     /**
@@ -168,17 +179,19 @@ public class ClassLoadInvoker extends Invoker {
      * @return Created context.
      */
     protected ClassLoadContext createContext(Snippet newSnippet, List<Pair<String, String>> newVariables) {
-        List<String> importStrings = new ArrayList<>();
-        List<String> moduleDclnStrings = new ArrayList<>();
-        imports.stream().map(Objects::toString).forEach(importStrings::add);
-        moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
-        List<Pair<String, String>> initVarDclns = new ArrayList<>(varDclns);
-        List<Pair<String, String>> saveVarDclns = new ArrayList<>(varDclns);
-
         // Variable declarations are handled differently.
         // If current snippet is a var dcln, it is added to saveVarDclns but not to initVarDclns.
         // All other var dclns are added to both.
         // Last expr is the last snippet if it was either a stmt or an expression.
+
+        List<Pair<String, String>> initVarDclns = new ArrayList<>();
+        List<Pair<String, String>> saveVarDclns = new ArrayList<>();
+        List<String> importStrings = new ArrayList<>();
+        List<String> moduleDclnStrings = new ArrayList<>();
+        imports.stream().map(Objects::toString).forEach(importStrings::add);
+        moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
+        globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
+        globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
 
         Pair<String, Boolean> lastExpr = null;
         String lastVarDcln = null;
@@ -195,20 +208,8 @@ public class ClassLoadInvoker extends Invoker {
             lastExpr = new Pair<>(newSnippet.toString(), false);
         }
 
-        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, lastVarDcln,
-                initVarDclns, saveVarDclns, lastExpr);
-    }
-
-    /**
-     * Creates the template reference.
-     * If the template is already created, will return the created one instead.
-     *
-     * @param templateName Name of the template.
-     * @return Created template
-     * @throws InvokerException If reading template failed.
-     */
-    protected Template getTemplate(String templateName) throws InvokerException {
-        return Objects.requireNonNullElse(this.template, super.getTemplate(templateName));
+        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings,
+                initVarDclns, saveVarDclns, lastVarDcln, lastExpr);
     }
 
     /**
@@ -243,26 +244,7 @@ public class ClassLoadInvoker extends Invoker {
             Class<?> clazz = classLoader.loadClass(initClassName);
 
             Method method = clazz.getDeclaredMethod(MODULE_MAIN_METHOD_NAME, String[].class);
-            String[] args = new String[0];
-
-            PrintStream stdErr = System.err;
-            PrintStream stdOut = System.out;
-            ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
-            try {
-                System.setErr(new PrintStream(new ByteArrayOutputStream()));
-                System.setOut(new PrintStream(stdOutBaOs));
-                System.setSecurityManager(new NoExitVmSecManager(System.getSecurityManager()));
-                method.invoke(null, new Object[]{args});
-            } catch (InvocationTargetException ignored) {
-            } finally {
-                // Restore everything
-                stdOut.print(new String(stdOutBaOs.toByteArray()));
-                System.setSecurityManager(null);
-                System.setErr(stdErr);
-                System.setOut(stdOut);
-            }
-
-            return true;
+            return invokeMethod(method) == 0;
         } catch (ClassNotFoundException e) {
             addDiagnostic(Diagnostic.error("Main class not found: " + e.getMessage()));
             throw new InvokerException(e);
@@ -272,6 +254,51 @@ public class ClassLoadInvoker extends Invoker {
         } catch (IllegalAccessException e) {
             addDiagnostic(Diagnostic.error("Access for the method failed: " + e.getMessage()));
             throw new InvokerException(e);
+        }
+    }
+
+    /**
+     * Get the project with the context data.
+     *
+     * @param context Context to create the ballerina file.
+     * @return Created ballerina project.
+     * @throws InvokerException If file writing failed.
+     */
+    protected SingleFileProject getProject(Object context) throws InvokerException {
+        this.template = Objects.requireNonNullElse(this.template, super.getTemplate(TEMPLATE_FILE));
+        File mainBal = writeToFile(this.template, context);
+        return SingleFileProject.load(mainBal.toPath());
+    }
+
+    /**
+     * Runs a method given. Returns the exit code from the execution.
+     * Method should be a static method which returns an int.
+     * Its signature should be, {@code static int name(String[] args)}.
+     * TODO: Catch errors and handle IO correctly.
+     *
+     * @param method Method to run (should be a static method).
+     * @return Exit code of the method.
+     * @throws IllegalAccessException If interrupted.
+     */
+    protected int invokeMethod(Method method) throws IllegalAccessException {
+        String[] args = new String[0];
+
+        PrintStream stdErr = System.err;
+        PrintStream stdOut = System.out;
+        ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
+        try {
+            System.setErr(new PrintStream(new ByteArrayOutputStream()));
+            System.setOut(new PrintStream(stdOutBaOs));
+            System.setSecurityManager(new NoExitVmSecManager(System.getSecurityManager()));
+            return (int) method.invoke(null, new Object[]{args});
+        } catch (InvocationTargetException ignored) {
+            return 0;
+        } finally {
+            // Restore everything
+            stdOut.print(new String(stdOutBaOs.toByteArray()));
+            System.setSecurityManager(null);
+            System.setErr(stdErr);
+            System.setOut(stdOut);
         }
     }
 }

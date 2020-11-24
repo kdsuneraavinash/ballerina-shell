@@ -36,8 +36,8 @@ public class ClassLoadContext {
     private final Collection<String> imports;
     private final Collection<String> moduleDclns;
     private final String lastVarDcln;
-    private final List<Pair<String, String>> initVarDclns;
-    private final List<Pair<String, String>> saveVarDclns;
+    private final Collection<Pair<String, String>> initVarDclns;
+    private final Collection<Pair<String, String>> saveVarDclns;
     private final Pair<String, Boolean> lastExpr;
 
     /**
@@ -58,9 +58,9 @@ public class ClassLoadContext {
     public ClassLoadContext(String contextId,
                             Collection<String> imports,
                             Collection<String> moduleDclns,
+                            Collection<Pair<String, String>> initVarDclns,
+                            Collection<Pair<String, String>> saveVarDclns,
                             String lastVarDcln,
-                            List<Pair<String, String>> initVarDclns,
-                            List<Pair<String, String>> saveVarDclns,
                             Pair<String, Boolean> lastExpr) {
         this.lastExpr = Objects.requireNonNullElse(lastExpr, DEFAULT_RETURN_EXPR);
         this.lastVarDcln = Objects.requireNonNullElse(lastVarDcln, "");

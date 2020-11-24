@@ -22,25 +22,23 @@ import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.TestUtils;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 import io.ballerina.shell.invoker.Invoker;
-import io.ballerina.shell.invoker.replay.ReplayInvoker;
+import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
+import io.ballerina.shell.invoker.classload.NoExitVmSecManager;
 import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
 import org.testng.Assert;
 
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
 public abstract class AbstractEvaluatorTest {
-    private static final Path BALLERINA_RUNTIME = Paths.get("../home/bre/lib/*");
     private static final Path BALLERINA_HOME_PATH = Paths.get("../home");
-
-    private static final String TEMPLATE_FILE = "template.replay.ftl";
-    private static final String TEMP_FILE_NAME = "main.bal";
 
     private static class TestCaseLine {
         String code;
@@ -50,21 +48,34 @@ public abstract class AbstractEvaluatorTest {
     private static class TestCase extends ArrayList<TestCaseLine> {
     }
 
-    private static class TestInvoker extends ReplayInvoker {
+    private static class TestInvoker extends ClassLoadInvoker {
         private String output;
 
-        public TestInvoker(String templateName, String tmpFileName, Path ballerinaRuntime, Path ballerinaHome) {
-            super(templateName, tmpFileName, ballerinaRuntime, ballerinaHome);
+        public TestInvoker(Path ballerinaHome) {
+            super(ballerinaHome);
         }
 
         @Override
-        protected int runCommand(List<String> commands) throws IOException, InterruptedException {
-            Runtime runtime = Runtime.getRuntime();
-            Process process = runtime.exec(commands.toArray(new String[0]));
-            process.waitFor();
-            Scanner scanner = new Scanner(process.getInputStream()).useDelimiter("\\A");
-            this.output = scanner.hasNext() ? scanner.next() : "";
-            return process.exitValue();
+        protected int invokeMethod(Method method) throws IllegalAccessException {
+            String[] args = new String[0];
+
+            PrintStream stdErr = System.err;
+            PrintStream stdOut = System.out;
+            ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
+            try {
+                System.setErr(new PrintStream(new ByteArrayOutputStream()));
+                System.setOut(new PrintStream(stdOutBaOs));
+                System.setSecurityManager(new NoExitVmSecManager(System.getSecurityManager()));
+                return (int) method.invoke(null, new Object[]{args});
+            } catch (InvocationTargetException ignored) {
+                return 0;
+            } finally {
+                // Restore everything
+                this.output = new String(stdOutBaOs.toByteArray());
+                System.setSecurityManager(null);
+                System.setErr(stdErr);
+                System.setOut(stdOut);
+            }
         }
     }
 
@@ -79,9 +90,7 @@ public abstract class AbstractEvaluatorTest {
     }
 
     private TestInvoker getInvoker() {
-        return new TestInvoker(
-                TEMPLATE_FILE, TEMP_FILE_NAME,
-                BALLERINA_RUNTIME, BALLERINA_HOME_PATH);
+        return new TestInvoker(BALLERINA_HOME_PATH);
     }
 
     private Evaluator getEvaluator(Invoker invoker) {
