@@ -19,10 +19,11 @@
 package io.ballerina.shell.invoker.replay;
 
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import io.ballerina.projects.JBallerinaBackend;
 import io.ballerina.projects.JarResolver;
+import io.ballerina.projects.JdkVersion;
 import io.ballerina.projects.Module;
+import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.Project;
 import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.shell.Diagnostic;
@@ -32,9 +33,7 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.utils.Pair;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -80,14 +79,9 @@ public class ReplayInvoker extends Invoker {
     public void initialize() throws InvokerException {
         this.template = getTemplate(templateName);
         ReplayContext emptyContext = new ReplayContext(List.of(), List.of(), List.of(), List.of(), null);
-        try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
-            template.process(emptyContext, fileWriter);
-            SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
-            execute(project, compile(project));
-        } catch (TemplateException | IOException | InvokerException e) {
-            addDiagnostic(Diagnostic.error("Replay Invoker initialization failed: " + e.getMessage()));
-            throw new InvokerException(e);
-        }
+        writeToFile(generatedBallerinaFile, template, emptyContext);
+        SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+        execute(project, JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11));
     }
 
     @Override
@@ -102,18 +96,11 @@ public class ReplayInvoker extends Invoker {
     public boolean execute(Snippet newSnippet) throws InvokerException {
         this.template = getTemplate(templateName);
         ReplayContext context = createContext(newSnippet);
-        try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
-            template.process(context, fileWriter);
-        } catch (TemplateException e) {
-            addDiagnostic(Diagnostic.error("Template processing failed: " + e.getMessage()));
-            throw new InvokerException(e);
-        } catch (IOException e) {
-            addDiagnostic(Diagnostic.error("File generation failed: " + e.getMessage()));
-            throw new InvokerException(e);
-        }
+        writeToFile(generatedBallerinaFile, template, context);
 
         SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
-        JBallerinaBackend jBallerinaBackend = compile(project);
+        PackageCompilation compilation = compile(project);
+        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
 
         boolean isSuccess = true;
         if (newSnippet.isExecutable()) {

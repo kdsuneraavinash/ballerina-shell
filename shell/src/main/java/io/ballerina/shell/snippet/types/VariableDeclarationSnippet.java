@@ -19,7 +19,6 @@
 package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
-import io.ballerina.shell.exceptions.SnippetException;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
 
@@ -38,12 +37,9 @@ public class VariableDeclarationSnippet extends Snippet {
      * If the snippet was created through the constructor, this condition is satisfied.
      *
      * @return Root node of the syntax tree referring to this declaration.
-     * @throws SnippetException If the snippet is invalid.
      */
-    public ModuleVariableDeclarationNode getRootNode() throws SnippetException {
-        if (rootNode instanceof ModuleVariableDeclarationNode) {
-            return (ModuleVariableDeclarationNode) rootNode;
-        }
-        throw new SnippetException();
+    public ModuleVariableDeclarationNode getRootNode() {
+        assert rootNode instanceof ModuleVariableDeclarationNode;
+        return (ModuleVariableDeclarationNode) rootNode;
     }
 }

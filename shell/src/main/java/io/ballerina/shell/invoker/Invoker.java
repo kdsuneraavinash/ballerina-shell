@@ -20,6 +20,7 @@ package io.ballerina.shell.invoker;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import io.ballerina.projects.DiagnosticResult;
 import io.ballerina.projects.JBallerinaBackend;
 import io.ballerina.projects.JdkVersion;
@@ -31,7 +32,9 @@ import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * Invoker that invokes a command to evaluate a list of snippets.
@@ -98,10 +101,10 @@ public abstract class Invoker extends DiagnosticReporter {
      * Helper method to compile a project and report any errors.
      *
      * @param project Project to compile.
-     * @return Created backend.
+     * @return Compilation data.
      * @throws InvokerException If compilation failed.
      */
-    protected JBallerinaBackend compile(Project project) throws InvokerException {
+    protected PackageCompilation compile(Project project) throws InvokerException {
         PackageCompilation packageCompilation = project.currentPackage().getCompilation();
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JdkVersion.JAVA_11);
         DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
@@ -120,6 +123,27 @@ public abstract class Invoker extends DiagnosticReporter {
             addDiagnostic(Diagnostic.error("Compilation aborted because of errors."));
             throw new InvokerException();
         }
-        return jBallerinaBackend;
+        return packageCompilation;
+    }
+
+    /**
+     * Helper method to write a template populated with context to a file.
+     * TODO: Use a temp file to write into and return file name.
+     *
+     * @param fileName File to create.
+     * @param template Template name.
+     * @param context  Context object to use to populate.
+     * @throws InvokerException If writing was unsuccessful.
+     */
+    protected void writeToFile(String fileName, Template template, Object context) throws InvokerException {
+        try (FileWriter fileWriter = new FileWriter(fileName, Charset.defaultCharset())) {
+            template.process(context, fileWriter);
+        } catch (TemplateException e) {
+            addDiagnostic(Diagnostic.error("Template processing failed: " + e.getMessage()));
+            throw new InvokerException(e);
+        } catch (IOException e) {
+            addDiagnostic(Diagnostic.error("File generation failed: " + e.getMessage()));
+            throw new InvokerException(e);
+        }
     }
 }

@@ -19,32 +19,32 @@
 package io.ballerina.shell.invoker.classload;
 
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import io.ballerina.projects.JBallerinaBackend;
 import io.ballerina.projects.JarResolver;
+import io.ballerina.projects.JdkVersion;
 import io.ballerina.projects.Module;
+import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.Project;
 import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
-import io.ballerina.shell.exceptions.SnippetException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
+import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -59,10 +59,13 @@ public class ClassLoadInvoker extends Invoker {
     private static final String TEMPLATE_FILE = "template.classload.ftl";
     // TODO: Set ballerina home using system prop.
     protected static final String BALLERINA_HOME = "ballerina.home";
+    protected static final Set<String> INIT_VAR_NAMES = Set.of("context_id", "$annotation_data");
 
     protected final List<Snippet> imports;
     protected final List<Snippet> moduleDclns;
-    protected final List<VariableDeclarationDetails> varDclns;
+    // First is name, second is type
+    protected final List<Pair<String, String>> varDclns;
+    protected final Set<String> globalVarNames;
     protected final String generatedBallerinaFile;
     protected final String templateName;
     protected final String contextId;
@@ -76,6 +79,8 @@ public class ClassLoadInvoker extends Invoker {
         this.templateName = TEMPLATE_FILE;
         this.generatedBallerinaFile = tmpFileName;
         this.contextId = UUID.randomUUID().toString();
+        this.globalVarNames = new HashSet<>(INIT_VAR_NAMES);
+
     }
 
     @Override
@@ -83,14 +88,9 @@ public class ClassLoadInvoker extends Invoker {
         this.template = getTemplate(templateName);
         ClassLoadContext emptyContext = new ClassLoadContext(contextId, List.of(), List.of(), null,
                 List.of(), List.of(), null);
-        try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
-            template.process(emptyContext, fileWriter);
-            SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
-            execute(project, compile(project));
-        } catch (TemplateException | IOException | InvokerException e) {
-            addDiagnostic(Diagnostic.error("Classload Invoker initialization failed: " + e.getMessage()));
-            throw new InvokerException(e);
-        }
+        writeToFile(generatedBallerinaFile, template, emptyContext);
+        SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+        execute(project, JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11));
     }
 
     @Override
@@ -105,16 +105,28 @@ public class ClassLoadInvoker extends Invoker {
     @Override
     public boolean execute(Snippet newSnippet) throws InvokerException {
         this.template = getTemplate(templateName);
-        ClassLoadContext context = createContext(newSnippet);
-        try (FileWriter fileWriter = new FileWriter(generatedBallerinaFile, Charset.defaultCharset())) {
-            template.process(context, fileWriter);
-        } catch (TemplateException | IOException e) {
-            addDiagnostic(Diagnostic.error("File generation failed: " + e.getMessage()));
-            throw new InvokerException(e);
+
+        List<Pair<String, String>> newVariables = new ArrayList<>();
+        if (newSnippet.isVariableDeclaration()) {
+            VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
+            ClassLoadContext varTypeInferContext = createVarTypeInferContext(varDcln);
+            writeToFile(generatedBallerinaFile, template, varTypeInferContext);
+            SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
+            PackageCompilation compilation = compile(project);
+            List<BLangSimpleVariable> globalVariables = compilation.defaultModuleBLangPackage().getGlobalVariables();
+            for (BLangSimpleVariable variable : globalVariables) {
+                if (!globalVarNames.contains(variable.name.value)) {
+                    newVariables.add(new Pair<>(variable.name.value, variable.type.toString()));
+                }
+            }
         }
 
+        ClassLoadContext context = createContext(newSnippet, newVariables);
+        writeToFile(generatedBallerinaFile, template, context);
+
         SingleFileProject project = SingleFileProject.load(Paths.get(generatedBallerinaFile));
-        JBallerinaBackend jBallerinaBackend = compile(project);
+        PackageCompilation compilation = compile(project);
+        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
         boolean isSuccess = execute(project, jBallerinaBackend);
 
         if (isSuccess) {
@@ -122,7 +134,8 @@ public class ClassLoadInvoker extends Invoker {
             if (newSnippet.isImport()) {
                 imports.add(newSnippet);
             } else if (newSnippet.isVariableDeclaration()) {
-                varDclns.add(getVariableDetails(newSnippet));
+                varDclns.addAll(newVariables);
+                newVariables.stream().map(Pair::getFirst).forEach(globalVarNames::add);
             } else if (newSnippet.isModuleMemberDeclaration()) {
                 moduleDclns.add(newSnippet);
             }
@@ -132,21 +145,38 @@ public class ClassLoadInvoker extends Invoker {
 
 
     /**
+     * Creates a context which can be used to identify new variables.
+     *
+     * @param newSnippet New snippet. Must be a var dcln.
+     * @return Context with type information inferring code.
+     */
+    protected ClassLoadContext createVarTypeInferContext(VariableDeclarationSnippet newSnippet) {
+        List<String> importStrings = new ArrayList<>();
+        List<String> moduleDclnStrings = new ArrayList<>();
+        List<Pair<String, String>> initVarDclns = new ArrayList<>(varDclns);
+        List<Pair<String, String>> saveVarDclns = new ArrayList<>(varDclns);
+        imports.stream().map(Objects::toString).forEach(importStrings::add);
+        moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
+        String lastVarDcln = newSnippet.toString();
+        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, lastVarDcln,
+                initVarDclns, saveVarDclns, null);
+    }
+
+    /**
      * Creates the context object to be passed to template.
      * The new snippets are not added here. Instead they are added to copies.
      *
-     * @param newSnippet New snippet from user.
+     * @param newSnippet   New snippet from user.
+     * @param newVariables Newly defined variables. Must be set if snippet is a var dcln.
      * @return Created context.
      */
-    protected ClassLoadContext createContext(Snippet newSnippet) throws InvokerException {
+    protected ClassLoadContext createContext(Snippet newSnippet, List<Pair<String, String>> newVariables) {
         List<String> importStrings = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>();
-        List<Pair<String, String>> initVarDclns = new ArrayList<>();
-        List<Pair<String, String>> saveVarDclns = new ArrayList<>();
         imports.stream().map(Objects::toString).forEach(importStrings::add);
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
-        varDclns.stream().map(VariableDeclarationDetails::varNameAndType).forEach(initVarDclns::add);
-        varDclns.stream().map(VariableDeclarationDetails::varNameAndType).forEach(saveVarDclns::add);
+        List<Pair<String, String>> initVarDclns = new ArrayList<>(varDclns);
+        List<Pair<String, String>> saveVarDclns = new ArrayList<>(varDclns);
 
         // Variable declarations are handled differently.
         // If current snippet is a var dcln, it is added to saveVarDclns but not to initVarDclns.
@@ -158,9 +188,8 @@ public class ClassLoadInvoker extends Invoker {
         if (newSnippet.isImport()) {
             importStrings.add(newSnippet.toString());
         } else if (newSnippet.isVariableDeclaration()) {
-            VariableDeclarationDetails varDetails = getVariableDetails(newSnippet);
             lastVarDcln = newSnippet.toString();
-            saveVarDclns.add(varDetails.varNameAndType());
+            saveVarDclns.addAll(newVariables);
         } else if (newSnippet.isModuleMemberDeclaration()) {
             moduleDclnStrings.add(newSnippet.toString());
         } else if (newSnippet.isStatement()) {
@@ -245,25 +274,6 @@ public class ClassLoadInvoker extends Invoker {
             throw new InvokerException(e);
         } catch (IllegalAccessException e) {
             addDiagnostic(Diagnostic.error("Access for the method failed: " + e.getMessage()));
-            throw new InvokerException(e);
-        }
-    }
-
-    /**
-     * Gets the variable information.
-     *
-     * @param variableDeclaration Snippet to get info. This must be a var dcln snippet.
-     * @return Collected details.
-     * @throws InvokerException If snippet was invalid or of unexpected type.
-     */
-    protected VariableDeclarationDetails getVariableDetails(Snippet variableDeclaration) throws InvokerException {
-        try {
-            assert variableDeclaration instanceof VariableDeclarationSnippet;
-            return new VariableDeclarationDetails((VariableDeclarationSnippet) variableDeclaration);
-        } catch (SnippetException e) {
-            addDiagnostic(Diagnostic.error("" +
-                    "Global variables should be of type name = value; format. " +
-                    "No metadata or qualifiers are allowed. The variable should also be initialized."));
             throw new InvokerException(e);
         }
     }
