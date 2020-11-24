@@ -30,7 +30,6 @@ import java.util.Stack;
  * Preprocessor to split the input into several statements
  * based on the semicolons and brackets. Outputs the split input.
  * If a comment starting is detected, this will ignore anything upto a new line.
- * TODO: Find more errors to catch at this stage.
  */
 public class SeparatorPreprocessor extends Preprocessor {
     private static final char ESCAPE_CHAR = '\\';

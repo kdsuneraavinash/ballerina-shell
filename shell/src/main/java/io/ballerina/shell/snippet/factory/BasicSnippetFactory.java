@@ -138,7 +138,6 @@ public class BasicSnippetFactory extends SnippetFactory {
             if (varNode.finalKeyword().isPresent()) {
                 qualifiers = NodeFactory.createNodeList(varNode.finalKeyword().get());
             }
-            // TODO: Inject variable default value or reject ones without initializers.
             if (varNode.initializer().isEmpty()) {
                 addDiagnostic(Diagnostic.warn("Variables without initializers are not permitted."));
             }
@@ -151,7 +150,6 @@ public class BasicSnippetFactory extends SnippetFactory {
         } else {
             return null;
         }
-        // TODO: Validate variable name is not reserved.
         return new VariableDeclarationSnippet(dclnNode);
     }
 
@@ -188,7 +186,6 @@ public class BasicSnippetFactory extends SnippetFactory {
 
     @Override
     public ExpressionSnippet createExpressionSnippet(Node node) {
-        // TODO: Add all subtypes later.
         if (node instanceof ExpressionNode) {
             return new ExpressionSnippet((ExpressionNode) node);
         }

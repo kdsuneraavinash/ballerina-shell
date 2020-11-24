@@ -115,8 +115,6 @@ public class ClassLoadInvoker extends Invoker {
     public boolean execute(Snippet newSnippet) throws InvokerException {
         List<Pair<String, String>> newVariables = new ArrayList<>();
 
-        addDiagnostic(Diagnostic.debug(newSnippet.usedImports().toString()));
-
         if (newSnippet.isVariableDeclaration()) {
             // This is a variable declaration.
             // So we have to compile once and know the names and types of variables.

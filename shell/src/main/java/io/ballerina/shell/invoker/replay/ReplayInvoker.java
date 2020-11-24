@@ -55,7 +55,6 @@ public class ReplayInvoker extends Invoker {
     protected final List<Snippet> imports;
     protected final List<Snippet> varDclns;
     protected final List<Snippet> moduleDclns;
-    // TODO: Find a better alternative than a pair
     // The second value of the pair signifies whether the statement is a
     // statement snippet. (It could also be a expression)
     protected final List<Pair<Snippet, Boolean>> stmts;

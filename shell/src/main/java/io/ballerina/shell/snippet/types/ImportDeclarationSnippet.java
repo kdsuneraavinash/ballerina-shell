@@ -24,8 +24,6 @@ import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * Snippet that represent a import statement.
- * TODO: How to defer unused imports until they are used?
- * TODO: Other imports are not supported because BRE is not supported.
  */
 public class ImportDeclarationSnippet extends Snippet {
     private final String prefix;

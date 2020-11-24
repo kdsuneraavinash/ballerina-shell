@@ -66,30 +66,33 @@ public abstract class TerminalAdapter {
     public abstract String readLine(String prefix, String postfix);
 
     public void error(String text) {
-        this.println(this.color(text, RED | BRIGHT));
+        this.println(this.color(indented(text), RED | BRIGHT));
     }
 
     public void warn(String text) {
-        this.println(this.color(text, YELLOW));
+        this.println(this.color(indented(text), YELLOW));
     }
 
     public void debug(String text) {
-        this.println(this.color(text, BRIGHT));
+        this.println(this.color(indented(text), BRIGHT));
     }
 
     public void fatalError(String text) {
-        this.println(this.color(text, RED));
+        this.println(this.color(indented(text), RED));
     }
 
     public void info(String text) {
-        // All info data is appended with |, similar to jshell
-        String[] strings = text.split("\n");
-        String result = Arrays.stream(strings).map(s -> "|  " + s).collect(Collectors.joining("\n"));
-        this.println(this.color(result, CYAN));
+        this.println(this.color(indented(text), CYAN));
     }
 
     public void println(String text) {
         this.writer().println(text);
         this.writer().flush();
+    }
+
+    private String indented(String text) {
+        // All info data is appended with |, similar to jshell
+        return Arrays.stream(text.split("\n")).map(s -> "|  " + s)
+                .collect(Collectors.joining("\n"));
     }
 }

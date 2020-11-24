@@ -22,8 +22,11 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.ballerina.projects.DiagnosticResult;
+import io.ballerina.projects.Document;
+import io.ballerina.projects.DocumentId;
 import io.ballerina.projects.JBallerinaBackend;
 import io.ballerina.projects.JdkVersion;
+import io.ballerina.projects.Module;
 import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.Project;
 import io.ballerina.shell.Diagnostic;
@@ -36,6 +39,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Optional;
 
 /**
  * Invoker that invokes a command to evaluate a list of snippets.
@@ -130,13 +134,15 @@ public abstract class Invoker extends DiagnosticReporter {
         PackageCompilation packageCompilation = project.currentPackage().getCompilation();
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JdkVersion.JAVA_11);
         DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
+        Module module = project.currentPackage().getDefaultModule();
         for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
             DiagnosticSeverity severity = diagnostic.diagnosticInfo().severity();
-            // TODO: Add smart error highlighting.
             if (severity == DiagnosticSeverity.ERROR) {
                 addDiagnostic(Diagnostic.error(diagnostic.message()));
+                addDiagnostic(Diagnostic.error(highlightedDiagnostic(module, diagnostic)));
             } else if (severity == DiagnosticSeverity.WARNING) {
                 addDiagnostic(Diagnostic.warn(diagnostic.message()));
+                addDiagnostic(Diagnostic.warn(highlightedDiagnostic(module, diagnostic)));
             } else {
                 addDiagnostic(Diagnostic.debug(diagnostic.message()));
             }
@@ -146,6 +152,24 @@ public abstract class Invoker extends DiagnosticReporter {
             throw new InvokerException();
         }
         return packageCompilation;
+    }
+
+    /**
+     * Highlight and show the error position.
+     *
+     * @param module     Module object. This should be a single document module.
+     * @param diagnostic Diagnostic to show.
+     * @return The string with position highlighted.
+     */
+    private String highlightedDiagnostic(Module module, io.ballerina.tools.diagnostics.Diagnostic diagnostic) {
+        // Get the source code
+        Optional<DocumentId> documentId = module.documentIds().stream().findFirst();
+        assert documentId.isPresent();
+        String space = " ";
+        Document document = module.document(documentId.get());
+        String sourceLine = document.textDocument().line(diagnostic.location().lineRange().startLine().line()).text();
+        int position = diagnostic.location().lineRange().startLine().offset();
+        return String.format("%s\n%s^", sourceLine, space.repeat(position));
     }
 
     /**
