@@ -105,6 +105,18 @@ public class Evaluator extends DiagnosticReporter {
         invoker.reset();
     }
 
+    public String availableImports() {
+        return invoker.availableImports();
+    }
+
+    public String availableVariables() {
+        return invoker.availableVariables();
+    }
+
+    public String availableModuleDeclarations() {
+        return invoker.availableModuleDeclarations();
+    }
+
     public void setInvoker(Invoker invoker) {
         this.invoker = invoker;
     }

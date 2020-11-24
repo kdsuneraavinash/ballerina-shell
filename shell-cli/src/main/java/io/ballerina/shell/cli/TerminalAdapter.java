@@ -19,6 +19,8 @@
 package io.ballerina.shell.cli;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * A library independent adapter for ballerina shell.
@@ -80,7 +82,10 @@ public abstract class TerminalAdapter {
     }
 
     public void info(String text) {
-        this.println(this.color(text, CYAN));
+        // All info data is appended with |, similar to jshell
+        String[] strings = text.split("\n");
+        String result = Arrays.stream(strings).map(s -> "|  " + s).collect(Collectors.joining("\n"));
+        this.println(this.color(result, CYAN));
     }
 
     public void println(String text) {

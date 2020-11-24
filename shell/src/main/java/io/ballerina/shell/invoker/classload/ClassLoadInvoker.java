@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Executes the snippet given.
@@ -55,13 +56,16 @@ import java.util.UUID;
  * load them into the generated class effectively managing any side-effects.
  */
 public class ClassLoadInvoker extends Invoker {
+    private static final int MAX_VAR_STRING_LENGTH = 78;
     private static final String TEMPLATE_FILE = "template.classload.ftl";
     protected static final String BALLERINA_HOME = "ballerina.home";
     // Main class and method names to invoke
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
     // Variables that are set from the start. These should not be cached.
-    protected static final Set<String> INIT_IMPORTS = Set.of("io", "java");
+    protected static final Map<String, String> INIT_IMPORTS = Map.of(
+            "io", "import ballerina/io as io;",
+            "java", "import ballerina/java as java;");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("context_id", "$annotation_data");
 
     protected final Map<String, Snippet> imports;
@@ -136,7 +140,7 @@ public class ClassLoadInvoker extends Invoker {
                 return false;
             } else {
                 // TODO: Validate if import can really be done.
-                if (INIT_IMPORTS.contains(importDcln.getPrefix())) {
+                if (INIT_IMPORTS.containsKey(importDcln.getPrefix())) {
                     addDiagnostic(Diagnostic.error("Import is already available by default."));
                     return false;
                 } else {
@@ -167,6 +171,56 @@ public class ClassLoadInvoker extends Invoker {
         return isSuccess;
     }
 
+    @Override
+    public String availableImports() {
+        // Imports with prefixes
+        List<String> importStrings = new ArrayList<>();
+        Map<String, String> importMapped = new HashMap<>(INIT_IMPORTS);
+        for (String prefix : imports.keySet()) {
+            importMapped.put(prefix, imports.get(prefix).toString());
+        }
+        for (String prefix : importMapped.keySet()) {
+            String importString = String.format("%s (prefix: %s)", importMapped.get(prefix), prefix);
+            importStrings.add(importString);
+        }
+        return String.join("\n", importStrings);
+    }
+
+    @Override
+    public String availableVariables() {
+        // Available variables and values as string.
+        List<String> varStrings = new ArrayList<>();
+        for (String name : globalVars.keySet()) {
+            String value = shortenedString(ClassLoadMemory.recall(contextId, name));
+            String varString = String.format("%s %s = %s", globalVars.get(name), name, value);
+            varStrings.add(varString);
+        }
+        return String.join("\n", varStrings);
+    }
+
+    @Override
+    public String availableModuleDeclarations() {
+        // Module level dclns.
+        return moduleDclns.stream().map(this::shortenedString)
+                .collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Short a string to a certain length.
+     *
+     * @param input Input string to shorten.
+     * @return Shortened string.
+     */
+    private String shortenedString(Object input) {
+        String value = String.valueOf(input);
+        value = value.replaceAll("\n", "");
+        if (value.length() > MAX_VAR_STRING_LENGTH) {
+            int subStrLength = MAX_VAR_STRING_LENGTH / 2;
+            return value.substring(0, subStrLength)
+                    + "..." + value.substring(value.length() - subStrLength);
+        }
+        return value;
+    }
 
     /**
      * Creates a context which can be used to identify new variables.

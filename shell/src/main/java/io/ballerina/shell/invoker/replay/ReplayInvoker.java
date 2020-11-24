@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 /**
  * Executes the snippet given.
@@ -119,6 +120,24 @@ public class ReplayInvoker extends Invoker {
             }
         }
         return isSuccess;
+    }
+
+    @Override
+    public String availableImports() {
+        return imports.stream().map(Snippet::toString)
+                .collect(Collectors.joining("\n"));
+    }
+
+    @Override
+    public String availableVariables() {
+        return varDclns.stream().map(Snippet::toString)
+                .collect(Collectors.joining("\n"));
+    }
+
+    @Override
+    public String availableModuleDeclarations() {
+        return moduleDclns.stream().map(Snippet::toString)
+                .collect(Collectors.joining("\n"));
     }
 
     /**

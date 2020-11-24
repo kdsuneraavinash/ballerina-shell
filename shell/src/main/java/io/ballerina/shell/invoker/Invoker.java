@@ -77,6 +77,27 @@ public abstract class Invoker extends DiagnosticReporter {
     public abstract boolean execute(Snippet newSnippet) throws InvokerException;
 
     /**
+     * Returns available imports in the module.
+     *
+     * @return Available imports as a string.
+     */
+    public abstract String availableImports();
+
+    /**
+     * Returns available variables in the module.
+     *
+     * @return Available variables as a string.
+     */
+    public abstract String availableVariables();
+
+    /**
+     * Returns available declarations in the module.
+     *
+     * @return Available declarations as a string.
+     */
+    public abstract String availableModuleDeclarations();
+
+    /**
      * Helper method that creates the template reference.
      *
      * @param templateName Name of the template.

@@ -52,6 +52,9 @@ public class BallerinaShell {
     private static final String TOGGLE_DEBUG = "/debug";
     private static final String RESET_COMMAND = "/reset";
     private static final String STATE_COMMAND = "/state";
+    private static final String IMPORTS_COMMAND = "/imports";
+    private static final String MODULE_DCLNS_COMMAND = "/dclns";
+    private static final String VARIABLES_COMMAND = "/vars";
 
     private final Configuration configuration;
     private final TerminalAdapter terminal;
@@ -67,11 +70,14 @@ public class BallerinaShell {
 
         // Register default handlers
         this.handlers = Map.of(
-                HELP_COMMAND, v -> outputResource(HELP_FILE),
-                EXIT_COMMAND, v -> this.continueLoop = false,
-                TOGGLE_DEBUG, v -> this.configuration.toggleDebug(),
                 RESET_COMMAND, v -> this.evaluator.reset(),
-                STATE_COMMAND, v -> this.terminal.info(evaluator.toString())
+                EXIT_COMMAND, v -> this.continueLoop = false,
+                HELP_COMMAND, v -> outputResource(HELP_FILE),
+                TOGGLE_DEBUG, v -> this.configuration.toggleDebug(),
+                STATE_COMMAND, v -> this.terminal.info(evaluator.toString()),
+                IMPORTS_COMMAND, v -> this.terminal.info(evaluator.availableImports()),
+                VARIABLES_COMMAND, v -> this.terminal.info(evaluator.availableVariables()),
+                MODULE_DCLNS_COMMAND, v -> this.terminal.info(evaluator.availableModuleDeclarations())
         );
     }
 
@@ -119,7 +125,7 @@ public class BallerinaShell {
             }
 
         }
-        terminal.println(REPL_EXIT_MESSAGE);
+        terminal.info(REPL_EXIT_MESSAGE);
     }
 
     /**
@@ -144,7 +150,7 @@ public class BallerinaShell {
      */
     private void outputResource(@SuppressWarnings("SameParameterValue") String path) {
         String content = readFile(path);
-        terminal.debug(content);
+        terminal.info(content);
     }
 
     /**
