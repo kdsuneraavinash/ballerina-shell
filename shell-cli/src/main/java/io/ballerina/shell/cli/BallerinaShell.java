@@ -122,6 +122,7 @@ public class BallerinaShell {
                 end = Instant.now();
                 evaluator.diagnostics().forEach(this::outputDiagnostic);
                 evaluator.resetDiagnostics();
+                terminal.println("");
             }
 
         }
