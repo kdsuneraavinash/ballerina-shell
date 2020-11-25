@@ -117,6 +117,16 @@ Following initializers will be used when an initializer is not provided. Note th
 
 Following are some inputs and expected filler values for reference.
 
+##### Issues with Data types
+
+- **Inherently Fully Supported** - `nil`, `boolean`, `int`, `float`, `decimal`, `string`, `xml`, `array`, `tuple`, `map`, `record`, `table`, `error`, ..., `singleton`, `union`, `optional`, `any`, `anydata`, `never`, `byte`, `json`,  `var`
+- **Not fully supported** - `function`, `object`
+  - Global variables is functions will same value as they were when the function is defined. (This issue is not applicable for normal function definitions, just anonymous function definitions) So anonymous function declarations should be disabled. (Or show a warning) - Use normal function declarations instead. Objects are not supported because of similar reason as functions.
+
+##### Things that you should not do
+
+- Define variables of function type or object where the function/object depends on a global variable. (The global must effectively be final)
+
 #### Module Member Declaration Snippet
 
 Module-level declarations. These are not active or runnable. Service declaration can start a service on a port, etc... All other declarations are just declarations. They do not execute to return a value. Also, any undefined variable in these declarations is ignored. These do not contain semicolons at the end. 

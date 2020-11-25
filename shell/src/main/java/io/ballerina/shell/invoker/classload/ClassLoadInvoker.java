@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
  */
 public class ClassLoadInvoker extends Invoker {
     private static final int MAX_VAR_STRING_LENGTH = 78;
+    private static final String VAR_TYPE_TEMPLATE_FILE = "template.type.ftl";
     private static final String TEMPLATE_FILE = "template.classload.ftl";
     protected static final String BALLERINA_HOME = "ballerina.home";
     // Main class and method names to invoke
@@ -73,7 +74,6 @@ public class ClassLoadInvoker extends Invoker {
     protected final List<Snippet> moduleDclns;
     protected final Map<String, String> globalVars;
     protected final String contextId;
-    protected Template template;
 
     /**
      * Creates a class load invoker from the given ballerina home.
@@ -97,7 +97,7 @@ public class ClassLoadInvoker extends Invoker {
         // This will allow compiler to cache necessary data so that
         // subsequent runs will be much more faster.
         ClassLoadContext emptyContext = new ClassLoadContext(contextId);
-        SingleFileProject project = getProject(emptyContext);
+        SingleFileProject project = getProject(emptyContext, TEMPLATE_FILE);
         JBallerinaBackend loadedBackend = JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11);
         execute(project, loadedBackend);
     }
@@ -114,7 +114,7 @@ public class ClassLoadInvoker extends Invoker {
 
     @Override
     public boolean execute(Snippet newSnippet) throws InvokerException {
-        List<Pair<String, String>> newVariables = new ArrayList<>();
+        Map<String, String> newVariables = new HashMap<>();
 
         if (newSnippet.isVariableDeclaration()) {
             // This is a variable declaration.
@@ -123,13 +123,13 @@ public class ClassLoadInvoker extends Invoker {
             // Only compilation is done.
             VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
             ClassLoadContext varTypeInferContext = createVarTypeInferContext(varDcln);
-            SingleFileProject project = getProject(varTypeInferContext);
+            SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
             PackageCompilation compilation = compile(project);
 
             for (BLangSimpleVariable variable : compilation.defaultModuleBLangPackage().getGlobalVariables()) {
                 // If the variable is a init var or a known global var, add it.
                 if (!INIT_VAR_NAMES.contains(variable.name.value) && !globalVars.containsKey(variable.name.value)) {
-                    newVariables.add(new Pair<>(variable.name.value, variable.type.toString()));
+                    newVariables.put(variable.name.value, variable.type.toString());
                 }
             }
         } else if (newSnippet.isImport()) {
@@ -151,7 +151,7 @@ public class ClassLoadInvoker extends Invoker {
 
         // Compile and execute the real program.
         ClassLoadContext context = createContext(newSnippet, newVariables);
-        SingleFileProject project = getProject(context);
+        SingleFileProject project = getProject(context, TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
         boolean isSuccess = execute(project, jBallerinaBackend);
@@ -160,7 +160,7 @@ public class ClassLoadInvoker extends Invoker {
         if (isSuccess) {
             addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
             if (newSnippet.isVariableDeclaration()) {
-                newVariables.forEach(v -> globalVars.put(v.getFirst(), v.getSecond()));
+                newVariables.forEach(globalVars::put);
             } else if (newSnippet.isModuleMemberDeclaration()) {
                 moduleDclns.add(newSnippet);
             }
@@ -250,7 +250,7 @@ public class ClassLoadInvoker extends Invoker {
      * @param newVariables Newly defined variables. Must be set if snippet is a var dcln.
      * @return Created context.
      */
-    protected ClassLoadContext createContext(Snippet newSnippet, List<Pair<String, String>> newVariables) {
+    protected ClassLoadContext createContext(Snippet newSnippet, Map<String, String> newVariables) {
         // Variable declarations are handled differently.
         // If current snippet is a var dcln, it is added to saveVarDclns but not to initVarDclns.
         // All other var dclns are added to both.
@@ -270,7 +270,7 @@ public class ClassLoadInvoker extends Invoker {
             importStrings.add(newSnippet.toString());
         } else if (newSnippet.isVariableDeclaration()) {
             lastVarDcln = newSnippet.toString();
-            saveVarDclns.addAll(newVariables);
+            newVariables.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
         } else if (newSnippet.isModuleMemberDeclaration()) {
             moduleDclnStrings.add(newSnippet.toString());
         } else if (newSnippet.isStatement()) {
@@ -331,13 +331,14 @@ public class ClassLoadInvoker extends Invoker {
     /**
      * Get the project with the context data.
      *
-     * @param context Context to create the ballerina file.
+     * @param context      Context to create the ballerina file.
+     * @param templateFile Template file to load.
      * @return Created ballerina project.
      * @throws InvokerException If file writing failed.
      */
-    protected SingleFileProject getProject(Object context) throws InvokerException {
-        this.template = Objects.requireNonNullElse(this.template, super.getTemplate(TEMPLATE_FILE));
-        File mainBal = writeToFile(this.template, context);
+    protected SingleFileProject getProject(Object context, String templateFile) throws InvokerException {
+        Template template = super.getTemplate(templateFile);
+        File mainBal = writeToFile(template, context);
         addDiagnostic(Diagnostic.debug("Using main file: " + mainBal));
         return SingleFileProject.load(mainBal.toPath());
     }

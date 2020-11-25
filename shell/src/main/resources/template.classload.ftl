@@ -15,6 +15,16 @@ function memorize(handle context_id, handle name, any|error value) = @java:Metho
     'class: "${memoryRef}"
 } external;
 
+// can use as a normal identifier
+function recall_var(string name) returns any|error {
+    return trap recall(context_id, java:fromString(name));
+}
+
+// can use as an assignment
+function memorize_var(string name, any|error value) {
+    memorize(context_id, java:fromString(name), value);
+}
+
 // Module level declarations
 <#list moduleDclns as dcln>
 ${dcln}
@@ -23,20 +33,16 @@ ${dcln}
 handle context_id = java:fromString("${contextId}");
 ${lastVarDcln}
 
-// Variable initialization
+// Variable initialization - recall and cast
 <#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall(context_id, java:fromString("${varNameType.first}"));
+${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("${varNameType.first}");
 </#list>
 
 // Saving variables
 function save(){
 <#list saveVarDclns as varNameType>
-    memorize(context_id, java:fromString("${varNameType.first}"), ${varNameType.first});
+    memorize_var("${varNameType.first}", ${varNameType.first});
 </#list>
-}
-
-function print_err(error err){
-    io:println("Exception occurred: ", err.message());
 }
 
 function run() returns @untainted any|error {
@@ -50,10 +56,10 @@ function run() returns @untainted any|error {
 }
 
 public function main() returns error? {
-    any|error expr = run();
+    any|error expr = trap run();
     if (expr is ()){
     } else if (expr is error){
-        print_err(expr);
+        io:println("Exception occurred: ", expr.message());
         return expr;
     } else {
         io:println(expr);
