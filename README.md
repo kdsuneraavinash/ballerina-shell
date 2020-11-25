@@ -17,7 +17,7 @@ The project is implemented in two base modules.
 
 ## Limitations and Known Issues
 
-- **Imports must be done with a prefix** - All the imports must be done by explicitly stating the snippet.  The following syntax must be used to declare an import. Also, the import library should also be in the class-path. (TODO) 
+- **Imports must be done with a prefix** - All the imports must be done by explicitly stating the prefix.  The following syntax must be used to declare an import. Also, the import library should also be in the class-path. (TODO) 
 
   ```
     import [org-name /] module-name [version sem-ver] as import-prefix;
@@ -31,7 +31,7 @@ The project is implemented in two base modules.
 
 ## Implementation
 
-For implementation details please refer [this](shell/README.md)
+For implementation details please refer [this](shell/README.md).
 
 ## References
 

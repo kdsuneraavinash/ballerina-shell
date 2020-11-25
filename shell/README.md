@@ -1,12 +1,27 @@
 # Ballerina Shell Design Document
 
-## Evaluator
+## Invoker
 
-![Preprocessor](../docs/overview.png)
+![Preprocessor](../docs/sequence.png)
 
+Currently, the approach is as follows. The overview sequence diagram is shown above as well.
 
+- The application front-end will supply the correctly categorized snippet. The snippet type refers to the location that the code segment should go to. For example, `ImportSnippets` will go to the topmost section. Refer [HERE](#front-end) to view the front-end implementation details.
 
-## Preprocessor
+- The invoker will then generate the `.bal` file using the snippet data, the previously defined module-level declarations, and variable details. The snippet will be generated using the template [HERE](#invoker-template). The variable type information required to generate the file is derived via the `PackageCompilation`. To enable imports, only the used imports are included. (Because unused imports are not allowed)
+
+- The invoker will then execute the generated ballerina file. A custom security manager is employed to stop VM from exiting because of `System.exit()` calls in the ballerina executable. 
+
+- In the execution, the ballerina file will load the variable values from the memory class. This memory class is a class with a static map that exposes static methods: `recall` and `memorize`. 
+
+- - `memorize` will save the variable value as a plain Java Object. `recall` will return the saved object. Since the life-time of this class is persistent throughout every execution phase, the variable values saved will be available for each execution. (So this will act as persistent storage for the ballerina global variables)
+  - At the start of each execution, all variables are loaded from the Java memory class and cast into the required type. Then the snippet is executed and all the variables are saved back in the memory class.
+
+- Additionally, a context id is used to allow several invoker sessions to run. If there are any errors, they are reported as necessary.
+
+## Front End
+
+### Preprocessor
 
 The preprocessor is the first transformational phase of the program. Any input is sent through the preprocessor to convert the input into a list of individually processable statements. For example, any multiple statement input will be split into the relevant list of string counterpart at the end of this phase. The implemented `SeparatorPreprocessor` currently splits the statements into separated lists depending on the semicolons that are in the root bracket level. The motivation of a preprocessor is to divide the input into separately identifiable sections so each can be individually processed. Removing comments is also a task done by the preprocessor.
 
@@ -27,7 +42,7 @@ Following are some inputs and expected output of the preprocessor for reference.
 | `function () { int p = 100; string h = "hello";}` | [`function () { int p = 100; string h = "hello";}`] |
 | `int a = 0; while (a < 10) { a+= 1; }`            | [`int a = 0;`, `while (a < 10) { a+= 1; }`]         |
 
-## Tree Parser
+### Tree Parser
 
 In this stage, the correct syntax tree is identified. The root node of the syntax tree must be the corresponding type for the statement. For example, for an import declaration, the tree that is parsed should have `ImportDeclarationNode` as the root node.
 
@@ -39,7 +54,7 @@ Currently, following tree parsers are implemented.
 | ----------------- | ------------------------------------------------------------ |
 | Trial Tree Parser | Parses the source code line using a trial based method. The source code is placed in several places and is attempted to parse. This continues until the correct type can be determined. |
 
-> TODO: Find a way to create a tree parser that directly uses ballerina parser without depending on trials.
+> TODO: Find a way to create a tree parser that directly uses ballerina parser without depending on trials. Trial parsing is too slow.
 
 Following are some inputs and expected output of the tree parser for reference.
 
@@ -49,7 +64,7 @@ Following are some inputs and expected output of the tree parser for reference.
 | `int variable = 100;`       | `ModuleVariableDeclarationNode` |
 | `while (a) { int i = 100;}` | `WhileStatementNode`            |
 
-## Snippet Factory
+### Snippet Factory
 
 Snippets are individual statements.
 
@@ -59,7 +74,7 @@ In processing the snippets, if a snippet contained an error and failed to run, t
 
 Also, names given to the REPL may never be overridden. (If x variable is defined, you cannot redefine variable x even with the same type. The same goes for functions, classes, etc..) However, any valid redeclaration in a different scope may be possible.
 
-### Snippet Base Type
+#### Snippet Base Type
 
 Snippets are defined in terms of the source code it contains.
 
@@ -69,63 +84,42 @@ Snippets would be of mainly 5 categories. Erroneous snippets are rejected as soo
 
 #### Import Snippet
 
-Snippets that represent an import statement. 
-
-> Add support for imports.
-
-##### Limitations
-
-- Because of using Project API, home directory do not support imports other than `io`.
-- Due to limitations in the compiler, practically no imports can be done even if the above issue is fixed. According to the language specification one cannot have unused imports which results in import snippets always causing an error. As a result no other imports than the ones that are already there cannot be used.
+Snippets that represent an import statement. **All imports must be done with prefixes.** The prefix is used to detect import usage and include only the used imports.
 
 #### Variable Declaration Snippet
 
-The bulk of the handling is done for these types of snippets since these snippets hold the whole REPL state. (as global variables) 
-
 In the REPL, only module-level variables are allowed. The main motivation of that is to keep a global state. (So every defined variable is available to others.) Thus, `VariableDeclarationNodes` will also be converted into `ModuleVariableDeclarationNode`. However, the ability of variable declarations to not have an initializer will be an issue. Currently, the declaration will be converted as is. If there isn't a initializer, compiler will give an error.
 
-> TODO: Inject filler values.
-
-##### Infer a filler value if possible (TODO)
+> Infer a filler value if possible (TODO?)
 
 Because every declaration is a module-level declaration, it must have an initializer. However, for usability, some variables should have a default value to initialize if the initializer is not given. For example, an integer can be initialized with a 0 if an initializer is not provided. However, this will only be done for a selected few types where a default initializer is trivial.
 
 Following initializers will be used when an initializer is not provided. Note that, because of lack of information at the stage of this operations, it is not possible to infer the default types of the types which are defined by the user. This will also include var, which is a type determined by the compiler. The table also includes whether the type is serializable.
 
-| Type                                                         | Filler Default Value                          |
-| ------------------------------------------------------------ | --------------------------------------------- |
-| `()`                                                         | `()`                                          |
-| `boolean`                                                    | `false`                                       |
-| `int`, `float`, `double`, `byte`                             | `0`                                           |
-| `string`                                                     | `""`                                          |
-| `xml`                                                        | `xml '<!---->'`                               |
-| `array`, `tuple`                                             | `[]`                                          |
-| `map`                                                        | `{}`                                          |
-| `record`                                                     | `{}`                                          |
-| `table`                                                      | `table []`                                    |
-| `any`                                                        | `()`                                          |
-| `union`                                                      | any available filler value of types in union. |
-| `optional`                                                   | `()`                                          |
-| `json`, `anydata`                                            | `()`                                          |
-| `intersection`, `singleton`, `readonly`, `never`, `distinct` | None                                          |
-| all behavioral types                                         | None                                          |
-| all other types                                              | None                                          |
+| Type                             | Filler Default Value                          |
+| -------------------------------- | --------------------------------------------- |
+| `()`                             | `()`                                          |
+| `boolean`                        | `false`                                       |
+| `int`, `float`, `double`, `byte` | `0`                                           |
+| `string`                         | `""`                                          |
+| `xml`                            | `xml '<!---->'`                               |
+| `array`, `tuple`                 | `[]`                                          |
+| `map`                            | `{}`                                          |
+| `record`                         | `{}`                                          |
+| `table`                          | `table []`                                    |
+| `any`                            | `()`                                          |
+| `union`                          | Any available filler value of types in union. |
+| `optional`                       | `()`                                          |
+| `json`, `anydata`                | `()`                                          |
+| Any other type                   | No filler value                               |
 
 *Default values for xml, array, tuple, map, record have the potential to fail or cause errors. However, they are still used if the user didn't provide one in the expectation that the user will identify the error if the default value failed. [Ballerina Default Fill Members](https://ballerina.io/spec/lang/2020R1/#FillMember)
 
 Following are some inputs and expected filler values for reference.
 
-| Input                     | Expected Type | Expected Filler Value(s) |
-| ------------------------- | ------------- | ------------------------ |
-| `int number;`             | `int`         | `0`                      |
-| `error|int|string value;` | `union`       | `0` or `""`              |
-| `var t`                   | `other`       | None                     |
-
 #### Module Member Declaration Snippet
 
 Module-level declarations. These are not active or runnable. Service declaration can start a service on a port, etc... All other declarations are just declarations. They do not execute to return a value. Also, any undefined variable in these declarations is ignored. These do not contain semicolons at the end. 
-
-##### Sub Kinds
 
 | Sub Kind Name                    | State    | Notes                                                        |
 | -------------------------------- | -------- | ------------------------------------------------------------ |
@@ -140,25 +134,9 @@ Module-level declarations. These are not active or runnable. Service declaration
 | Enum Declaration                 | OK       |                                                              |
 | Class Definition                 | OK       |                                                              |
 
-##### Examples
-
-```C#
-function printValue(string value) { } // Function Definition
-listener http:Listener helloWorldEP = new (9095, helloWorldEPConfig); // Listener Declaration
-type newType record{string name;}; // Type Definition
-service hello on new http:Listener(9090) { } // Service Declaration 
-const int var1 = 3; // Constant Declaration
-// TODO: No examples // Annotation Declaration
-xmlns "http://ballerina.com/aa" as ns0; // Module XML Namespace Declaration
-enum Color { RED, GREEN, BLUE } // Enum Declaration
-class Person { } // Class Definition
-```
-
 #### Statement Kind
 
 These are normal statements that should be evaluated from top to bottom inside a function. Fail Statement Sub Kind is not accepted. 
-
-##### Sub Kinds
 
 | Sub Kind Name                       | State | Notes                                                        |
 | ----------------------------------- | ----- | ------------------------------------------------------------ |
@@ -185,139 +163,88 @@ These are normal statements that should be evaluated from top to bottom inside a
 | Match Statement                     | OK    | Similar to switch statements.                                |
 | Do Statement                        | OK    | ?                                                            |
 
-##### Examples
-
-```C#
-var1 = 3; // Assignment Statement
-var1 += 3; // Compound Assignment Statement
-{ int var1 =4; } // Block Statement
-if (cond) { } // If Else Statement
-while (cond) { } // While Statement
-panic error("Record is nil"); // Panic
-lock { amount += n; } // Lock
-fork { } // Fork
-foreach var color in colors { } // For Each Statement
-transaction { } // Transaction Statement
-retry<Type> (args) { } // Retry Statement
-match var1 { 0 => {} 1 => { } } // Match Statement
-// TODO: No examples // Do Statement
-```
-
 #### Expression Kind
 
-> TODO: Should expressions and statements be merged into one type?
+These are expressions that are executable but returns a value which should be immediately displayed.
 
-These are expressions that are executable but are not persistent. (Does not affect other statements/expressions) These do not contain semicolons. (If the expression is an Expression Statement or a statement with a semicolon, the semicolon will be stripped.)
+## Annex
 
-##### Examples
+### Overview Diagram
 
-```C#
-var1 == var2 // Binary Expression
-(var1 == var2) // Braced Expression
-check func1(10) // Check Expression
-abc.value // Field Access Expression
-func1(arg1) // Function Call Expression
-abs.method(arg1)// Method Call Expression
-{ line: "str", country: "abc" } // Mapping Constructor Expression
-typeof var1 // Typeof Expression
-! var1 // Unary Expression 
-object { public string city; } // Object constructor Expression
-var1 is Type // Type Test Expression [ISSUE]
-abc->method(arg1) // Action
-() // Nil Literal
-4 // Basic Literal
-int|string // Type Descriptor [ISSUE] : Abstract so cant detect
-trap func1(10) // Trap Expression
-[1, 2, 3, 4] // List Constructor Expression
-<float> v1 // Type Cast Expression
-table [ {id: 1, name: "J"}, {id: 2, name: "B"} ] // Table Constructor Expression [ISSUE]
-let int x = 2 in x*2 // Let Expression
-string `INSERT INTO Details VALUES (${p.name}, ${p.age})` // Template Expression
-function(int arg1) { } // Annonymous Function Expression
-new Abc(arg1) // New Expression
-from var student in studentList select { name: student.firstName }   // Query Expression
-start func1(arg1) // Start Action
-flush worker1 // Flush Action [ISSUE]
-// TODO: No examples // Annot Access Expression
-abc?.value // Optional Field Access Expression
-cond ? func1() : func2() // Conditionl Expression
-transactional // Transactional Expression
-@http:WebSocketServiceConfig {} service {} // Service Constructor Expression ((DECIDE))
-base16 `112233` // Byte Array Expression
-bookXML/**/<fname> // XML Navigate Expression
-```
+![Overview](../docs/overview.png)
 
-#### Others
+### Invoker Template
 
-Any other snippet is considered to be invalid/syntax errors.
+```ballerina
+import ballerina/io as io;
+import ballerina/java as java;
 
-### Limitations
-
-- Some variable names, function names are reserved by the snippet. (eg: `_reserved`) And functions declared by the REPL must not be used as it may cause stack overflows. (This is a huge problem since `main` method name is known always)
-- Some statements or expressions cannot be supported. (eg: statements involving thread) Since current implementation in each run, such statements would return a different value each time. Also table constructor expressions are disabled because table constructor cannot be assigned to `any`.
-
-## Invoker
-
-Invoker will make sure of executing the snippet. This is where the bulk of execution logic lies. Invoker will use a `Context` to generate a file and execute it. (The logic may change depending on the invoker used)
-
-![Preprocessor](../docs/invoker.png)
-
-### Replay Invoker
-
-This is the currently implemented invoker. It will populate the following template and execute it via `Project API`.
-
-```java
-<#-- @ftlvariable name="" type="io.ballerina.shell.invoker.replay.ReplayContext" -->
-import ballerina/io as _io;
+// Other imports
 <#list imports as import>
-    ${import}
+${import}
 </#list>
 
-<#list varDclns + moduleDclns as dcln>
-    ${dcln}
+function recall(handle context_id, handle name) returns any|error = @java:Method {
+    'class: "${memoryRef}"
+} external;
+
+function memorize(handle context_id, handle name, any|error value) = @java:Method {
+    'class: "${memoryRef}"
+} external;
+
+// Module level declarations
+<#list moduleDclns as dcln>
+${dcln}
 </#list>
 
-function statements() {
-    any|error _reserved = ();
-    <#list stmts as stmt>
-        <#if stmt.second>
-           ${stmt.first}
-        <#else>
-           _reserved = ${stmt.first};
-        </#if>
-    </#list>
+handle context_id = java:fromString("${contextId}");
+${lastVarDcln}
+
+// Variable initialization
+<#list initVarDclns as varNameType>
+${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall(context_id, java:fromString("${varNameType.first}"));
+</#list>
+
+// Saving variables
+function save(){
+<#list saveVarDclns as varNameType>
+    memorize(context_id, java:fromString("${varNameType.first}"), ${varNameType.first});
+</#list>
 }
 
-any|error _reserved = ();
+function print_err(error err){
+    io:println("Exception occurred: ", err.message());
+}
 
-public function main() {
-    statements();
-
+function run() returns @untainted any|error {
     any|error expr = ();
     <#if lastExpr.second>
-       ${lastExpr.first}
+    ${lastExpr.first}
     <#else>
-       expr = trap ${lastExpr.first};
+    expr = trap (${lastExpr.first});
     </#if>
+    return expr;
+}
 
+public function main() returns error? {
+    any|error expr = run();
     if (expr is ()){
     } else if (expr is error){
-        var color_start = "\u{001b}[33;1m";
-        var color_end = "\u{001b}[0m";
-        _io:println(color_start, "Exception occurred: ", expr.message(), color_end);
+        print_err(expr);
+        return expr;
     } else {
-        _io:println(expr);
+        io:println(expr);
     }
+
+    return trap save();
 }
 ```
 
-### Implementation II - Replay improved (TODO)
+## References
 
-> TODO: Fix bug of state preservation if a statement changed state.
+[reple: "Replay-Based" REPLs for Compiled Languages](https://people.eecs.berkeley.edu/~brock/blog/reple.php) - A blog post on reple: "Replay-Based" REPLs for Compiled Languages and limitations/fixes possible.
 
-In this implementation every statement is reevaluated. However because of the issues that this might pose, (randomness/computation heavy snippets) some small optimizations are done.
+[JShell](https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm#JSHEL-GUID-630F27C8-1195-4989-9F6B-2C51D46F52C8) - A REPL for Java programming language.
 
-- A subset of global variables are serialized. A dump file in json format is used for this. The template would generate the code required to convert these variables. (Not all variable types are serializable)
-- If a later statement or expression did not change the state, that statement or expression would be ditched. In the reevaluation that snippet is not evaluated at all.
-- If a later statement or expression changes only the serialized state, the state change would be recorded and the statement would be ditched.
-- If a later statement or expression changed non-serialized state, that statement would be persisted.
+[RCRL](https://github.com/onqtam/rcrl) - Read-Compile-Run-Loop: tiny and powerful interactive C++ compiler (REPL)
+
