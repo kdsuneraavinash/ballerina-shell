@@ -35,6 +35,7 @@ public class RejectInvalidStmtTrial extends TreeParserTrial {
         if (source.trim().startsWith(DOCUMENTATION_START)) {
             throw new ParserRejectedException("Documentation is not allowed in the REPL.");
         } else if (source.trim().startsWith(ANNOTATION_START)) {
+            // TODO: Should annotations be allowed?
             throw new ParserRejectedException("Annotations are not allowed in the REPL.");
         } else if (source.trim().startsWith(PUBLIC_START)) {
             throw new ParserRejectedException("Invalid qualifier 'public'. Public is not allowed here.");

@@ -56,12 +56,6 @@ public class TrialTreeParserTest {
     @Test
     public void testModuleMemberDeclarationParse() {
         // TODO: Add test cases with Annotation Declaration
-        // Enums not tested: Enum dclns go into stack overflow
-        // {
-        //    "name": "Enum Declaration",
-        //    "input": "enum Color { RED, GREEN, BLUE };",
-        //    "expected": "EnumDeclarationNode"
-        //  }
         testParse(MODULE_DCLN_TESTCASES, ModuleMemberDeclarationNode.class);
     }
 
