@@ -116,6 +116,8 @@ public class ClassLoadInvoker extends Invoker {
     public boolean execute(Snippet newSnippet) throws InvokerException {
         Map<String, String> newVariables = new HashMap<>();
 
+        newSnippet.modify(new GlobalLoadModifier(globalVars));
+
         if (newSnippet.isVariableDeclaration()) {
             // This is a variable declaration.
             // So we have to compile once and know the names and types of variables.

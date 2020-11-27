@@ -21,6 +21,7 @@ package io.ballerina.shell.snippet;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeVisitor;
 import io.ballerina.compiler.syntax.tree.QualifiedNameReferenceNode;
+import io.ballerina.compiler.syntax.tree.TreeModifier;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -46,7 +47,7 @@ import java.util.Set;
  */
 public abstract class Snippet {
     protected final SnippetSubKind subKind;
-    protected final Node rootNode;
+    protected Node rootNode;
 
     protected Snippet(SnippetSubKind subKind, Node rootNode) {
         this.subKind = subKind;
@@ -88,6 +89,15 @@ public abstract class Snippet {
      */
     public boolean isExecutable() {
         return subKind.isExecutable();
+    }
+
+    /**
+     * Modifies the tree of the snippet.
+     *
+     * @param treeModifier Modifier to use.
+     */
+    public void modify(TreeModifier treeModifier) {
+        this.rootNode = this.rootNode.apply(treeModifier);
     }
 
     public boolean isImport() {

@@ -5,9 +5,8 @@ import ballerina/java as java;
     ${import}
 </#list>
 
-function recall() returns any|error {
-    return ();
-}
+function recall_var(string name) returns any|error { return (); }
+function memorize_var(string name, any|error value) { }
 
 <#list moduleDclns as dcln>
 ${dcln}
@@ -15,7 +14,7 @@ ${dcln}
 
 ${lastVarDcln}
 <#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall();
+${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("x");
 </#list>
 
 public function main(){
