@@ -15,9 +15,9 @@ The project is implemented in two base modules.
 - **shell** - Module including all the base evaluation classes. This has all the base components to evaluate and run a string. All other components are built on top of this module. You may find the source code for this module [here](shell).
 - **shell-cli** - A command-line interface built on top of shell. Includes multi-line inputs, color-coded outputs, keyword-based auto-completion, etc... You may find the source code for this module [here](shell-cli).
 
-## Limitations and Known Issues
+## Known Issues
 
-- **Imports must be done with a prefix** - All the imports must be done by explicitly stating the prefix.  The following syntax must be used to declare an import. Also, the import library should also be in the class-path. (TODO) 
+- **Imports must be done with a prefix** - All the imports must be done by explicitly stating the prefix.  The following syntax must be used to declare an import. Also, the import library should also be in the class-path. Imports are lazy. Which means imports are actually used only when you try to use them.
 
   ```
     import [org-name /] module-name [version sem-ver] as import-prefix;
@@ -25,18 +25,30 @@ The project is implemented in two base modules.
 
 - **The parser is imperfect** - Current parser is imperfect and is sometimes unable to detect the type of statement. Please file an issue if you come across any wrong categorization of a snippet. The parser is also relatively slow compared to the compilation phase, acting as a bottle-neck.
 
-- **Ctrl+C while an execution causes the program to exit** - While the execution is happening if a `sigint` or a similar call is done, the VM will exit directly.
+- **Assignments to global variables in closures or class methods will not work** - Assignments done to global variables in closures will not be reflected after the execution. The changes will be visible only for the scope belonging to the snippet where the closure was defined. However the value of the global variables inside a closure will reflect the current real value of the said variable.
 
-- **Ballerina Home must be set correctly** - Ballerina home is currently set as `home` directory. (TODO) 
 
 ## Implementation
 
 For implementation details please refer [this](shell/README.md).
 
-## References
+## Building
+
+> **Linux** - Simply clone the repository and run `run.sh`. It should launch the REPL.
+
+Run following commands in order.
+
+```batch
+gradlew.bat fatJar
+cls
+java -jar shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+```
+
+##  References
 
 [reple: "Replay-Based" REPLs for Compiled Languages](https://people.eecs.berkeley.edu/~brock/blog/reple.php) - A blog post on reple: "Replay-Based" REPLs for Compiled Languages and limitations/fixes possible.
 
+[RCRL](https://github.com/onqtam/rcrl) - Read-Compile-Run-Loop: tiny and powerful interactive C++ compiler (REPL)
+
 [JShell](https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm#JSHEL-GUID-630F27C8-1195-4989-9F6B-2C51D46F52C8) - A REPL for Java programming language.
 
-[RCRL](https://github.com/onqtam/rcrl) - Read-Compile-Run-Loop: tiny and powerful interactive C++ compiler (REPL)
