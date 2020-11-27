@@ -37,13 +37,17 @@ public class ImportDeclarationTrial extends TreeParserTrial {
     public Node parse(String source) throws ParserTrialFailedException {
         assertIf(source.trim().startsWith("import "), "expected to start with 'import'");
 
-        TextDocument document = TextDocuments.from(source);
-        SyntaxTree tree = SyntaxTree.from(document);
-        assertTree(tree);
+        try {
+            TextDocument document = TextDocuments.from(source);
+            SyntaxTree tree = SyntaxTree.from(document);
+            assertTree(tree);
 
-        ModulePartNode modulePartNode = tree.rootNode();
-        NodeList<ImportDeclarationNode> imports = modulePartNode.imports();
-        assertIf(!imports.isEmpty(), "expected import member");
-        return imports.get(0);
+            ModulePartNode modulePartNode = tree.rootNode();
+            NodeList<ImportDeclarationNode> imports = modulePartNode.imports();
+            assertIf(!imports.isEmpty(), "expected import member");
+            return imports.get(0);
+        } catch (ParserTrialFailedException e) {
+            throw new ParserRejectedException(e.getMessage());
+        }
     }
 }

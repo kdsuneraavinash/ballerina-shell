@@ -25,7 +25,9 @@ import io.ballerina.shell.parser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.parser.trials.ExpressionTrial;
 import io.ballerina.shell.parser.trials.ImportDeclarationTrial;
 import io.ballerina.shell.parser.trials.ModuleMemberTrial;
+import io.ballerina.shell.parser.trials.ParserRejectedException;
 import io.ballerina.shell.parser.trials.ParserTrialFailedException;
+import io.ballerina.shell.parser.trials.RejectInvalidStmtTrial;
 import io.ballerina.shell.parser.trials.StatementTrial;
 import io.ballerina.shell.parser.trials.TreeParserTrial;
 
@@ -40,8 +42,9 @@ import java.util.Objects;
 public class TrialTreeParser extends TreeParser {
     private static final List<TreeParserTrial> NODE_PARSER_TRIALS = List.of(
             new ImportDeclarationTrial(),
-            new ExpressionTrial(),
+            new RejectInvalidStmtTrial(),
             new ModuleMemberTrial(),
+            new ExpressionTrial(),
             new StatementTrial(),
             new EmptyExpressionTrial()
     );
@@ -56,6 +59,9 @@ public class TrialTreeParser extends TreeParser {
                 errorMessage = e.getMessage();
                 addDiagnostic(Diagnostic.debug(String.format("Failed %s because %s",
                         trial.getClass().getSimpleName(), errorMessage)));
+            } catch (ParserRejectedException e) {
+                errorMessage = "Invalid statement: " + e.getMessage();
+                break;
             } catch (Exception e) {
                 errorMessage = "Invalid statement. Could not parse the expression: " + e.getMessage();
                 addDiagnostic(Diagnostic.debug(String.format("Unexpected Fail %s because %s",
