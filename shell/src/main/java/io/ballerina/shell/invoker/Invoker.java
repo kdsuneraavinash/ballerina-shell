@@ -138,10 +138,8 @@ public abstract class Invoker extends DiagnosticReporter {
         for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
             DiagnosticSeverity severity = diagnostic.diagnosticInfo().severity();
             if (severity == DiagnosticSeverity.ERROR) {
-                addDiagnostic(Diagnostic.error(diagnostic.message()));
                 addDiagnostic(Diagnostic.error(highlightedDiagnostic(module, diagnostic)));
             } else if (severity == DiagnosticSeverity.WARNING) {
-                addDiagnostic(Diagnostic.warn(diagnostic.message()));
                 addDiagnostic(Diagnostic.warn(highlightedDiagnostic(module, diagnostic)));
             } else {
                 addDiagnostic(Diagnostic.debug(diagnostic.message()));
@@ -165,11 +163,8 @@ public abstract class Invoker extends DiagnosticReporter {
         // Get the source code
         Optional<DocumentId> documentId = module.documentIds().stream().findFirst();
         assert documentId.isPresent();
-        String space = " ";
         Document document = module.document(documentId.get());
-        String sourceLine = document.textDocument().line(diagnostic.location().lineRange().startLine().line()).text();
-        int position = diagnostic.location().lineRange().startLine().offset();
-        return String.format("%s%n%s^", sourceLine, space.repeat(position));
+        return Diagnostic.highlightDiagnostic(document.textDocument(), diagnostic);
     }
 
     /**

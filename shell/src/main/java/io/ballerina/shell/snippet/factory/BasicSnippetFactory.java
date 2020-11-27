@@ -118,7 +118,9 @@ public class BasicSnippetFactory extends SnippetFactory {
             ImportDeclarationNode importDeclarationNode = (ImportDeclarationNode) node;
             if (importDeclarationNode.prefix().isEmpty()) {
                 // TODO: Even if no prefix, detect the prefix
-                addDiagnostic(Diagnostic.error("Imports without prefixes are not allowed in the REPL."));
+                addDiagnostic(Diagnostic.error("" +
+                        "Imports without prefixes are not allowed in the REPL. " +
+                        "Use your import with a prefix: 'import abc/x as x;' "));
                 return null;
             }
             String prefix = importDeclarationNode.prefix().get().prefix().text();
@@ -139,7 +141,9 @@ public class BasicSnippetFactory extends SnippetFactory {
                 qualifiers = NodeFactory.createNodeList(varNode.finalKeyword().get());
             }
             if (varNode.initializer().isEmpty()) {
-                addDiagnostic(Diagnostic.warn("Variables without initializers are not permitted."));
+                addDiagnostic(Diagnostic.warn("" +
+                        "Variables without initializers are not permitted. " +
+                        "Give an initial value for your variable."));
             }
             dclnNode = NodeFactory.createModuleVariableDeclarationNode(
                     NodeFactory.createMetadataNode(null, varNode.annotations()),

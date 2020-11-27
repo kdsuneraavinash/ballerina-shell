@@ -46,7 +46,7 @@ public abstract class TreeParserTrial {
     protected void assertTree(SyntaxTree tree) throws ParserTrialFailedException {
         for (Diagnostic diagnostic : tree.diagnostics()) {
             if (diagnostic.diagnosticInfo().severity() == DiagnosticSeverity.ERROR) {
-                throw new ParserTrialFailedException(diagnostic.message());
+                throw new ParserTrialFailedException(tree.textDocument(), diagnostic);
             }
         }
     }

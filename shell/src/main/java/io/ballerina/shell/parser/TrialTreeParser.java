@@ -25,6 +25,7 @@ import io.ballerina.shell.parser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.parser.trials.ExpressionTrial;
 import io.ballerina.shell.parser.trials.ImportDeclarationTrial;
 import io.ballerina.shell.parser.trials.ModuleMemberTrial;
+import io.ballerina.shell.parser.trials.ParserTrialFailedException;
 import io.ballerina.shell.parser.trials.StatementTrial;
 import io.ballerina.shell.parser.trials.TreeParserTrial;
 
@@ -47,15 +48,22 @@ public class TrialTreeParser extends TreeParser {
 
     @Override
     public Node parse(String source) throws TreeParserException {
+        String errorMessage = "";
         for (TreeParserTrial trial : NODE_PARSER_TRIALS) {
             try {
                 return Objects.requireNonNull(trial.parse(source), "trial returned no nodes");
-            } catch (Exception e) {
+            } catch (ParserTrialFailedException e) {
+                errorMessage = e.getMessage();
                 addDiagnostic(Diagnostic.debug(String.format("Failed %s because %s",
-                        trial.getClass().getSimpleName(), e.getMessage())));
+                        trial.getClass().getSimpleName(), errorMessage)));
+            } catch (Exception e) {
+                errorMessage = "Invalid statement. Could not parse the expression: " + e.getMessage();
+                addDiagnostic(Diagnostic.debug(String.format("Unexpected Fail %s because %s",
+                        trial.getClass().getSimpleName(), errorMessage)));
             }
         }
-        addDiagnostic(Diagnostic.error("Invalid statement. Could not parse the expression."));
+        addDiagnostic(Diagnostic.error(errorMessage));
+        addDiagnostic(Diagnostic.error("Parsing aborted because of errors."));
         throw new TreeParserException();
     }
 }

@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -52,19 +53,16 @@ public class GlobalLoadModifier extends TreeModifier {
     }
 
     private Collection<StatementNode> loadStatements() {
-        List<StatementNode> statementNodes = new ArrayList<>();
-        for (String varName : allVars.keySet()) {
-            statementNodes.add(loadStatement(varName, allVars.get(varName)));
-        }
-        return statementNodes;
+        String varStatement = allVars.entrySet().stream()
+                .map(e -> String.format("%s = <%s> recall_var(\"%s\");", e.getKey(), e.getValue(), e.getKey()))
+                .collect(Collectors.joining());
+        String sourceCode = String.format("function main(){%s}", varStatement);
+        List<StatementNode> statements = new ArrayList<>();
+        extractStatements(sourceCode).forEach(statements::add);
+        return statements;
     }
 
-    public StatementNode loadStatement(String varName, String typeName) {
-        String sourceCode = String.format("function main(){%s = <%s> recall_var(\"%s\");}", varName, typeName, varName);
-        return extractExpression(sourceCode);
-    }
-
-    public StatementNode extractExpression(String sourceCode) {
+    public NodeList<StatementNode> extractStatements(String sourceCode) {
         TextDocument document = TextDocuments.from(sourceCode);
         SyntaxTree tree = SyntaxTree.from(document);
         ModulePartNode node = tree.rootNode();
@@ -72,6 +70,6 @@ public class GlobalLoadModifier extends TreeModifier {
         ModuleMemberDeclarationNode moduleDeclaration = moduleDclns.get(0);
         FunctionDefinitionNode mainFunction = (FunctionDefinitionNode) moduleDeclaration;
         FunctionBodyBlockNode mainFunctionBody = (FunctionBodyBlockNode) mainFunction.functionBody();
-        return mainFunctionBody.statements().get(0);
+        return mainFunctionBody.statements();
     }
 }
