@@ -28,7 +28,7 @@ public class ExpressionTrial extends StatementTrial {
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
         String statementCode = String.format("return %s", source);
-        Node statement = super.parse(statementCode);
+        Node statement = super.parseSource(statementCode);
 
         assertIf(statement instanceof ReturnStatementNode, "expected a return statement");
         assert statement instanceof ReturnStatementNode;

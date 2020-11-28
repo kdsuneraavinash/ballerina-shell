@@ -39,8 +39,7 @@ public class ImportDeclarationTrial extends TreeParserTrial {
 
         try {
             TextDocument document = TextDocuments.from(source);
-            SyntaxTree tree = SyntaxTree.from(document);
-            assertTree(tree);
+            SyntaxTree tree = getSyntaxTree(document);
 
             ModulePartNode modulePartNode = tree.rootNode();
             NodeList<ImportDeclarationNode> imports = modulePartNode.imports();

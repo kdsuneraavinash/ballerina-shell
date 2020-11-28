@@ -18,12 +18,14 @@
 
 package io.ballerina.shell.parser.trials;
 
+import io.ballerina.compiler.syntax.tree.ExpressionStatementNode;
 import io.ballerina.compiler.syntax.tree.FunctionBodyBlockNode;
 import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
+import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
@@ -38,8 +40,7 @@ public class StatementTrial extends DualTreeParserTrial {
     public Node parseSource(String source) throws ParserTrialFailedException {
         String sourceCode = String.format("function main(){%s}", source);
         TextDocument document = TextDocuments.from(sourceCode);
-        SyntaxTree tree = SyntaxTree.from(document);
-        assertTree(tree);
+        SyntaxTree tree = getSyntaxTree(document);
 
         ModulePartNode node = tree.rootNode();
         NodeList<ModuleMemberDeclarationNode> moduleDclns = node.members();
@@ -48,6 +49,11 @@ public class StatementTrial extends DualTreeParserTrial {
         FunctionDefinitionNode mainFunction = (FunctionDefinitionNode) moduleDeclaration;
         FunctionBodyBlockNode mainFunctionBody = (FunctionBodyBlockNode) mainFunction.functionBody();
         assertIf(!mainFunctionBody.statements().isEmpty(), "expected at least one statement");
-        return mainFunctionBody.statements().get(0);
+
+        StatementNode statementNode = mainFunctionBody.statements().get(0);
+        if (statementNode instanceof ExpressionStatementNode) {
+            return ((ExpressionStatementNode) statementNode).expression();
+        }
+        return statementNode;
     }
 }

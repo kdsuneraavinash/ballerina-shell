@@ -83,5 +83,10 @@
     "name": "Do Statement",
     "input": "do { };",
     "expected": "DoStatementNode"
+  },
+  {
+    "name": "Panic Statement",
+    "input": "panic error(\"Record is nil\");",
+    "expected": "PanicStatementNode"
   }
 ]

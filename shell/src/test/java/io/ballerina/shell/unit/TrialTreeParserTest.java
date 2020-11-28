@@ -66,12 +66,6 @@ public class TrialTreeParserTest {
         //  - Local Type Definition Statement - These are caught as a module level dcln
         //  - XML Namespace Declaration Statement - These are caught as a module level dcln
         //  - Module Variable Declaration - These are caught as a module level dcln
-        // TODO: Panic statements not tested: Panic statements go into stack overflow (without semicolon)
-        //  {
-        //    "name": "Panic Statement",
-        //    "input": "panic error(\"Record is nil\");",
-        //    "expected": "PanicStatementNode"
-        //   }
         testParse(STATEMENT_TESTCASES, StatementNode.class);
     }
 

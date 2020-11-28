@@ -22,11 +22,21 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
+import io.ballerina.tools.text.TextDocument;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Trial for testing for the correct syntax tree.
  */
 public abstract class TreeParserTrial {
+    private static final long TIME_OUT_DURATION_MS = 250;
+
     /**
      * Tries to parse the source into a syntax tree.
      * Returns null if failed.
@@ -38,17 +48,35 @@ public abstract class TreeParserTrial {
     public abstract Node parse(String source) throws ParserTrialFailedException;
 
     /**
-     * Checks for errors in the syntax tree.
+     * Creates and checks for errors in the syntax tree.
      *
-     * @param tree Tree to check.
+     * @param document Document to parse.
+     * @return Created syntax tree.
      * @throws ParserTrialFailedException If tree contains errors.
      */
-    protected void assertTree(SyntaxTree tree) throws ParserTrialFailedException {
+    protected SyntaxTree getSyntaxTree(TextDocument document) throws ParserTrialFailedException {
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        Future<SyntaxTree> future = executor.submit(() -> SyntaxTree.from(document));
+        executor.shutdown();
+
+        SyntaxTree tree;
+        try {
+            tree = future.get(TIME_OUT_DURATION_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            throw new ParserTrialFailedException("Tree parsing was interrupted.");
+        } catch (ExecutionException e) {
+            throw new ParserTrialFailedException("Executor failure because " + e.getCause().getMessage());
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            throw new ParserTrialFailedException("Tree parsing was timed out.");
+        }
+
         for (Diagnostic diagnostic : tree.diagnostics()) {
             if (diagnostic.diagnosticInfo().severity() == DiagnosticSeverity.ERROR) {
                 throw new ParserTrialFailedException(tree.textDocument(), diagnostic);
             }
         }
+        return tree;
     }
 
     /**

@@ -40,8 +40,7 @@ public class EmptyExpressionTrial extends TreeParserTrial {
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
         TextDocument document = TextDocuments.from(source);
-        SyntaxTree tree = SyntaxTree.from(document);
-        assertTree(tree);
+        SyntaxTree tree = getSyntaxTree(document);
 
         ModulePartNode node = tree.rootNode();
         assertIf(node.members().isEmpty(), "expected no members");

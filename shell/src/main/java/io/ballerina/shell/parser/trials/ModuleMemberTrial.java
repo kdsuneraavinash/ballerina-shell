@@ -27,8 +27,6 @@ import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
-import java.util.regex.Pattern;
-
 /**
  * Attempts to capture a module member declaration.
  * Puts in the module level and checks for module level entries.
@@ -36,51 +34,22 @@ import java.util.regex.Pattern;
  * any error is rejected. Otherwise, it is still checked.
  */
 public class ModuleMemberTrial extends DualTreeParserTrial {
-    public static final Pattern LISTENER_START = Pattern.compile("^listener[^\\w]");
-    public static final Pattern SERVICE_START = Pattern.compile("^(isolated)?\\s+service[^\\w]");
-    public static final Pattern FUNCTION_START = Pattern.compile("^(isolated)?\\s+function[^\\w]");
-    public static final Pattern TYPE_START = Pattern.compile("^type[^\\w]");
-    public static final Pattern CONST_START = Pattern.compile("^const[^\\w]");
-    public static final Pattern ENUM_START = Pattern.compile("^enum[^\\w]");
-    public static final Pattern XMLNS_START = Pattern.compile("^xmlns[^\\w]");
-    public static final Pattern[] PATTERNS = {
-            LISTENER_START, SERVICE_START, FUNCTION_START,
-            TYPE_START, CONST_START, ENUM_START, XMLNS_START
-    };
-
     @Override
     public Node parseSource(String source) throws ParserTrialFailedException {
-        String trimmedSource = source.trim();
-        boolean definitelyModuleDcln = false;
-        for (Pattern pattern : PATTERNS) {
-            if (pattern.matcher(trimmedSource).matches()) {
-                definitelyModuleDcln = true;
-                break;
-            }
+        TextDocument document = TextDocuments.from(source);
+        SyntaxTree tree = getSyntaxTree(document);
+
+        ModulePartNode node = tree.rootNode();
+        assertIf(!node.members().isEmpty(), "expected at least one member");
+
+        ModuleMemberDeclarationNode dclnNode = node.members().get(0);
+
+        // Only captured binding patterns can be global variables
+        if (dclnNode instanceof ModuleVariableDeclarationNode) {
+            assertIf(((ModuleVariableDeclarationNode) dclnNode).typedBindingPattern().bindingPattern()
+                            instanceof CaptureBindingPatternNode,
+                    "Only captured binding patterns can be global variables");
         }
-
-        try {
-            TextDocument document = TextDocuments.from(source);
-            SyntaxTree tree = SyntaxTree.from(document);
-            assertTree(tree);
-
-            ModulePartNode node = tree.rootNode();
-            assertIf(!node.members().isEmpty(), "expected at least one member");
-
-            ModuleMemberDeclarationNode dclnNode = node.members().get(0);
-
-            // Only captured binding patterns can be global variables
-            if (dclnNode instanceof ModuleVariableDeclarationNode) {
-                assertIf(((ModuleVariableDeclarationNode) dclnNode).typedBindingPattern().bindingPattern()
-                                instanceof CaptureBindingPatternNode,
-                        "Only captured binding patterns can be global variables");
-            }
-            return dclnNode;
-        } catch (ParserTrialFailedException e) {
-            if (definitelyModuleDcln) {
-                throw new ParserRejectedException(e.getMessage());
-            }
-            throw e;
-        }
+        return dclnNode;
     }
 }
