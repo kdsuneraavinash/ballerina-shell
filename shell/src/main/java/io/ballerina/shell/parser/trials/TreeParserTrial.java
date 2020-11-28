@@ -35,7 +35,7 @@ import java.util.concurrent.TimeoutException;
  * Trial for testing for the correct syntax tree.
  */
 public abstract class TreeParserTrial {
-    private static final long TIME_OUT_DURATION_MS = 250;
+    private static final long TIME_OUT_DURATION_MS = 100;
 
     /**
      * Tries to parse the source into a syntax tree.
