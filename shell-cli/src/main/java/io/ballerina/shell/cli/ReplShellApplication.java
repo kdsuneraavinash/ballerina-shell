@@ -55,6 +55,7 @@ public class ReplShellApplication implements Callable<Integer> {
         DefaultParser parser = new DefaultParser();
         parser.setEofOnUnclosedBracket(DefaultParser.Bracket.CURLY,
                 DefaultParser.Bracket.ROUND, DefaultParser.Bracket.SQUARE);
+        parser.setQuoteChars(new char[]{'"'});
         Completer completer = new KeywordCompleter();
         DefaultHighlighter highlighter = new DefaultHighlighter();
 
