@@ -33,6 +33,7 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
+import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 
 import java.io.ByteArrayOutputStream;
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
 public class ClassLoadInvoker extends Invoker {
     private static final int MAX_VAR_STRING_LENGTH = 78;
     private static final String VAR_TYPE_TEMPLATE_FILE = "template.type.ftl";
+    private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
     private static final String TEMPLATE_FILE = "template.classload.ftl";
     protected static final String BALLERINA_HOME = "ballerina.home";
     // Main class and method names to invoke
@@ -139,14 +141,25 @@ public class ClassLoadInvoker extends Invoker {
         } else if (newSnippet.isImport()) {
             ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
             if (imports.containsKey(importDcln.getPrefix())) {
-                addDiagnostic(Diagnostic.error("Module was previously imported with the same prefix."));
+                addDiagnostic(Diagnostic.error("A module was previously imported with the same prefix."));
                 return new Pair<>(false, Optional.empty());
             } else {
-                // TODO: Validate if import can really be done.
                 if (INIT_IMPORTS.containsKey(importDcln.getPrefix())) {
                     addDiagnostic(Diagnostic.error("Import is already available by default."));
                     return new Pair<>(false, Optional.empty());
                 } else {
+                    ClassLoadContext importCheckingContext = createImportCheckingContext(importDcln);
+                    SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
+                    PackageCompilation packageCompilation = project.currentPackage().getCompilation();
+                    for (io.ballerina.tools.diagnostics.Diagnostic diagnostic :
+                            packageCompilation.diagnosticResult().diagnostics()) {
+                        if (diagnostic.diagnosticInfo().code()
+                                .equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
+                            addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
+                            return new Pair<>(false, Optional.empty());
+                        }
+                    }
+
                     imports.put(importDcln.getPrefix(), importDcln);
                     return new Pair<>(true, Optional.empty());
                 }
@@ -245,6 +258,17 @@ public class ClassLoadInvoker extends Invoker {
 
         return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings,
                 initVarDclns, saveVarDclns, lastVarDcln, null);
+    }
+
+    /**
+     * Creates a context which can be used to check import validation.
+     *
+     * @param newSnippet New snippet. Must be a import dcln.
+     * @return Context with import checking code.
+     */
+    protected ClassLoadContext createImportCheckingContext(ImportDeclarationSnippet newSnippet) {
+        return new ClassLoadContext(this.contextId, List.of(newSnippet.toString()), List.of(),
+                List.of(), List.of(), null, null);
     }
 
     /**
