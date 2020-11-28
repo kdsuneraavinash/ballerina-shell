@@ -21,7 +21,6 @@ package io.ballerina.shell.cli;
 import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
-import io.ballerina.shell.invoker.replay.ReplayInvoker;
 import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
@@ -34,15 +33,12 @@ import java.util.Objects;
  * Configuration that uses command utils to provide options.
  */
 public class ApplicationConfiguration extends Configuration {
-    private static final Path BALLERINA_RUNTIME = Paths.get("home/bre/lib/*");
     private static final Path BALLERINA_HOME_PATH = Paths.get("home");
-    private static final String TEMP_FILE_NAME = "main.bal";
 
     /**
      * Modes to create the evaluator.
      */
     public enum EvaluatorMode {
-        REPLAY,
         CLASSLOAD
     }
 
@@ -59,15 +55,7 @@ public class ApplicationConfiguration extends Configuration {
      * @return Created evaluator.
      */
     private Evaluator createEvaluator(EvaluatorMode mode) {
-        if (mode == EvaluatorMode.REPLAY) {
-            Invoker invoker = new ReplayInvoker(BALLERINA_RUNTIME, BALLERINA_HOME_PATH);
-            Evaluator evaluator = new Evaluator();
-            evaluator.setPreprocessor(new SeparatorPreprocessor());
-            evaluator.setTreeParser(new TrialTreeParser());
-            evaluator.setSnippetFactory(new BasicSnippetFactory());
-            evaluator.setInvoker(invoker);
-            return evaluator;
-        } else if (mode == EvaluatorMode.CLASSLOAD) {
+        if (mode == EvaluatorMode.CLASSLOAD) {
             Invoker invoker = new ClassLoadInvoker(BALLERINA_HOME_PATH);
             Evaluator evaluator = new Evaluator();
             evaluator.setPreprocessor(new SeparatorPreprocessor());

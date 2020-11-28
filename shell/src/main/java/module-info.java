@@ -6,7 +6,6 @@ module io.ballerina.shell {
 
     exports io.ballerina.shell.exceptions;
     exports io.ballerina.shell.invoker;
-    exports io.ballerina.shell.invoker.replay;
     exports io.ballerina.shell.invoker.classload;
     exports io.ballerina.shell.parser;
     exports io.ballerina.shell.preprocessor;
