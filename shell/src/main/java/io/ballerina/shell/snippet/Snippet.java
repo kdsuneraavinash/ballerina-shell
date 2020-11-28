@@ -82,16 +82,6 @@ public abstract class Snippet {
     }
 
     /**
-     * Whether the snippet needs to be executed as well.
-     * Most module level declarations do not need to be executed.
-     *
-     * @return Whether the snippet is executable.
-     */
-    public boolean isExecutable() {
-        return subKind.isExecutable();
-    }
-
-    /**
      * Modifies the tree of the snippet.
      *
      * @param treeModifier Modifier to use.
