@@ -67,7 +67,7 @@ public class TrialTreeParser extends TreeParser {
                 addDiagnostic(Diagnostic.debug(String.format("Unexpected Fail %s because %s",
                         trial.getClass().getSimpleName(), errorMessage)));
             } catch (Error e) {
-                errorMessage = "Something severely went wrong: " + e.getMessage();
+                errorMessage = "Something severely went wrong: " + e.toString();
             }
         }
         addDiagnostic(Diagnostic.error(errorMessage));
