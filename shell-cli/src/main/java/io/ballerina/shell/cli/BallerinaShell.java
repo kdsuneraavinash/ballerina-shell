@@ -71,13 +71,16 @@ public class BallerinaShell {
         // Register default handlers
         this.handlers = Map.of(
                 RESET_COMMAND, v -> this.evaluator.reset(),
-                EXIT_COMMAND, v -> this.continueLoop = false,
                 HELP_COMMAND, v -> outputResource(HELP_FILE),
                 TOGGLE_DEBUG, v -> this.configuration.toggleDebug(),
                 STATE_COMMAND, v -> this.terminal.info(evaluator.toString()),
                 IMPORTS_COMMAND, v -> this.terminal.info(evaluator.availableImports()),
                 VARIABLES_COMMAND, v -> this.terminal.info(evaluator.availableVariables()),
-                MODULE_DCLNS_COMMAND, v -> this.terminal.info(evaluator.availableModuleDeclarations())
+                MODULE_DCLNS_COMMAND, v -> this.terminal.info(evaluator.availableModuleDeclarations()),
+                EXIT_COMMAND, v -> {
+                    this.continueLoop = false;
+                    terminal.info(REPL_EXIT_MESSAGE);
+                }
         );
     }
 
@@ -129,7 +132,6 @@ public class BallerinaShell {
             }
 
         }
-        terminal.info(REPL_EXIT_MESSAGE);
     }
 
     /**

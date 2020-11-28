@@ -59,6 +59,12 @@ public class NoExitVmSecManager extends SecurityManager {
             }
             throw new SecurityException();
         }
+        // If already exited, no need to write error file.
+        if (isExitCodeSet) {
+            if (permission.getName().contains("ballerina-internal.log")) {
+                throw new SecurityException();
+            }
+        }
         if (baseSecurityManager != null) {
             baseSecurityManager.checkPermission(permission);
         }
