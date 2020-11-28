@@ -125,11 +125,11 @@ Following are some inputs and expected filler values for reference.
 
 ##### Things that you should not do
 
-- Define variables of function type or object where the function/object depends on a global variable. (The global must effectively be final)
+- Define variables of function type or object where the function/object depends on a global variable.
 
 #### Module Member Declaration Snippet
 
-Module-level declarations. These are not active or runnable. Service declaration can start a service on a port, etc... All other declarations are just declarations. They do not execute to return a value. Also, any undefined variable in these declarations is ignored. These do not contain semicolons at the end. 
+Module-level declarations. These are not active or runnable. Service declaration can start a service on a port, etc... All other declarations are just declarations. They do not execute to return a value. Documentations and public keyword cannot be used in the module level declarations.
 
 | Sub Kind Name                    | State    | Notes                                                        |
 | -------------------------------- | -------- | ------------------------------------------------------------ |
@@ -175,7 +175,7 @@ These are normal statements that should be evaluated from top to bottom inside a
 
 #### Expression Kind
 
-These are expressions that are executable but returns a value which should be immediately displayed.
+These are expressions that are executable but returns a value which should be immediately displayed. If the statement contained multiple expressions, only the final expression value will be given.
 
 ## Annex
 
@@ -189,7 +189,6 @@ These are expressions that are executable but returns a value which should be im
 import ballerina/io as io;
 import ballerina/java as java;
 
-// Other imports
 <#list imports as import>
 ${import}
 </#list>
@@ -197,12 +196,16 @@ ${import}
 function recall(handle context_id, handle name) returns any|error = @java:Method {
     'class: "${memoryRef}"
 } external;
-
 function memorize(handle context_id, handle name, any|error value) = @java:Method {
     'class: "${memoryRef}"
 } external;
+function recall_var(string name) returns any|error {
+    return trap recall(context_id, java:fromString(name));
+}
+function memorize_var(string name, any|error value) {
+    memorize(context_id, java:fromString(name), value);
+}
 
-// Module level declarations
 <#list moduleDclns as dcln>
 ${dcln}
 </#list>
@@ -210,42 +213,32 @@ ${dcln}
 handle context_id = java:fromString("${contextId}");
 ${lastVarDcln}
 
-// Variable initialization
 <#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall(context_id, java:fromString("${varNameType.first}"));
+${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("${varNameType.first}");
 </#list>
 
-// Saving variables
 function save(){
-<#list saveVarDclns as varNameType>
-    memorize(context_id, java:fromString("${varNameType.first}"), ${varNameType.first});
-</#list>
-}
-
-function print_err(error err){
-    io:println("Exception occurred: ", err.message());
+    <#list saveVarDclns as varNameType>
+    memorize_var("${varNameType.first}", ${varNameType.first});
+    </#list>
 }
 
 function run() returns @untainted any|error {
-    any|error expr = ();
     <#if lastExpr.second>
     ${lastExpr.first}
+    return ();
     <#else>
-    expr = trap (${lastExpr.first});
+    return trap (${lastExpr.first});
     </#if>
-    return expr;
 }
 
 public function main() returns error? {
-    any|error expr = run();
-    if (expr is ()){
-    } else if (expr is error){
-        print_err(expr);
-        return expr;
-    } else {
-        io:println(expr);
+    any|error ${exprVarName} = trap run();
+     if (${exprVarName} is error){
+        io:println("Exception occurred: ", ${exprVarName}.message());
+        return ${exprVarName};
     }
-
+    memorize_var("${exprVarName}", ${exprVarName});
     return trap save();
 }
 ```

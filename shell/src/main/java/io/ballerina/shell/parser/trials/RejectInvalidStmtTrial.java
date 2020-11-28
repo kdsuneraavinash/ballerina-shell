@@ -27,16 +27,12 @@ import io.ballerina.compiler.syntax.tree.Node;
  */
 public class RejectInvalidStmtTrial extends TreeParserTrial {
     private static final String DOCUMENTATION_START = "#";
-    private static final String ANNOTATION_START = "@";
     private static final String PUBLIC_START = "public";
 
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
         if (source.trim().startsWith(DOCUMENTATION_START)) {
             throw new ParserRejectedException("Documentation is not allowed in the REPL.");
-        } else if (source.trim().startsWith(ANNOTATION_START)) {
-            // TODO: Should annotations be allowed?
-            throw new ParserRejectedException("Annotations are not allowed in the REPL.");
         } else if (source.trim().startsWith(PUBLIC_START)) {
             throw new ParserRejectedException("Invalid qualifier 'public'. Public is not allowed here.");
         }
