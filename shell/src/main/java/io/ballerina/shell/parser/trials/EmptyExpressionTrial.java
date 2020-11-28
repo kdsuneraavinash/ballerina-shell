@@ -23,6 +23,8 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.tools.diagnostics.Diagnostic;
+import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -40,7 +42,14 @@ public class EmptyExpressionTrial extends TreeParserTrial {
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
         TextDocument document = TextDocuments.from(source);
-        SyntaxTree tree = getSyntaxTree(document);
+        // This will process without timing out so we can get a better error message
+        // otherwise error will be just 'timed out'
+        SyntaxTree tree = SyntaxTree.from(document);
+        for (Diagnostic diagnostic : tree.diagnostics()) {
+            if (diagnostic.diagnosticInfo().severity() == DiagnosticSeverity.ERROR) {
+                throw new ParserTrialFailedException(tree.textDocument(), diagnostic);
+            }
+        }
 
         ModulePartNode node = tree.rootNode();
         assertIf(node.members().isEmpty(), "expected no members");
