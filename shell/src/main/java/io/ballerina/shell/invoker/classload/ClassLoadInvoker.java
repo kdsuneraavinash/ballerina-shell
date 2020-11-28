@@ -71,8 +71,8 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String EXPR_VAR_NAME = "expr";
     // Variables that are set from the start. These should not be cached.
     protected static final Map<String, String> INIT_IMPORTS = Map.of(
-            "'io", "import ballerina/io as io;",
-            "'java", "import ballerina/java as java;");
+            "'io", "import ballerina/io;",
+            "'java", "import ballerina/java;");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id", "'$annotation_data");
     private static final String QUOTE = "'";
 
@@ -200,15 +200,11 @@ public class ClassLoadInvoker extends Invoker {
     @Override
     public String availableImports() {
         // Imports with prefixes
-        List<String> importStrings = new ArrayList<>();
         Map<String, String> importMapped = new HashMap<>(INIT_IMPORTS);
         for (Map.Entry<String, Snippet> entry : imports.entrySet()) {
             importMapped.put(entry.getKey(), entry.getValue().toString());
         }
-        for (Map.Entry<String, String> entry : importMapped.entrySet()) {
-            String importString = String.format("%s (prefix: %s)", entry.getValue(), entry.getKey());
-            importStrings.add(importString);
-        }
+        List<String> importStrings = new ArrayList<>(importMapped.values());
         return String.join("\n", importStrings);
     }
 
