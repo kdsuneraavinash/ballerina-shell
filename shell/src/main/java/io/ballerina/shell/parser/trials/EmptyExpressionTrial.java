@@ -35,6 +35,7 @@ import io.ballerina.tools.text.TextDocuments;
  * Empty entries are converted to ().
  */
 public class EmptyExpressionTrial extends TreeParserTrial {
+    private static final long LONG_TIME_OUT_DURATION_MS = 1000;
     private static final Node EMPTY_NODE = NodeFactory.createNilLiteralNode(
             NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
             NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN));
@@ -55,5 +56,10 @@ public class EmptyExpressionTrial extends TreeParserTrial {
         assertIf(node.members().isEmpty(), "expected no members");
         assertIf(node.imports().isEmpty(), "expected no imports");
         return EMPTY_NODE;
+    }
+
+    @Override
+    public long getTimeOutDurationMs() {
+        return LONG_TIME_OUT_DURATION_MS;
     }
 }

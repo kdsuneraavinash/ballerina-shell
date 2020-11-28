@@ -61,7 +61,7 @@ public abstract class TreeParserTrial {
 
         SyntaxTree tree;
         try {
-            tree = future.get(TIME_OUT_DURATION_MS, TimeUnit.MILLISECONDS);
+            tree = future.get(getTimeOutDurationMs(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             throw new ParserTrialFailedException("Tree parsing was interrupted.");
         } catch (ExecutionException e) {
@@ -90,5 +90,9 @@ public abstract class TreeParserTrial {
         if (!condition) {
             throw new ParserTrialFailedException(message);
         }
+    }
+
+    public long getTimeOutDurationMs() {
+        return TIME_OUT_DURATION_MS;
     }
 }
