@@ -117,15 +117,7 @@ public class BasicSnippetFactory extends SnippetFactory {
     public ImportDeclarationSnippet createImportSnippet(Node node) {
         if (node instanceof ImportDeclarationNode) {
             ImportDeclarationNode importDeclarationNode = (ImportDeclarationNode) node;
-            if (importDeclarationNode.prefix().isEmpty()) {
-                // TODO: Even if no prefix, detect the prefix
-                addDiagnostic(Diagnostic.error("" +
-                        "Imports without prefixes are not allowed in the REPL. " +
-                        "Use your import with a prefix: 'import abc/x as x;' "));
-                return null;
-            }
-            String prefix = importDeclarationNode.prefix().get().prefix().text();
-            return new ImportDeclarationSnippet(prefix, importDeclarationNode);
+            return new ImportDeclarationSnippet(importDeclarationNode);
         }
         return null;
     }

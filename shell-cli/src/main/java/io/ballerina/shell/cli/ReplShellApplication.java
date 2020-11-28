@@ -64,7 +64,7 @@ public class ReplShellApplication implements Callable<Integer> {
                 .completer(completer)
                 .highlighter(highlighter)
                 .parser(parser)
-                .variable(LineReader.SECONDARY_PROMPT_PATTERN, "%M%P > ")
+                .variable(LineReader.SECONDARY_PROMPT_PATTERN, "%P > ")
                 .variable(LineReader.INDENTATION, 2)
                 .option(LineReader.Option.INSERT_BRACKET, true)
                 .build();

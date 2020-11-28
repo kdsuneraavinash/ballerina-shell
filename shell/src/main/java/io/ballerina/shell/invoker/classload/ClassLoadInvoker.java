@@ -34,6 +34,7 @@ import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
+import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
 import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 
 import java.io.ByteArrayOutputStream;
@@ -70,9 +71,10 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String EXPR_VAR_NAME = "expr";
     // Variables that are set from the start. These should not be cached.
     protected static final Map<String, String> INIT_IMPORTS = Map.of(
-            "io", "import ballerina/io as io;",
-            "java", "import ballerina/java as java;");
-    protected static final Set<String> INIT_VAR_NAMES = Set.of("context_id", "$annotation_data");
+            "'io", "import ballerina/io as io;",
+            "'java", "import ballerina/java as java;");
+    protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id", "'$annotation_data");
+    private static final String QUOTE = "'";
 
     protected final Map<String, Snippet> imports;
     protected final List<Snippet> moduleDclns;
@@ -134,8 +136,9 @@ public class ClassLoadInvoker extends Invoker {
 
             for (BLangSimpleVariable variable : compilation.defaultModuleBLangPackage().getGlobalVariables()) {
                 // If the variable is a init var or a known global var, add it.
-                if (!INIT_VAR_NAMES.contains(variable.name.value) && !globalVars.containsKey(variable.name.value)) {
-                    newVariables.put(variable.name.value, variable.type.toString());
+                String variableName = quotedIdentifier(variable.name.value);
+                if (!INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)) {
+                    newVariables.put(variableName, variable.type.toString());
                 }
             }
         } else if (newSnippet.isImport()) {
@@ -144,30 +147,33 @@ public class ClassLoadInvoker extends Invoker {
             // It should not give module not found error.
             // Only compilation is done to verify package resolution.
             ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
-            if (imports.containsKey(importDcln.getPrefix())) {
-                addDiagnostic(Diagnostic.error("A module was previously imported with the same prefix."));
-                return new Pair<>(false, Optional.empty());
-            } else {
-                if (INIT_IMPORTS.containsKey(importDcln.getPrefix())) {
-                    addDiagnostic(Diagnostic.error("Import is already available by default."));
-                    return new Pair<>(false, Optional.empty());
-                } else {
-                    ClassLoadContext importCheckingContext = createImportCheckingContext(importDcln);
-                    SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
-                    PackageCompilation packageCompilation = project.currentPackage().getCompilation();
-                    for (io.ballerina.tools.diagnostics.Diagnostic diagnostic :
-                            packageCompilation.diagnosticResult().diagnostics()) {
-                        if (diagnostic.diagnosticInfo().code()
-                                .equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
-                            addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
-                            return new Pair<>(false, Optional.empty());
-                        }
-                    }
 
-                    imports.put(importDcln.getPrefix(), importDcln);
-                    return new Pair<>(true, Optional.empty());
+            ClassLoadContext importCheckingContext = createImportCheckingContext(importDcln);
+            SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
+            PackageCompilation compilation = project.currentPackage().getCompilation();
+            for (io.ballerina.tools.diagnostics.Diagnostic diagnostic :
+                    compilation.diagnosticResult().diagnostics()) {
+                if (diagnostic.diagnosticInfo().code()
+                        .equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
+                    addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
+                    return new Pair<>(false, Optional.empty());
                 }
             }
+            if (compilation.defaultModuleBLangPackage().imports.isEmpty()) {
+                addDiagnostic(Diagnostic.error("Not a valid import statement."));
+                return new Pair<>(false, Optional.empty());
+            }
+            BLangImportPackage importPackage = compilation.defaultModuleBLangPackage().imports.get(0);
+            String importPrefix = quotedIdentifier(importPackage.alias.value);
+            if (INIT_IMPORTS.containsKey(importPrefix)) {
+                addDiagnostic(Diagnostic.error("Import is already available by default."));
+                return new Pair<>(false, Optional.empty());
+            } else if (imports.containsKey(importPrefix)) {
+                addDiagnostic(Diagnostic.error("A module was previously imported with the same prefix."));
+                return new Pair<>(false, Optional.empty());
+            }
+            imports.put(importPrefix, importDcln);
+            return new Pair<>(true, Optional.empty());
         }
 
         // Compile and execute the real program.
@@ -273,6 +279,21 @@ public class ClassLoadInvoker extends Invoker {
     protected ClassLoadContext createImportCheckingContext(ImportDeclarationSnippet newSnippet) {
         return new ClassLoadContext(this.contextId, List.of(newSnippet.toString()), List.of(),
                 List.of(), List.of(), null, null);
+    }
+
+    /**
+     * Creates an quoted identifier to use for variable names.
+     * This will allow quoted identifiers as well as unquoted ones to be
+     * used in the context.
+     *
+     * @param rawIdentifier Identifier without quote.
+     * @return Quoted identifier.
+     */
+    protected String quotedIdentifier(String rawIdentifier) {
+        if (rawIdentifier.startsWith(QUOTE)) {
+            return rawIdentifier;
+        }
+        return QUOTE + rawIdentifier;
     }
 
     /**
@@ -384,7 +405,8 @@ public class ClassLoadInvoker extends Invoker {
      */
     protected List<String> getUsedImportStrings(Snippet snippet) {
         List<String> importStrings = new ArrayList<>();
-        snippet.usedImports().stream().map(imports::get).filter(Objects::nonNull)
+        snippet.usedImports().stream().map(this::quotedIdentifier)
+                .map(imports::get).filter(Objects::nonNull)
                 .map(Snippet::toString).forEach(importStrings::add);
         return importStrings;
     }

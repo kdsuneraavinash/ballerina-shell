@@ -26,14 +26,7 @@ import io.ballerina.shell.snippet.SnippetSubKind;
  * Snippet that represent a import statement.
  */
 public class ImportDeclarationSnippet extends Snippet {
-    private final String prefix;
-
-    public ImportDeclarationSnippet(String prefix, ImportDeclarationNode rootNode) {
+    public ImportDeclarationSnippet(ImportDeclarationNode rootNode) {
         super(SnippetSubKind.IMPORT_DECLARATION, rootNode);
-        this.prefix = prefix;
-    }
-
-    public String getPrefix() {
-        return prefix;
     }
 }

@@ -84,7 +84,7 @@ Snippets would be of mainly 5 categories. Erroneous snippets are rejected as soo
 
 #### Import Snippet
 
-Snippets that represent an import statement. **All imports must be done with prefixes.** The prefix is used to detect import usage and include only the used imports.
+Snippets that represent an import statement.
 
 #### Variable Declaration Snippet
 
