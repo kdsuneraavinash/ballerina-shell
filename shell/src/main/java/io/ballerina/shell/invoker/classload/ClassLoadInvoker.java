@@ -142,9 +142,8 @@ public class ClassLoadInvoker extends Invoker {
                 }
             }
         } else if (newSnippet.isImport()) {
-            // This is an import. Imports MUST be done via a prefix.
-            // If the import prefix is not previously used a demo import is done.
-            // It should not give module not found error.
+            // This is an import. A test import is done to check for errors.
+            // It should not give 'module not found' error.
             // Only compilation is done to verify package resolution.
             ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
 

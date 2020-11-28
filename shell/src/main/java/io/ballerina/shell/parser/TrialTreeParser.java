@@ -66,6 +66,8 @@ public class TrialTreeParser extends TreeParser {
                 errorMessage = "Invalid statement. Could not parse the expression: " + e.getMessage();
                 addDiagnostic(Diagnostic.debug(String.format("Unexpected Fail %s because %s",
                         trial.getClass().getSimpleName(), errorMessage)));
+            } catch (Error e) {
+                errorMessage = "Something severely went wrong: " + e.getMessage();
             }
         }
         addDiagnostic(Diagnostic.error(errorMessage));
