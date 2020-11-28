@@ -139,6 +139,10 @@ public class ClassLoadInvoker extends Invoker {
                 }
             }
         } else if (newSnippet.isImport()) {
+            // This is an import. Imports MUST be done via a prefix.
+            // If the import prefix is not previously used a demo import is done.
+            // It should not give module not found error.
+            // Only compilation is done to verify package resolution.
             ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
             if (imports.containsKey(importDcln.getPrefix())) {
                 addDiagnostic(Diagnostic.error("A module was previously imported with the same prefix."));

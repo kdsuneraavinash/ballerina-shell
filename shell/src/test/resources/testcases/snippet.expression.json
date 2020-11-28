@@ -142,7 +142,7 @@
   {
     "name": "Service Constructor Expression",
     "input": "service {};",
-    "accepted": true
+    "accepted": false
   },
   {
     "name": "Byte Array Expression",

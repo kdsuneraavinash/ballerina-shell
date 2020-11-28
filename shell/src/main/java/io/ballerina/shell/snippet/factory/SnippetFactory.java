@@ -119,5 +119,5 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
      */
-    public abstract Snippet createExpressionSnippet(Node node);
+    public abstract Snippet createExpressionSnippet(Node node) throws SnippetException;
 }
