@@ -36,7 +36,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 public abstract class AbstractEvaluatorTest {
@@ -45,7 +44,7 @@ public abstract class AbstractEvaluatorTest {
     private static class TestCaseLine {
         String code;
         String stdout = "";
-        ArrayList<String> exprs = new ArrayList<>();
+        String expr;
         int exitCode = 0;
     }
 
@@ -92,12 +91,9 @@ public abstract class AbstractEvaluatorTest {
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
         for (TestCaseLine testCaseLine : testCase) {
             invoker.expectingExitCode = testCaseLine.exitCode;
-            List<String> output = new ArrayList<>();
-            evaluator.evaluate(testCaseLine.code)
-                    .stream().filter(Objects::nonNull)
-                    .map(String::valueOf).forEach(output::add);
+            String expr = evaluator.evaluate(testCaseLine.code);
             Assert.assertEquals(invoker.output, testCaseLine.stdout);
-            Assert.assertEquals(output, testCaseLine.exprs);
+            Assert.assertEquals(expr, testCaseLine.expr);
         }
     }
 

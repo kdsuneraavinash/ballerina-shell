@@ -34,11 +34,6 @@ public class Pair<P, Q> {
         this.second = second;
     }
 
-    public Pair(P first) {
-        this.first = first;
-        this.second = null;
-    }
-
     public P getFirst() {
         return first;
     }

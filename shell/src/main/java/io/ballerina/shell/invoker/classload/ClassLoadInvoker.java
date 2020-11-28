@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -114,7 +115,7 @@ public class ClassLoadInvoker extends Invoker {
     }
 
     @Override
-    public Pair<Boolean, Object> execute(Snippet newSnippet) throws InvokerException {
+    public Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException {
         Map<String, String> newVariables = new HashMap<>();
 
         newSnippet.modify(new GlobalLoadModifier(globalVars));
@@ -139,15 +140,15 @@ public class ClassLoadInvoker extends Invoker {
             ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
             if (imports.containsKey(importDcln.getPrefix())) {
                 addDiagnostic(Diagnostic.error("Module was previously imported with the same prefix."));
-                return new Pair<>(false);
+                return new Pair<>(false, Optional.empty());
             } else {
                 // TODO: Validate if import can really be done.
                 if (INIT_IMPORTS.containsKey(importDcln.getPrefix())) {
                     addDiagnostic(Diagnostic.error("Import is already available by default."));
-                    return new Pair<>(false);
+                    return new Pair<>(false, Optional.empty());
                 } else {
                     imports.put(importDcln.getPrefix(), importDcln);
-                    return new Pair<>(true);
+                    return new Pair<>(true, Optional.empty());
                 }
             }
         }
@@ -171,7 +172,7 @@ public class ClassLoadInvoker extends Invoker {
             addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
         }
         Object result = ClassLoadMemory.recall(contextId, EXPR_VAR_NAME);
-        return new Pair<>(isSuccess, result);
+        return new Pair<>(isSuccess, Optional.ofNullable(result));
     }
 
     @Override

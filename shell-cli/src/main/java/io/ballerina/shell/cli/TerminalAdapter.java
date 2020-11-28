@@ -31,7 +31,6 @@ public abstract class TerminalAdapter {
     protected static final int RED = 1;
     protected static final int GREEN = 2;
     protected static final int YELLOW = 3;
-    @SuppressWarnings("unused")
     protected static final int BLUE = 4;
     @SuppressWarnings("unused")
     protected static final int MAGENTA = 5;
@@ -66,7 +65,7 @@ public abstract class TerminalAdapter {
     public abstract String readLine(String prefix, String postfix);
 
     public void result(String text) {
-        this.println(this.color(text, GREEN | BRIGHT));
+        this.println(this.color(text, BLUE));
     }
 
     public void error(String text) {

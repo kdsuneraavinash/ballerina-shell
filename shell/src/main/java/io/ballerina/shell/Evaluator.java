@@ -28,10 +28,9 @@ import io.ballerina.shell.snippet.factory.SnippetFactory;
 import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.timeit.TimeIt;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Main shell entry point.
@@ -68,28 +67,30 @@ public class Evaluator extends DiagnosticReporter {
      * then this will stop execution without evaluating later lines.
      *
      * @param source Input line from user.
-     * @return List of outputs from the evaluator.
+     * @return String output from the evaluator. This will be the last output.
      */
-    public List<Object> evaluate(String source) throws BallerinaShellException {
+    public String evaluate(String source) throws BallerinaShellException {
         Objects.requireNonNull(preprocessor, "Preprocessor not set");
         Objects.requireNonNull(treeParser, "Tree Parser not set");
         Objects.requireNonNull(snippetFactory, "Snippet Factory not set");
         Objects.requireNonNull(invoker, "Invoker not set");
 
-        List<Object> results = new ArrayList<>();
+        String result = null;
         try {
             Collection<String> statements = TimeIt.timeIt(preprocessor, () -> preprocessor.process(source));
             for (String statement : statements) {
                 Node rootNode = TimeIt.timeIt(treeParser, () -> treeParser.parse(statement));
                 Snippet snippet = TimeIt.timeIt(snippetFactory, () -> snippetFactory.createSnippet(rootNode));
-                Pair<Boolean, Object> result = TimeIt.timeIt(invoker, () -> invoker.execute(snippet));
-                if (result.getFirst()) {
-                    results.add(result.getSecond());
+                Pair<Boolean, Optional<Object>> invokerOut = TimeIt.timeIt(invoker, () -> invoker.execute(snippet));
+                if (invokerOut.getFirst()) {
+                    if (invokerOut.getSecond().isPresent()) {
+                        result = String.valueOf(invokerOut.getSecond().get());
+                    }
                 } else {
-                    return results;
+                    return result;
                 }
             }
-            return results;
+            return result;
         } finally {
             addAllDiagnostics(preprocessor.diagnostics());
             addAllDiagnostics(treeParser.diagnostics());

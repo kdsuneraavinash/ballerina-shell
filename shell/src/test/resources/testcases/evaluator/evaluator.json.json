@@ -4,36 +4,28 @@
   },
   {
     "code": "j1",
-    "exprs": [
-      "Apple"
-    ]
+    "expr": "Apple"
   },
   {
     "code": "json j2 = 5.36;"
   },
   {
     "code": "j2",
-    "exprs": [
-      "5.36"
-    ]
+    "expr": "5.36"
   },
   {
     "code": "json j3 = true;"
   },
   {
     "code": "j3",
-    "exprs": [
-      "true"
-    ]
+    "expr": "true"
   },
   {
     "code": "json j4 = false;"
   },
   {
     "code": "j4",
-    "exprs": [
-      "false"
-    ]
+    "expr": "false"
   },
   {
     "code": "json j5 = null;"
@@ -46,33 +38,25 @@
   },
   {
     "code": "j6",
-    "exprs": [
-      "{\"name\":\"apple\",\"color\":\"red\",\"price\":5.36}"
-    ]
+    "expr": "{\"name\":\"apple\",\"color\":\"red\",\"price\":5.36}"
   },
   {
     "code": "j6.toJsonString()",
-    "exprs": [
-      "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}"
-    ]
+    "expr": "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}"
   },
   {
     "code": "json j7 = [1, false, null, \"foo\", {first: \"John\", last: \"Pala\"}];"
   },
   {
     "code": "j7.toJsonString()",
-    "exprs": [
-      "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]"
-    ]
+    "expr": "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]"
   },
   {
     "code": "json j8 = checkpanic j5.mergeJson(j7);"
   },
   {
     "code": "j8.toJsonString()",
-    "exprs": [
-      "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]"
-    ]
+    "expr": "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]"
   },
   {
     "code": "json j9 = {name: \"Anne\", age: null, marks: {math: 90, language: 95}};"
@@ -85,15 +69,11 @@
   },
   {
     "code": "j11.toJsonString()",
-    "exprs": [
-      "{\"name\":\"Anne\", \"age\":20, \"marks\":{\"math\":90, \"language\":95, \"physics\":85}}"
-    ]
+    "expr": "{\"name\":\"Anne\", \"age\":20, \"marks\":{\"math\":90, \"language\":95, \"physics\":85}}"
   },
   {
     "code": "j9 === j11",
-    "exprs": [
-      "true"
-    ]
+    "expr": "true"
   },
   {
     "code": "json|error j12 = j2.mergeJson(j3);"
@@ -111,14 +91,10 @@
   },
   {
     "code": "j13.toJsonString()",
-    "exprs": [
-      "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}"
-    ]
+    "expr": "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}"
   },
   {
     "code": "j13 is map<json>",
-    "exprs": [
-      "true"
-    ]
+    "expr": "true"
   }
 ]

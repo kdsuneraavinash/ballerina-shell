@@ -1,32 +1,22 @@
 [
   {
     "code": "12",
-    "exprs": [
-      "12"
-    ]
+    "expr": "12"
   },
   {
     "code": "\"Hello\"",
-    "exprs": [
-      "\"Hello\""
-    ]
+    "expr": "\"Hello\""
   },
   {
     "code": "12.3",
-    "exprs": [
-      "12.3"
-    ]
+    "expr": "12.3"
   },
   {
     "code": "string `hello world`",
-    "exprs": [
-      "hello world"
-    ]
+    "expr": "hello world"
   },
   {
     "code": "false",
-    "exprs": [
-      "false"
-    ]
+    "expr": "false"
   }
 ]

@@ -30,7 +30,6 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
@@ -111,11 +110,9 @@ public class BallerinaShell {
                     if (this.handlers.containsKey(source)) {
                         this.handlers.get(source).accept(null);
                     } else {
-                        List<Object> results = evaluator.evaluate(source);
-                        for (Object result : results) {
-                            if (result != null) {
-                                terminal.result(String.valueOf(result));
-                            }
+                        String result = evaluator.evaluate(source);
+                        if (result != null) {
+                            terminal.result(result);
                         }
                     }
                 }

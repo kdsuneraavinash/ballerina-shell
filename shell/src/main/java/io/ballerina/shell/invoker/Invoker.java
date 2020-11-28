@@ -79,7 +79,7 @@ public abstract class Invoker extends DiagnosticReporter {
      * @param newSnippet New snippet to execute.
      * @return Execution output result.
      */
-    public abstract Pair<Boolean, Object> execute(Snippet newSnippet) throws InvokerException;
+    public abstract Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException;
 
     /**
      * Returns available imports in the module.
