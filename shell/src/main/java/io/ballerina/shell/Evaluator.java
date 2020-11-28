@@ -25,9 +25,12 @@ import io.ballerina.shell.parser.TreeParser;
 import io.ballerina.shell.preprocessor.Preprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.factory.SnippetFactory;
+import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.timeit.TimeIt;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -65,23 +68,28 @@ public class Evaluator extends DiagnosticReporter {
      * then this will stop execution without evaluating later lines.
      *
      * @param source Input line from user.
+     * @return List of outputs from the evaluator.
      */
-    public void evaluate(String source) throws BallerinaShellException {
+    public List<Object> evaluate(String source) throws BallerinaShellException {
         Objects.requireNonNull(preprocessor, "Preprocessor not set");
         Objects.requireNonNull(treeParser, "Tree Parser not set");
         Objects.requireNonNull(snippetFactory, "Snippet Factory not set");
         Objects.requireNonNull(invoker, "Invoker not set");
 
+        List<Object> results = new ArrayList<>();
         try {
             Collection<String> statements = TimeIt.timeIt(preprocessor, () -> preprocessor.process(source));
             for (String statement : statements) {
                 Node rootNode = TimeIt.timeIt(treeParser, () -> treeParser.parse(statement));
                 Snippet snippet = TimeIt.timeIt(snippetFactory, () -> snippetFactory.createSnippet(rootNode));
-                boolean isSuccess = TimeIt.timeIt(invoker, () -> invoker.execute(snippet));
-                if (!isSuccess) {
-                    return;
+                Pair<Boolean, Object> result = TimeIt.timeIt(invoker, () -> invoker.execute(snippet));
+                if (result.getFirst()) {
+                    results.add(result.getSecond());
+                } else {
+                    return results;
                 }
             }
+            return results;
         } finally {
             addAllDiagnostics(preprocessor.diagnostics());
             addAllDiagnostics(treeParser.diagnostics());

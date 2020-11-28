@@ -4,17 +4,23 @@
   },
   {
     "code": "i",
-    "output": "4\n"
+    "exprs": [
+      "4"
+    ]
   },
   {
     "code": "i = 100"
   },
   {
     "code": "i",
-    "output": "100\n"
+    "exprs": [
+      "100"
+    ]
   },
   {
     "code": "i+1",
-    "output": "101\n"
+    "exprs": [
+      "101"
+    ]
   }
 ]

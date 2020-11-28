@@ -1,22 +1,32 @@
 [
   {
     "code": "xml x1 = xml `<book>The Lost World</book>`; x1",
-    "output": "<book>The Lost World</book>\n"
+    "exprs": [
+      "<book>The Lost World</book>"
+    ]
   },
   {
     "code": "xml x2 = xml `Hello, world!`; x2",
-    "output": "Hello, world!\n"
+    "exprs": [
+      "Hello, world!"
+    ]
   },
   {
     "code": "xml x3 = xml `<!--I am a comment-->`; x3",
-    "output": "<!--I am a comment-->\n"
+    "exprs": [
+      "<!--I am a comment-->"
+    ]
   },
   {
     "code": "xml x4 = xml `<?target data?>`; x4",
-    "output": "<?target data?>\n"
+    "exprs": [
+      "<?target data?>"
+    ]
   },
   {
     "code": "xml x5 = x1 + x2 + x3 + x4; x5",
-    "output": "<book>The Lost World</book>Hello, world!<!--I am a comment--><?target data?>\n"
+    "exprs": [
+      "<book>The Lost World</book>Hello, world!<!--I am a comment--><?target data?>"
+    ]
   }
 ]

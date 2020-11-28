@@ -4,28 +4,36 @@
   },
   {
     "code": "j1",
-    "output": "Apple\n"
+    "exprs": [
+      "Apple"
+    ]
   },
   {
     "code": "json j2 = 5.36;"
   },
   {
     "code": "j2",
-    "output": "5.36\n"
+    "exprs": [
+      "5.36"
+    ]
   },
   {
-    "code": "json j3 = true;\n"
+    "code": "json j3 = true;"
   },
   {
     "code": "j3",
-    "output": "true\n"
+    "exprs": [
+      "true"
+    ]
   },
   {
     "code": "json j4 = false;"
   },
   {
     "code": "j4",
-    "output": "false\n"
+    "exprs": [
+      "false"
+    ]
   },
   {
     "code": "json j5 = null;"
@@ -38,25 +46,33 @@
   },
   {
     "code": "j6",
-    "output": "{\"name\":\"apple\",\"color\":\"red\",\"price\":5.36}\n"
+    "exprs": [
+      "{\"name\":\"apple\",\"color\":\"red\",\"price\":5.36}"
+    ]
   },
   {
     "code": "j6.toJsonString()",
-    "output": "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}\n"
+    "exprs": [
+      "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}"
+    ]
   },
   {
-    "code": "json j7 = [1, false, null, \"foo\", {first: \"John\", last: \"Pala\"}];\n"
+    "code": "json j7 = [1, false, null, \"foo\", {first: \"John\", last: \"Pala\"}];"
   },
   {
     "code": "j7.toJsonString()",
-    "output": "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]\n"
+    "exprs": [
+      "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]"
+    ]
   },
   {
     "code": "json j8 = checkpanic j5.mergeJson(j7);"
   },
   {
     "code": "j8.toJsonString()",
-    "output": "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]\n"
+    "exprs": [
+      "[1, false, null, \"foo\", {\"first\":\"John\", \"last\":\"Pala\"}]"
+    ]
   },
   {
     "code": "json j9 = {name: \"Anne\", age: null, marks: {math: 90, language: 95}};"
@@ -69,18 +85,22 @@
   },
   {
     "code": "j11.toJsonString()",
-    "output": "{\"name\":\"Anne\", \"age\":20, \"marks\":{\"math\":90, \"language\":95, \"physics\":85}}\n"
+    "exprs": [
+      "{\"name\":\"Anne\", \"age\":20, \"marks\":{\"math\":90, \"language\":95, \"physics\":85}}"
+    ]
   },
   {
     "code": "j9 === j11",
-    "output": "true\n"
+    "exprs": [
+      "true"
+    ]
   },
   {
     "code": "json|error j12 = j2.mergeJson(j3);"
   },
   {
     "code": "j12",
-    "output": "Exception occurred: {ballerina/lang.value}MergeJsonError\n",
+    "stdout": "Exception occurred: {ballerina/lang.value}MergeJsonError\n",
     "exitCode": 1
   },
   {
@@ -91,10 +111,14 @@
   },
   {
     "code": "j13.toJsonString()",
-    "output": "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}\n"
+    "exprs": [
+      "{\"name\":\"apple\", \"color\":\"red\", \"price\":5.36}"
+    ]
   },
   {
     "code": "j13 is map<json>",
-    "output": "true\n"
+    "exprs": [
+      "true"
+    ]
   }
 ]

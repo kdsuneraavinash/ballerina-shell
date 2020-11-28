@@ -1,22 +1,32 @@
 [
   {
     "code": "12",
-    "output": "12\n"
+    "exprs": [
+      "12"
+    ]
   },
   {
     "code": "\"Hello\"",
-    "output": "\"Hello\"\n"
+    "exprs": [
+      "\"Hello\""
+    ]
   },
   {
     "code": "12.3",
-    "output": "12.3\n"
+    "exprs": [
+      "12.3"
+    ]
   },
   {
     "code": "string `hello world`",
-    "output": "hello world\n"
+    "exprs": [
+      "hello world"
+    ]
   },
   {
     "code": "false",
-    "output": "false\n"
+    "exprs": [
+      "false"
+    ]
   }
 ]

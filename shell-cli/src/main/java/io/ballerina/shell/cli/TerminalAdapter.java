@@ -65,6 +65,10 @@ public abstract class TerminalAdapter {
      */
     public abstract String readLine(String prefix, String postfix);
 
+    public void result(String text) {
+        this.println(this.color(text, GREEN | BRIGHT));
+    }
+
     public void error(String text) {
         this.println(this.color(indented(text), RED | BRIGHT));
     }

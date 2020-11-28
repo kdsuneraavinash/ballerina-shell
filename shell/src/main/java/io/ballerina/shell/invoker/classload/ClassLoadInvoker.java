@@ -64,6 +64,7 @@ public class ClassLoadInvoker extends Invoker {
     // Main class and method names to invoke
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
+    protected static final String EXPR_VAR_NAME = "expr";
     // Variables that are set from the start. These should not be cached.
     protected static final Map<String, String> INIT_IMPORTS = Map.of(
             "io", "import ballerina/io as io;",
@@ -113,7 +114,7 @@ public class ClassLoadInvoker extends Invoker {
     }
 
     @Override
-    public boolean execute(Snippet newSnippet) throws InvokerException {
+    public Pair<Boolean, Object> execute(Snippet newSnippet) throws InvokerException {
         Map<String, String> newVariables = new HashMap<>();
 
         newSnippet.modify(new GlobalLoadModifier(globalVars));
@@ -138,15 +139,15 @@ public class ClassLoadInvoker extends Invoker {
             ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
             if (imports.containsKey(importDcln.getPrefix())) {
                 addDiagnostic(Diagnostic.error("Module was previously imported with the same prefix."));
-                return false;
+                return new Pair<>(false);
             } else {
                 // TODO: Validate if import can really be done.
                 if (INIT_IMPORTS.containsKey(importDcln.getPrefix())) {
                     addDiagnostic(Diagnostic.error("Import is already available by default."));
-                    return false;
+                    return new Pair<>(false);
                 } else {
                     imports.put(importDcln.getPrefix(), importDcln);
-                    return true;
+                    return new Pair<>(true);
                 }
             }
         }
@@ -169,7 +170,8 @@ public class ClassLoadInvoker extends Invoker {
         } else {
             addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
         }
-        return isSuccess;
+        Object result = ClassLoadMemory.recall(contextId, EXPR_VAR_NAME);
+        return new Pair<>(isSuccess, result);
     }
 
     @Override

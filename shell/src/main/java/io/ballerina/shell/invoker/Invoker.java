@@ -33,6 +33,7 @@ import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticReporter;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.utils.Pair;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
 import java.io.File;
@@ -76,9 +77,9 @@ public abstract class Invoker extends DiagnosticReporter {
      * Old snippets should be managed as necessary by the implementation.
      *
      * @param newSnippet New snippet to execute.
-     * @return Execution output lines.
+     * @return Execution output result.
      */
-    public abstract boolean execute(Snippet newSnippet) throws InvokerException;
+    public abstract Pair<Boolean, Object> execute(Snippet newSnippet) throws InvokerException;
 
     /**
      * Returns available imports in the module.

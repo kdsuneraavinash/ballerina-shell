@@ -122,6 +122,11 @@ public class ClassLoadContext {
     }
 
     @TemplateAccessible
+    public String getExprVarName() {
+        return ClassLoadInvoker.EXPR_VAR_NAME;
+    }
+
+    @TemplateAccessible
     public String getMemoryRef() {
         return ClassLoadMemory.class.getCanonicalName();
     }

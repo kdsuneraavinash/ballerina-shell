@@ -4,11 +4,13 @@
   },
   {
     "code": "j.toJsonString()",
-    "output": "{\"name\":\"apple\", \"color\":\"red\", \"price\":100}\n"
+    "exprs": [
+      "{\"name\":\"apple\", \"color\":\"red\", \"price\":100}"
+    ]
   },
   {
     "code": "io:println(\"j is map<json>: \", j is map<json>);",
-    "output": "j is map<json>: true\n"
+    "stdout": "j is map<json>: true\n"
   },
   {
     "code": "json empty = {};"
@@ -21,7 +23,9 @@
   },
   {
     "code": "p.toJsonString()",
-    "output": "{\"fname\":\"John\", \"lname\":\"Stallone\", \"age\":30}\n"
+    "exprs": [
+      "{\"fname\":\"John\", \"lname\":\"Stallone\", \"age\":30}"
+    ]
   },
   {
     "code": "map<json> mp = <map<json>>p;"
@@ -31,20 +35,26 @@
   },
   {
     "code": "p.toJsonString()",
-    "output": "{\"fname\":\"John\", \"lname\":\"Stallone\", \"age\":31}\n"
+    "exprs": [
+      "{\"fname\":\"John\", \"lname\":\"Stallone\", \"age\":31}"
+    ]
   },
   {
     "code": "map<json> p2 = {\n        fname: \"Peter\",\n        lname: \"Stallone\",\n        address: {\n            line: \"20 Palm Grove\",\n            city: \"Colombo 03\",\n            country: \"Sri Lanka\"\n        }\n    };"
   },
   {
     "code": "p2.toJsonString()",
-    "output": "{\"fname\":\"Peter\", \"lname\":\"Stallone\", \"address\":{\"line\":\"20 Palm Grove\", \"city\":\"Colombo 03\", \"country\":\"Sri Lanka\"}}\n"
+    "exprs": [
+      "{\"fname\":\"Peter\", \"lname\":\"Stallone\", \"address\":{\"line\":\"20 Palm Grove\", \"city\":\"Colombo 03\", \"country\":\"Sri Lanka\"}}"
+    ]
   },
   {
     "code": "json lastName = p2[\"lname\"];"
   },
   {
     "code": "lastName",
-    "output": "Stallone\n"
+    "exprs": [
+      "Stallone"
+    ]
   }
 ]

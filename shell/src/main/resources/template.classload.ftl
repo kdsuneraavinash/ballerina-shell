@@ -37,24 +37,20 @@ function save(){
 }
 
 function run() returns @untainted any|error {
-    any|error expr = ();
     <#if lastExpr.second>
     ${lastExpr.first}
+    return ();
     <#else>
-    expr = trap (${lastExpr.first});
+    return trap (${lastExpr.first});
     </#if>
-    return expr;
 }
 
 public function main() returns error? {
-    any|error expr = trap run();
-    if (expr is ()){
-    } else if (expr is error){
-        io:println("Exception occurred: ", expr.message());
-        return expr;
-    } else {
-        io:println(expr);
+    any|error ${exprVarName} = trap run();
+     if (${exprVarName} is error){
+        io:println("Exception occurred: ", ${exprVarName}.message());
+        return ${exprVarName};
     }
-
+    memorize_var("${exprVarName}", ${exprVarName});
     return trap save();
 }
