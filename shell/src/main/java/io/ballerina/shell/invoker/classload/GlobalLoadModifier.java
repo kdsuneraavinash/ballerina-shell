@@ -37,7 +37,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- *
+ * A modifier that will inject global load variable value loading statements
+ * to the start of a function block. This will result in all the globals used inside the
+ * function being fully up-to-date.
  */
 public class GlobalLoadModifier extends TreeModifier {
     private final Map<String, String> allVars;
@@ -46,23 +48,36 @@ public class GlobalLoadModifier extends TreeModifier {
         this.allVars = allVars;
     }
 
+    @Override
     public FunctionBodyBlockNode transform(FunctionBodyBlockNode functionBodyBlockNode) {
         List<StatementNode> statementNodes = new ArrayList<>(loadStatements());
         functionBodyBlockNode.statements().forEach(statementNodes::add);
         return functionBodyBlockNode.modify().withStatements(NodeFactory.createNodeList(statementNodes)).apply();
     }
 
+    /**
+     * Creates the statements required to load the global var values.
+     *
+     * @return Statements required to restore global values.
+     */
     private Collection<StatementNode> loadStatements() {
         String varStatement = allVars.entrySet().stream()
                 .map(e -> String.format("%s = <%s> recall_var(\"%s\");", e.getKey(), e.getValue(), e.getKey()))
                 .collect(Collectors.joining());
-        String sourceCode = String.format("function main(){%s}", varStatement);
+        String sourceCode = String.format("function main(){%s%n}", varStatement);
         List<StatementNode> statements = new ArrayList<>();
         extractStatements(sourceCode).forEach(statements::add);
         return statements;
     }
 
-    public NodeList<StatementNode> extractStatements(String sourceCode) {
+    /**
+     * Extracts the statement from a function body.
+     * Used to create the statements using a string.
+     *
+     * @param sourceCode Source code to use for extraction.
+     * @return Statements inside the function.
+     */
+    private NodeList<StatementNode> extractStatements(String sourceCode) {
         TextDocument document = TextDocuments.from(sourceCode);
         SyntaxTree tree = SyntaxTree.from(document);
         ModulePartNode node = tree.rootNode();

@@ -14,7 +14,7 @@ ${dcln}
 
 ${lastVarDcln}
 <#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} =
+${varNameType.second} ${varNameType.first} = // value
     <${varNameType.second}> recall_var("x");
 </#list>
 

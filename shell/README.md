@@ -131,18 +131,18 @@ Following are some inputs and expected filler values for reference.
 
 Module-level declarations. These are not active or runnable. Service declaration can start a service on a port, etc... All other declarations are just declarations. They do not execute to return a value. Documentations and public keyword cannot be used in the module level declarations.
 
-| Sub Kind Name                    | State    | Notes                                                        |
-| -------------------------------- | -------- | ------------------------------------------------------------ |
-| Function Definition              | OK       |                                                              |
-| Listener Declaration             | OK       | There must be a initializer. However, there may be undefined variables inside the initializer. |
-| Type Definition                  | OK       |                                                              |
-| Service Declaration              | REJECTED | Has a side effect of starting a server.                      |
-| Constant Declaration             | OK       | Constant variables are always defined in the module level.   |
-| Module Variable Declaration      | MOVED    | Moved responsibility into Variable Declaration Kind.         |
-| Annotation Declaration           | OK       | ?                                                            |
-| Module XML Namespace Declaration | OK       |                                                              |
-| Enum Declaration                 | OK       |                                                              |
-| Class Definition                 | OK       |                                                              |
+| Sub Kind Name                    | State | Notes                                                        |
+| -------------------------------- | ----- | ------------------------------------------------------------ |
+| Function Definition              | OK    |                                                              |
+| Listener Declaration             | OK    | There must be a initializer. However, there may be undefined variables inside the initializer. |
+| Type Definition                  | OK    |                                                              |
+| Service Declaration              | ERROR | Has a side effect of starting a server.                      |
+| Constant Declaration             | OK    | Constant variables are always defined in the module level.   |
+| Module Variable Declaration      | MOVED | Moved responsibility into Variable Declaration Kind.         |
+| Annotation Declaration           | OK    | ?                                                            |
+| Module XML Namespace Declaration | OK    |                                                              |
+| Enum Declaration                 | OK    |                                                              |
+| Class Definition                 | OK    |                                                              |
 
 #### Statement Kind
 
@@ -154,14 +154,14 @@ These are normal statements that should be evaluated from top to bottom inside a
 | Compound Assignment Statement       | OK    |                                                              |
 | Variable Declaration Statement      | MOVED | Moved responsibility into Variable Declaration Kind.         |
 | Block Statement                     | OK    |                                                              |
-| Break Statement                     | ERROR | Break cannot be used outside of a loop.                      |
-| Fail Statement                      | ERROR | Fail statements must appear inside a function. (Similar to return) |
+| Break Statement                     | OK    |                                                              |
+| Fail Statement                      | OK    |                                                              |
 | Expression Statement                | MOVED | Moved responsibility into Expression Kind.                   |
-| Continue Statement                  | ERROR | Continue cannot be used outside of a loop.                   |
+| Continue Statement                  | OK    |                                                              |
 | If Else Statement                   | OK    |                                                              |
 | While Statement                     | OK    |                                                              |
 | Panic Statement                     | OK    | Similar to throwing an error. Will throw the error and ignore from then. |
-| Return Statement                    | ERROR | Return cannot exist outside of a function.                   |
+| Return Statement                    | OK    |                                                              |
 | Local Type Definition Statement     | MOVED | Moved responsibility into Module Member Declaration Kind.    |
 | Lock Statement                      | OK    | Atomically change the values of the variables.               |
 | Fork Statement                      | OK    | Starts workers. (Might cause problems)                       |
@@ -176,6 +176,8 @@ These are normal statements that should be evaluated from top to bottom inside a
 #### Expression Kind
 
 These are expressions that are executable but returns a value which should be immediately displayed. If the statement contained multiple expressions, only the final expression value will be given.
+
+Service expressions are rejected because they have a side effect of starting a server.
 
 ## Annex
 

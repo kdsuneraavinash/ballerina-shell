@@ -43,21 +43,21 @@ public enum SnippetSubKind {
     COMPOUND_ASSIGNMENT_STATEMENT(SnippetKind.STATEMENT),
     VARIABLE_DECLARATION_STATEMENT(SnippetKind.STATEMENT, true), // Ignore
     BLOCK_STATEMENT(SnippetKind.STATEMENT),
-    BREAK_STATEMENT(SnippetKind.STATEMENT, "Break cannot be used outside of a loop."), // Error
-    FAIL_STATEMENT(SnippetKind.STATEMENT, "Fail statements must appear inside a function."), // Error
+    BREAK_STATEMENT(SnippetKind.STATEMENT),
+    FAIL_STATEMENT(SnippetKind.STATEMENT),
     EXPRESSION_STATEMENT(SnippetKind.STATEMENT, true), // Ignore
-    CONTINUE_STATEMENT(SnippetKind.STATEMENT, "Continue cannot be used outside of a loop."), // Error
+    CONTINUE_STATEMENT(SnippetKind.STATEMENT),
     IF_ELSE_STATEMENT(SnippetKind.STATEMENT),
     WHILE_STATEMENT(SnippetKind.STATEMENT),
     PANIC_STATEMENT(SnippetKind.STATEMENT),
-    RETURN_STATEMENT(SnippetKind.STATEMENT, "Return cannot exist outside of a function."), // Error
+    RETURN_STATEMENT(SnippetKind.STATEMENT),
     LOCAL_TYPE_DEFINITION_STATEMENT(SnippetKind.STATEMENT, true), // Ignore
     LOCK_STATEMENT(SnippetKind.STATEMENT),
     FORK_STATEMENT(SnippetKind.STATEMENT),
     FOR_EACH_STATEMENT(SnippetKind.STATEMENT),
     XML_NAMESPACE_DECLARATION_STATEMENT(SnippetKind.STATEMENT, true), // Ignore
     TRANSACTION_STATEMENT(SnippetKind.STATEMENT),
-    ROLLBACK_STATEMENT(SnippetKind.STATEMENT, "Rollback cannot be used outside of a transaction block."), // Error
+    ROLLBACK_STATEMENT(SnippetKind.STATEMENT),
     RETRY_STATEMENT(SnippetKind.STATEMENT),
     MATCH_STATEMENT(SnippetKind.STATEMENT),
     DO_STATEMENT(SnippetKind.STATEMENT),

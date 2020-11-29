@@ -38,10 +38,14 @@ function save(){
 
 function run() returns @untainted any|error {
     <#if lastExpr.second>
-    ${lastExpr.first}
+    if (true) {
+        ${lastExpr.first}
+    }
     return ();
     <#else>
-    return trap (${lastExpr.first});
+    return trap (
+    ${lastExpr.first}
+    );
     </#if>
 }
 
