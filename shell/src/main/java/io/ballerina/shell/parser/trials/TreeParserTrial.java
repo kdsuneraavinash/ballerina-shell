@@ -92,7 +92,7 @@ public abstract class TreeParserTrial {
         }
     }
 
-    public long getTimeOutDurationMs() {
+    protected long getTimeOutDurationMs() {
         // TODO: Refactor this to load from a config/cli
         return TIME_OUT_DURATION_MS;
     }
