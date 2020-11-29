@@ -23,6 +23,7 @@ import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.TreeParserException;
 import io.ballerina.shell.parser.trials.EmptyExpressionTrial;
 import io.ballerina.shell.parser.trials.ExpressionTrial;
+import io.ballerina.shell.parser.trials.GetErrorMessageTrial;
 import io.ballerina.shell.parser.trials.ImportDeclarationTrial;
 import io.ballerina.shell.parser.trials.ModuleMemberTrial;
 import io.ballerina.shell.parser.trials.ParserRejectedException;
@@ -46,7 +47,8 @@ public class TrialTreeParser extends TreeParser {
             new ModuleMemberTrial(),
             new ExpressionTrial(),
             new StatementTrial(),
-            new EmptyExpressionTrial()
+            new EmptyExpressionTrial(),
+            new GetErrorMessageTrial()
     );
 
     @Override

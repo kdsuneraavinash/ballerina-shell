@@ -23,8 +23,6 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
-import io.ballerina.tools.diagnostics.Diagnostic;
-import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -35,7 +33,6 @@ import io.ballerina.tools.text.TextDocuments;
  * Empty entries are converted to ().
  */
 public class EmptyExpressionTrial extends TreeParserTrial {
-    private static final long LONG_TIME_OUT_DURATION_MS = 1000;
     private static final Node EMPTY_NODE = NodeFactory.createNilLiteralNode(
             NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
             NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN));
@@ -43,23 +40,10 @@ public class EmptyExpressionTrial extends TreeParserTrial {
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
         TextDocument document = TextDocuments.from(source);
-        // This will process without timing out so we can get a better error message
-        // otherwise error will be just 'timed out'
-        SyntaxTree tree = SyntaxTree.from(document);
-        for (Diagnostic diagnostic : tree.diagnostics()) {
-            if (diagnostic.diagnosticInfo().severity() == DiagnosticSeverity.ERROR) {
-                throw new ParserTrialFailedException(tree.textDocument(), diagnostic);
-            }
-        }
-
+        SyntaxTree tree = getSyntaxTree(document);
         ModulePartNode node = tree.rootNode();
         assertIf(node.members().isEmpty(), "expected no members");
         assertIf(node.imports().isEmpty(), "expected no imports");
         return EMPTY_NODE;
-    }
-
-    @Override
-    public long getTimeOutDurationMs() {
-        return LONG_TIME_OUT_DURATION_MS;
     }
 }
