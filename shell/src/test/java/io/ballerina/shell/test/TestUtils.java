@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell;
+package io.ballerina.shell.test;
 
 import com.google.gson.Gson;
 

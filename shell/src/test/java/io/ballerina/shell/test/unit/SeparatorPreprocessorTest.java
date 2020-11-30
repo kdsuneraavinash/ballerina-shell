@@ -16,12 +16,12 @@
  * under the License.
  */
 
-package io.ballerina.shell.unit;
+package io.ballerina.shell.test.unit;
 
-import io.ballerina.shell.TestUtils;
 import io.ballerina.shell.exceptions.PreprocessorException;
 import io.ballerina.shell.preprocessor.Preprocessor;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
+import io.ballerina.shell.test.TestUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Test preprocessor use cases.
+ */
 public class SeparatorPreprocessorTest {
     private static final String TESTCASES = "testcases/preprocessor.separator.json";
 

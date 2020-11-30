@@ -34,7 +34,7 @@ Run following commands in order.
 
 ```batch
 gradlew.bat fatJar
-java -jar shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+java -jar -Dballerina.home=home shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
 ```
 
 ##  References

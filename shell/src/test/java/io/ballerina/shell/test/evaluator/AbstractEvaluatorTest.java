@@ -16,10 +16,9 @@
  * under the License.
  */
 
-package io.ballerina.shell.evaluator;
+package io.ballerina.shell.test.evaluator;
 
 import io.ballerina.shell.Evaluator;
-import io.ballerina.shell.TestUtils;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
@@ -27,20 +26,19 @@ import io.ballerina.shell.invoker.classload.NoExitVmSecManager;
 import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
+import io.ballerina.shell.test.TestUtils;
 import org.testng.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Objects;
 
+/**
+ * Base class for evaluator tests.
+ */
 public abstract class AbstractEvaluatorTest {
-    private static final Path BALLERINA_HOME_PATH = Paths.get("../home");
-
     private static class TestCaseLine {
         String code;
         String stdout = "";
@@ -54,10 +52,6 @@ public abstract class AbstractEvaluatorTest {
     private static class TestInvoker extends ClassLoadInvoker {
         private String output;
         private int expectingExitCode;
-
-        public TestInvoker(Path ballerinaHome) {
-            super(ballerinaHome);
-        }
 
         @Override
         protected int invokeMethod(Method method) throws IllegalAccessException {
@@ -98,7 +92,7 @@ public abstract class AbstractEvaluatorTest {
     }
 
     private TestInvoker getInvoker() {
-        return new TestInvoker(BALLERINA_HOME_PATH);
+        return new TestInvoker();
     }
 
     private Evaluator getEvaluator(Invoker invoker) {

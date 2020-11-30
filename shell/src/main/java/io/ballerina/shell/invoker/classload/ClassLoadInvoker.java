@@ -45,7 +45,6 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,7 +65,6 @@ public class ClassLoadInvoker extends Invoker {
     private static final String VAR_TYPE_TEMPLATE_FILE = "template.type.ftl";
     private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
     private static final String TEMPLATE_FILE = "template.classload.ftl";
-    protected static final String BALLERINA_HOME = "ballerina.home";
     // Main class and method names to invoke
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
@@ -87,12 +85,8 @@ public class ClassLoadInvoker extends Invoker {
      * Creates a class load invoker from the given ballerina home.
      * Ballerina home should be tha path that contains repo directory.
      * It is expected that the runtime is added in the class path.
-     *
-     * @param ballerinaHome Ballerina home directory.
      */
-    public ClassLoadInvoker(Path ballerinaHome) {
-        // TODO: Set ballerina home using system prop.
-        System.setProperty(BALLERINA_HOME, ballerinaHome.toString());
+    public ClassLoadInvoker() {
         this.contextId = UUID.randomUUID().toString();
         this.imports = new HashMap<>();
         this.moduleDclns = new ArrayList<>();

@@ -16,11 +16,14 @@
  * under the License.
  */
 
-package io.ballerina.shell.evaluator;
+package io.ballerina.shell.test.evaluator;
 
 import io.ballerina.shell.exceptions.BallerinaShellException;
 import org.testng.annotations.Test;
 
+/**
+ * Test Json/Xml based snippets.
+ */
 public class JsonXmlEvaluatorTest extends AbstractEvaluatorTest {
     private static final String JSON_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json.json";
     private static final String JSON_OBJECTS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json-objects.json";

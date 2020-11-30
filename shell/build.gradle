@@ -63,6 +63,7 @@ dependencies {
 }
 
 test {
+    systemProperty "ballerina.home", "${rootProject.projectDir}/home"
     useTestNG()
 }
 

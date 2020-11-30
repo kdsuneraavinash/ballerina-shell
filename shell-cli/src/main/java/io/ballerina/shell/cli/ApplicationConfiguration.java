@@ -33,8 +33,6 @@ import java.util.Objects;
  * Configuration that uses command utils to provide options.
  */
 public class ApplicationConfiguration extends Configuration {
-    private static final Path BALLERINA_HOME_PATH = Paths.get("home");
-
     /**
      * Modes to create the evaluator.
      */
@@ -56,7 +54,7 @@ public class ApplicationConfiguration extends Configuration {
      */
     private Evaluator createEvaluator(EvaluatorMode mode) {
         if (mode == EvaluatorMode.CLASSLOAD) {
-            Invoker invoker = new ClassLoadInvoker(BALLERINA_HOME_PATH);
+            Invoker invoker = new ClassLoadInvoker();
             Evaluator evaluator = new Evaluator();
             evaluator.setPreprocessor(new SeparatorPreprocessor());
             evaluator.setTreeParser(new TrialTreeParser());

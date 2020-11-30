@@ -16,10 +16,9 @@
  * under the License.
  */
 
-package io.ballerina.shell.unit;
+package io.ballerina.shell.test.unit;
 
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.shell.TestUtils;
 import io.ballerina.shell.exceptions.SnippetException;
 import io.ballerina.shell.exceptions.TreeParserException;
 import io.ballerina.shell.parser.TreeParser;
@@ -28,12 +27,16 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
 import io.ballerina.shell.snippet.factory.SnippetFactory;
+import io.ballerina.shell.test.TestUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Test snippet factory use cases.
+ */
 public class BasicSnippetFactoryTest {
     private static final String IMPORT_TESTCASES = "testcases/snippet.import.json";
     private static final String EXPRESSION_TESTCASES = "testcases/snippet.expression.json";
