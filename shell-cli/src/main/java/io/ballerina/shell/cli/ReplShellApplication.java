@@ -28,28 +28,12 @@ import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import picocli.CommandLine;
-
-import java.util.concurrent.Callable;
 
 /**
- * Ballerina base shell REPL.
- * Executes a interactive shell to let the user interact with Ballerina Shell.
+ * Main entry point for REPL shell application.
  */
-@CommandLine.Command(name = "ballerina shell", mixinStandardHelpOptions = true, version = "ballerina shell 0.01",
-        description = "Shell program for Ballerina.")
-public class ReplShellApplication implements Callable<Integer> {
-    @SuppressWarnings("FieldMayBeFinal")
-    @CommandLine.Option(names = {"-m", "--mode"}, description = "Mode to operate the REPL.",
-            type = ApplicationConfiguration.EvaluatorMode.class)
-    private ApplicationConfiguration.EvaluatorMode mode = ApplicationConfiguration.EvaluatorMode.CLASSLOAD;
-
-    @SuppressWarnings("FieldMayBeFinal")
-    @CommandLine.Option(names = {"-d", "--debug"}, description = "Whether to enable debug mode from start.")
-    private boolean isDebug = false;
-
-    @Override
-    public Integer call() throws Exception {
+public class ReplShellApplication {
+    public static void execute(boolean isDebug, ApplicationConfiguration.EvaluatorMode mode) throws Exception {
         Configuration configuration = new ApplicationConfiguration(isDebug, mode);
         Terminal terminal = TerminalBuilder.terminal();
         DefaultParser parser = new DefaultParser();
@@ -72,17 +56,9 @@ public class ReplShellApplication implements Callable<Integer> {
 
         BallerinaShell shell = new BallerinaShell(configuration, new JlineTerminalAdapter(lineReader));
         shell.run();
-        return 0;
     }
 
-    /**
-     * Launch the REPL.
-     *
-     * @param args Optional arguments.
-     */
-    public static void main(String... args) {
-        int exitCode = new CommandLine(new ReplShellApplication())
-                .setCaseInsensitiveEnumValuesAllowed(true).execute(args);
-        System.exit(exitCode);
+    public static void main(String[] args) throws Exception {
+        ReplShellApplication.execute(false, ApplicationConfiguration.EvaluatorMode.CLASSLOAD);
     }
 }

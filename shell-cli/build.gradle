@@ -32,7 +32,7 @@ compileJava {
     }
 }
 
-def mainCliClass = 'io.ballerina.shell.cli.ReplShellApplication'
+def mainCliClass = 'io.ballerina.shell.cli.ReplShellLauncher'
 task run(type: JavaExec) {
     main = mainCliClass
     standardInput = System.in
