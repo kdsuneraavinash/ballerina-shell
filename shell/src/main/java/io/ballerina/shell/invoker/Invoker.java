@@ -132,25 +132,35 @@ public abstract class Invoker extends DiagnosticReporter {
      * @throws InvokerException If compilation failed.
      */
     protected PackageCompilation compile(Project project) throws InvokerException {
-        PackageCompilation packageCompilation = project.currentPackage().getCompilation();
-        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JdkVersion.JAVA_11);
-        DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
-        Module module = project.currentPackage().getDefaultModule();
-        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
-            DiagnosticSeverity severity = diagnostic.diagnosticInfo().severity();
-            if (severity == DiagnosticSeverity.ERROR) {
-                addDiagnostic(Diagnostic.error(highlightedDiagnostic(module, diagnostic)));
-            } else if (severity == DiagnosticSeverity.WARNING) {
-                addDiagnostic(Diagnostic.warn(highlightedDiagnostic(module, diagnostic)));
-            } else {
-                addDiagnostic(Diagnostic.debug(diagnostic.message()));
+        try {
+            PackageCompilation packageCompilation = project.currentPackage().getCompilation();
+            JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JdkVersion.JAVA_11);
+            DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
+            Module module = project.currentPackage().getDefaultModule();
+            for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
+                DiagnosticSeverity severity = diagnostic.diagnosticInfo().severity();
+                if (severity == DiagnosticSeverity.ERROR) {
+                    addDiagnostic(Diagnostic.error(highlightedDiagnostic(module, diagnostic)));
+                } else if (severity == DiagnosticSeverity.WARNING) {
+                    addDiagnostic(Diagnostic.warn(highlightedDiagnostic(module, diagnostic)));
+                } else {
+                    addDiagnostic(Diagnostic.debug(diagnostic.message()));
+                }
             }
+            if (diagnosticResult.hasErrors()) {
+                addDiagnostic(Diagnostic.error("Compilation aborted because of errors."));
+                throw new InvokerException();
+            }
+            return packageCompilation;
+        } catch (InvokerException e) {
+            throw e;
+        } catch (Exception e) {
+            addDiagnostic(Diagnostic.error("Something went wrong: " + e.getMessage()));
+            throw new InvokerException(e);
+        } catch (Error e) {
+            addDiagnostic(Diagnostic.error("Something severely went wrong: " + e));
+            throw new InvokerException(e);
         }
-        if (diagnosticResult.hasErrors()) {
-            addDiagnostic(Diagnostic.error("Compilation aborted because of errors."));
-            throw new InvokerException();
-        }
-        return packageCompilation;
     }
 
     /**
