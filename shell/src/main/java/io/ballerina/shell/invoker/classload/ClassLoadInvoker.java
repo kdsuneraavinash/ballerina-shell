@@ -19,6 +19,8 @@
 package io.ballerina.shell.invoker.classload;
 
 import freemarker.template.Template;
+import io.ballerina.projects.BuildOptions;
+import io.ballerina.projects.BuildOptionsBuilder;
 import io.ballerina.projects.JBallerinaBackend;
 import io.ballerina.projects.JarResolver;
 import io.ballerina.projects.JdkVersion;
@@ -345,11 +347,6 @@ public class ClassLoadInvoker extends Invoker {
      * @throws InvokerException If execution failed.
      */
     protected boolean execute(Project project, JBallerinaBackend jBallerinaBackend) throws InvokerException {
-        if (!project.currentPackage().getDefaultModule().getCompilation().entryPointExists()) {
-            addDiagnostic(Diagnostic.error("Unexpected Error: No entry point!!!"));
-            throw new InvokerException();
-        }
-
         try {
             Module executableModule = project.currentPackage().getDefaultModule();
             JarResolver jarResolver = jBallerinaBackend.jarResolver();
@@ -389,7 +386,8 @@ public class ClassLoadInvoker extends Invoker {
         Template template = super.getTemplate(templateFile);
         File mainBal = writeToFile(template, context);
         addDiagnostic(Diagnostic.debug("Using main file: " + mainBal));
-        return SingleFileProject.load(mainBal.toPath());
+        BuildOptions buildOptions = new BuildOptionsBuilder().offline(true).build();
+        return SingleFileProject.load(mainBal.toPath(), buildOptions);
     }
 
     /**
