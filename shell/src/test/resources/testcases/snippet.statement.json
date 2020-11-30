@@ -22,17 +22,17 @@
   {
     "name": "Break Statement",
     "input": "break;",
-    "accepted": false
+    "accepted": true
   },
   {
     "name": "Fail Statement",
     "input": "fail x();",
-    "accepted": false
+    "accepted": true
   },
   {
     "name": "Continue Statement",
     "input": "continue;",
-    "accepted": false
+    "accepted": true
   },
   {
     "name": "If Else Statement",
@@ -47,7 +47,7 @@
   {
     "name": "Return Statement",
     "input": "return 10;",
-    "accepted": false
+    "accepted": true
   },
   {
     "name": "Lock Statement",
@@ -72,7 +72,7 @@
   {
     "name": "Rollback Statement",
     "input": "rollback;",
-    "accepted": false
+    "accepted": true
   },
   {
     "name": "Retry Statement",
