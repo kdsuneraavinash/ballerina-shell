@@ -16,3 +16,4 @@ Following command are the in-built commands.
 /vars       - List the declared variables and their values.
 /dclns      - List the user defined module level declarations.
 /help       - Get this message.
+/help TOPIC - Get help on TOPIC.

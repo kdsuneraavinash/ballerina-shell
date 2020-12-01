@@ -21,6 +21,8 @@ package io.ballerina.shell.cli;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticKind;
 import io.ballerina.shell.Evaluator;
+import io.ballerina.shell.cli.help.HelpProvider;
+import io.ballerina.shell.cli.help.RemoteBbeHelpProvider;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 
 import java.io.InputStream;
@@ -59,7 +61,8 @@ public class BallerinaShell {
     protected final Configuration configuration;
     protected final TerminalAdapter terminal;
     protected final Evaluator evaluator;
-    protected final Map<String, Consumer<String>> handlers;
+    protected final Map<String, Consumer<String[]>> handlers;
+    private final HelpProvider helpProvider;
     protected boolean continueLoop;
 
     public BallerinaShell(Configuration configuration, TerminalAdapter terminal) {
@@ -67,6 +70,7 @@ public class BallerinaShell {
         this.terminal = terminal;
         this.continueLoop = true;
         this.evaluator = configuration.getEvaluator();
+        this.helpProvider = new RemoteBbeHelpProvider();
         this.handlers = availableCommands();
     }
 
@@ -102,7 +106,7 @@ public class BallerinaShell {
                 if (source.startsWith(COMMAND_PREFIX)) {
                     String[] args = source.split(" ");
                     if (this.handlers.containsKey(args[0])) {
-                        this.handlers.get(args[0]).accept(source);
+                        this.handlers.get(args[0]).accept(args);
                         continue;
                     }
                 }
@@ -180,8 +184,8 @@ public class BallerinaShell {
      *
      * @return Command attached handler map.
      */
-    protected Map<String, Consumer<String>> availableCommands() {
-        Map<String, Consumer<String>> handlers = new HashMap<>();
+    protected Map<String, Consumer<String[]>> availableCommands() {
+        Map<String, Consumer<String[]>> handlers = new HashMap<>();
         handlers.put(RESET_COMMAND, this::handleReset);
         handlers.put(HELP_COMMAND, this::handleHelp);
         handlers.put(TOGGLE_DEBUG, this::handleToggleDebug);
@@ -193,38 +197,44 @@ public class BallerinaShell {
         return handlers;
     }
 
-    protected void handleReset(String command) {
+    protected void handleReset(String... args) {
         this.evaluator.reset();
         terminal.info("REPL state was reset.");
     }
 
-    protected void handleHelp(String command) {
-        String content = readFile(HELP_FILE);
-        terminal.info(content);
+    protected void handleHelp(String... args) {
+        StringBuilder content = new StringBuilder();
+        if (args.length <= 1) {
+            content.append(readFile(HELP_FILE));
+        } else {
+            helpProvider.getTopic(args[1], content);
+        }
+        terminal.info(content.toString());
     }
 
-    protected void handleToggleDebug(String command) {
+    protected void handleToggleDebug(String... args) {
         this.configuration.toggleDebug();
-        terminal.info("Toggled debug mode. Debug mode: " + this.configuration.isDebug);
+        terminal.info("Toggled debug mode. Debug mode: "
+                + this.configuration.isDebug);
     }
 
-    protected void handleDumpState(String command) {
+    protected void handleDumpState(String... args) {
         this.terminal.info(evaluator.toString());
     }
 
-    protected void handleDumpImports(String command) {
+    protected void handleDumpImports(String... args) {
         this.terminal.info(evaluator.availableImports());
     }
 
-    protected void handleDumpVars(String command) {
+    protected void handleDumpVars(String... args) {
         this.terminal.info(evaluator.availableVariables());
     }
 
-    protected void handleDumpDclns(String command) {
+    protected void handleDumpDclns(String... args) {
         this.terminal.info(evaluator.availableModuleDeclarations());
     }
 
-    protected void handleExit(String command) {
+    protected void handleExit(String... args) {
         this.continueLoop = false;
         terminal.info("Bye!!");
     }

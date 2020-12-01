@@ -32,21 +32,21 @@ import java.util.Scanner;
  * Simple completer for the REPL which completes Ballerina Keywords.
  * Keywords are read off of a text file.
  */
-public class KeywordCompleter extends StringsCompleter {
-    private static final String KEYWORDS_FILE = "command.keywords.txt";
+public class FileKeywordsCompleter extends StringsCompleter {
 
-    public KeywordCompleter() {
-        super(readKeywords());
+    public FileKeywordsCompleter(String file) {
+        super(readKeywords(file));
     }
 
     /**
      * Read the keywords file and return a list of keywords.
      *
+     * @param file Name of the comma separated content file.
      * @return Keywords list.
      */
-    public static List<String> readKeywords() {
-        ClassLoader classLoader = KeywordCompleter.class.getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream(KEYWORDS_FILE);
+    public static List<String> readKeywords(String file) {
+        ClassLoader classLoader = FileKeywordsCompleter.class.getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(file);
         Objects.requireNonNull(inputStream, "Keyword file does not exist.");
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         Scanner scanner = new Scanner(reader).useDelimiter(",");
