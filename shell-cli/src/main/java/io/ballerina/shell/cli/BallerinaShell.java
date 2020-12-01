@@ -30,6 +30,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
@@ -42,11 +43,10 @@ import java.util.function.Consumer;
 public class BallerinaShell {
     private static final String HELP_FILE = "command.help.txt";
     private static final String HEADER_FILE = "command.header.txt";
-    private static final String REPL_VERSION = "0.0.1";
     private static final String SPECIAL_DELIMITER = "\\A";
     private static final String REPL_PROMPT = "=$ ";
-    private static final String REPL_EXIT_MESSAGE = "Bye!!";
 
+    private static final String COMMAND_PREFIX = "/";
     private static final String HELP_COMMAND = "/help";
     private static final String EXIT_COMMAND = "/exit";
     private static final String TOGGLE_DEBUG = "/debug";
@@ -56,41 +56,26 @@ public class BallerinaShell {
     private static final String MODULE_DCLNS_COMMAND = "/dclns";
     private static final String VARIABLES_COMMAND = "/vars";
 
-    private final Configuration configuration;
-    private final TerminalAdapter terminal;
-    private final Evaluator evaluator;
-    private final Map<String, Consumer<Void>> handlers;
-    private boolean continueLoop;
+    protected final Configuration configuration;
+    protected final TerminalAdapter terminal;
+    protected final Evaluator evaluator;
+    protected final Map<String, Consumer<String>> handlers;
+    protected boolean continueLoop;
 
     public BallerinaShell(Configuration configuration, TerminalAdapter terminal) {
         this.configuration = configuration;
         this.terminal = terminal;
         this.continueLoop = true;
         this.evaluator = configuration.getEvaluator();
-
-        // Register default handlers
-        this.handlers = Map.of(
-                RESET_COMMAND, v -> this.evaluator.reset(),
-                HELP_COMMAND, v -> outputResource(HELP_FILE),
-                TOGGLE_DEBUG, v -> this.configuration.toggleDebug(),
-                STATE_COMMAND, v -> this.terminal.info(evaluator.toString()),
-                IMPORTS_COMMAND, v -> this.terminal.info(evaluator.availableImports()),
-                VARIABLES_COMMAND, v -> this.terminal.info(evaluator.availableVariables()),
-                MODULE_DCLNS_COMMAND, v -> this.terminal.info(evaluator.availableModuleDeclarations()),
-                EXIT_COMMAND, v -> {
-                    this.continueLoop = false;
-                    terminal.info(REPL_EXIT_MESSAGE);
-                }
-        );
+        this.handlers = availableCommands();
     }
 
     /**
      * Runs the terminal application using the given config.
      */
     public void run() {
-        String replPrompt = terminal.color(REPL_PROMPT, TerminalAdapter.GREEN);
-        String banner = String.format(readFile(HEADER_FILE), REPL_VERSION);
-        terminal.println(banner);
+        String leftPrompt = terminal.color(REPL_PROMPT, TerminalAdapter.GREEN);
+        terminal.println(readFile(HEADER_FILE));
 
         // Initialize. This must not fail.
         // If this fails, an error would be directly thrown.
@@ -105,19 +90,26 @@ public class BallerinaShell {
         while (continueLoop) {
             Duration previousDuration = Duration.between(start, end);
             String rightPrompt = String.format("took %s ms", previousDuration.toMillis());
-            String source = terminal.readLine(replPrompt, rightPrompt).trim();
+            String source = terminal.readLine(leftPrompt, rightPrompt).trim();
             start = Instant.now();
 
             try {
-                if (!source.isBlank()) {
-                    if (this.handlers.containsKey(source)) {
-                        this.handlers.get(source).accept(null);
-                    } else {
-                        String result = evaluator.evaluate(source);
-                        if (result != null) {
-                            terminal.result(result);
-                        }
+                // Ignore blank lines
+                if (source.isBlank()) {
+                    continue;
+                }
+                // Check if starts with /
+                if (source.startsWith(COMMAND_PREFIX)) {
+                    String[] args = source.split(" ");
+                    if (this.handlers.containsKey(args[0])) {
+                        this.handlers.get(args[0]).accept(source);
+                        continue;
                     }
+                }
+                // Evaluate line
+                String result = evaluator.evaluate(source);
+                if (result != null) {
+                    terminal.result(result);
                 }
             } catch (Exception e) {
                 if (!evaluator.hasErrors()) {
@@ -130,7 +122,6 @@ public class BallerinaShell {
                 evaluator.resetDiagnostics();
                 terminal.println("");
             }
-
         }
     }
 
@@ -147,16 +138,6 @@ public class BallerinaShell {
         InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         Scanner scanner = new Scanner(reader).useDelimiter(SPECIAL_DELIMITER);
         return scanner.hasNext() ? scanner.next() : "";
-    }
-
-    /**
-     * Read a resource file and output its content to the terminal.
-     *
-     * @param path File to read.
-     */
-    private void outputResource(@SuppressWarnings("SameParameterValue") String path) {
-        String content = readFile(path);
-        terminal.info(content);
     }
 
     /**
@@ -190,5 +171,61 @@ public class BallerinaShell {
             e.printStackTrace(printWriter);
             terminal.fatalError(stringWriter.toString());
         }
+    }
+
+    // Commands  ======================================================
+
+    /**
+     * Attaches commands to the handler which handles internal command.
+     *
+     * @return Command attached handler map.
+     */
+    protected Map<String, Consumer<String>> availableCommands() {
+        Map<String, Consumer<String>> handlers = new HashMap<>();
+        handlers.put(RESET_COMMAND, this::handleReset);
+        handlers.put(HELP_COMMAND, this::handleHelp);
+        handlers.put(TOGGLE_DEBUG, this::handleToggleDebug);
+        handlers.put(STATE_COMMAND, this::handleDumpState);
+        handlers.put(IMPORTS_COMMAND, this::handleDumpImports);
+        handlers.put(VARIABLES_COMMAND, this::handleDumpVars);
+        handlers.put(MODULE_DCLNS_COMMAND, this::handleDumpDclns);
+        handlers.put(EXIT_COMMAND, this::handleExit);
+        return handlers;
+    }
+
+    protected void handleReset(String command) {
+        this.evaluator.reset();
+        terminal.info("REPL state was reset.");
+    }
+
+    protected void handleHelp(String command) {
+        String content = readFile(HELP_FILE);
+        terminal.info(content);
+    }
+
+    protected void handleToggleDebug(String command) {
+        this.configuration.toggleDebug();
+        terminal.info("Toggled debug mode. Debug mode: " + this.configuration.isDebug);
+    }
+
+    protected void handleDumpState(String command) {
+        this.terminal.info(evaluator.toString());
+    }
+
+    protected void handleDumpImports(String command) {
+        this.terminal.info(evaluator.availableImports());
+    }
+
+    protected void handleDumpVars(String command) {
+        this.terminal.info(evaluator.availableVariables());
+    }
+
+    protected void handleDumpDclns(String command) {
+        this.terminal.info(evaluator.availableModuleDeclarations());
+    }
+
+    protected void handleExit(String command) {
+        this.continueLoop = false;
+        terminal.info("Bye!!");
     }
 }
