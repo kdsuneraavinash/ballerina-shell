@@ -37,11 +37,13 @@ public class JlineSimpleCompleter implements Completer {
     private static final String COMMANDS_FILE = "command.commands.txt";
 
     private final StringsCompleter topicsCompleter;
+    private final StringsCompleter topicsOptionCompleter;
     private final StringsCompleter commandsCompleter;
     private final StringsCompleter keywordsCompleter;
 
     public JlineSimpleCompleter() {
         this.topicsCompleter = new FileKeywordsCompleter(TOPICS_FILE);
+        this.topicsOptionCompleter = new StringsCompleter("description", "example");
         this.commandsCompleter = new FileKeywordsCompleter(COMMANDS_FILE);
         this.keywordsCompleter = new FileKeywordsCompleter(KEYWORDS_FILE);
     }
@@ -49,7 +51,11 @@ public class JlineSimpleCompleter implements Completer {
     @Override
     public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
         if (line.line().trim().startsWith("/help")) {
-            topicsCompleter.complete(reader, line, candidates);
+            if (line.wordIndex() == 1) {
+                topicsCompleter.complete(reader, line, candidates);
+            } else {
+                topicsOptionCompleter.complete(reader, line, candidates);
+            }
         } else if (line.line().trim().startsWith("/")) {
             commandsCompleter.complete(reader, line, candidates);
         } else {

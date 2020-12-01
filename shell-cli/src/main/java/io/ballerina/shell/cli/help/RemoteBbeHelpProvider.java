@@ -38,19 +38,31 @@ public class RemoteBbeHelpProvider implements HelpProvider {
     private static final String META_URL =
             "https://raw.githubusercontent.com/ballerina-platform/ballerina-distribution/master/examples/%s/";
     private static final String DESCRIPTION_FILE = "%s.description";
+    private static final String EXAMPLE_FILE = "%s.bal";
 
     @Override
-    public void getTopic(String topic, StringBuilder output) {
+    public void getTopic(String[] args, StringBuilder output) {
+        assert args.length > 0;
+        String topic = args[0];
+
+        boolean isExample = false;
+        if (args.length > 1) {
+            isExample = args[1].equals("example");
+        }
+
         try {
             String metaUrl = String.format(META_URL, topic);
-            String descriptionFile = String.format(DESCRIPTION_FILE, topic.replace(HYPHEN, UNDERSCORE));
-            String description = getLinkContent(metaUrl + descriptionFile).trim()
-                    .replaceAll("^// ", NEWLINE)
-                    .replaceAll("\n// ", NEWLINE)
-                    .replaceAll("<br/>", NEWLINE)
-                    .trim();
-            output.append(description).append(NEWLINE);
-
+            String fileName = topic.replace(HYPHEN, UNDERSCORE);
+            String file = String.format(isExample ? EXAMPLE_FILE : DESCRIPTION_FILE, fileName);
+            String content = getLinkContent(metaUrl + file).trim();
+            if (!isExample) {
+                content = content
+                        .replaceAll("^// ", NEWLINE)
+                        .replaceAll("\n// ", NEWLINE)
+                        .replaceAll("<br/>", NEWLINE)
+                        .trim();
+            }
+            output.append(content).append(NEWLINE);
         } catch (FileNotFoundException e) {
             output.append("No ballerina documentation found for '")
                     .append(topic).append("'").append(NEWLINE);
@@ -61,6 +73,13 @@ public class RemoteBbeHelpProvider implements HelpProvider {
         }
     }
 
+    /**
+     * Get the content that is in the given link.
+     *
+     * @param link Link to fetch.
+     * @return String content of the file.
+     * @throws IOException If the file does not exist or fetching failed.
+     */
     private String getLinkContent(String link) throws IOException {
         URL url = new URL(link);
         InputStream inputStream = url.openStream();

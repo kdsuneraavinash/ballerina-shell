@@ -32,6 +32,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -207,7 +208,8 @@ public class BallerinaShell {
         if (args.length <= 1) {
             content.append(readFile(HELP_FILE));
         } else {
-            helpProvider.getTopic(args[1], content);
+            String[] newArgs = Arrays.copyOfRange(args, 1, args.length);
+            helpProvider.getTopic(newArgs, content);
         }
         terminal.info(content.toString());
     }

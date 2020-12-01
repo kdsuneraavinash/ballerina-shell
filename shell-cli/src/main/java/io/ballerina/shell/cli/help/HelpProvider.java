@@ -26,8 +26,8 @@ public interface HelpProvider {
     /**
      * Get the content for a given topic.
      *
-     * @param topic  Topic  to fetch help.
+     * @param args   All the arguments given by requester.
      * @param output Builder to append output.
      */
-    void getTopic(String topic, StringBuilder output);
+    void getTopic(String[] args, StringBuilder output);
 }
