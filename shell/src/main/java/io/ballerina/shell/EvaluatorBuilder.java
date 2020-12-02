@@ -49,19 +49,23 @@ public class EvaluatorBuilder {
         return new Evaluator(preprocessor, treeParser, snippetFactory, invoker);
     }
 
-    public void preprocessor(Preprocessor preprocessor) {
+    public EvaluatorBuilder preprocessor(Preprocessor preprocessor) {
         this.preprocessor = preprocessor;
+        return this;
     }
 
-    public void treeParser(TreeParser treeParser) {
+    public EvaluatorBuilder treeParser(TreeParser treeParser) {
         this.treeParser = treeParser;
+        return this;
     }
 
-    public void snippetFactory(SnippetFactory snippetFactory) {
+    public EvaluatorBuilder snippetFactory(SnippetFactory snippetFactory) {
         this.snippetFactory = snippetFactory;
+        return this;
     }
 
-    public void invoker(Invoker invoker) {
+    public EvaluatorBuilder invoker(Invoker invoker) {
         this.invoker = invoker;
+        return this;
     }
 }

@@ -21,7 +21,6 @@ package io.ballerina.shell.test.evaluator;
 import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.EvaluatorBuilder;
 import io.ballerina.shell.exceptions.BallerinaShellException;
-import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
 import io.ballerina.shell.invoker.classload.NoExitVmSecManager;
 import io.ballerina.shell.test.TestUtils;
@@ -79,21 +78,22 @@ public abstract class AbstractEvaluatorTest {
 
     protected void testEvaluate(String fileName) throws BallerinaShellException {
         TestInvoker invoker = getInvoker();
-        Evaluator evaluator = getEvaluator(invoker);
+        Evaluator evaluator = new EvaluatorBuilder().invoker(invoker).build();
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
         for (TestCaseLine testCaseLine : testCase) {
-            invoker.expectingExitCode = testCaseLine.exitCode;
-            String expr = evaluator.evaluate(testCaseLine.code);
-            Assert.assertEquals(invoker.output, testCaseLine.stdout);
-            Assert.assertEquals(expr, testCaseLine.expr);
+            try {
+                invoker.expectingExitCode = testCaseLine.exitCode;
+                String expr = evaluator.evaluate(testCaseLine.code);
+                Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.code);
+                Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.code);
+            } catch (BallerinaShellException e) {
+                Assert.fail("Exception occurred in " + testCaseLine.code + " " + e);
+                throw e;
+            }
         }
     }
 
     private TestInvoker getInvoker() {
         return new TestInvoker();
-    }
-
-    private Evaluator getEvaluator(Invoker invoker) {
-        return new EvaluatorBuilder().build();
     }
 }
