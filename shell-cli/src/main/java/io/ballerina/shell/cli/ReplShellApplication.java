@@ -29,6 +29,8 @@ import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
+import static io.ballerina.shell.cli.PropertiesLoader.APP_NAME;
+
 /**
  * Main entry point for REPL shell application.
  */
@@ -52,8 +54,8 @@ public class ReplShellApplication {
 
         LineReader lineReader = LineReaderBuilder.builder()
                 .variable(LineReader.SECONDARY_PROMPT_PATTERN, "%P > ")
+                .appName(PropertiesLoader.getProperty(APP_NAME))
                 .variable(LineReader.INDENTATION, 2)
-                .appName("Ballerina Shell REPL")
                 .highlighter(highlighter)
                 .completer(completer)
                 .terminal(terminal)

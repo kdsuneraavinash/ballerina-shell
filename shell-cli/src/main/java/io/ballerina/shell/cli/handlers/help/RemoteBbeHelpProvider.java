@@ -18,10 +18,15 @@
 
 package io.ballerina.shell.cli.handlers.help;
 
+import io.ballerina.shell.cli.PropertiesLoader;
 import io.ballerina.shell.cli.utils.FileUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+
+import static io.ballerina.shell.cli.PropertiesLoader.DESCRIPTION_URL_TEMPLATE;
+import static io.ballerina.shell.cli.PropertiesLoader.EXAMPLE_URL_TEMPLATE;
+import static io.ballerina.shell.cli.PropertiesLoader.HELP_EXAMPLE_POSTFIX;
 
 /**
  * Help provider that will fetch data from the BBE.
@@ -31,16 +36,12 @@ import java.io.IOException;
 public class RemoteBbeHelpProvider implements HelpProvider {
     private static final char HYPHEN = '-';
     private static final char UNDERSCORE = '_';
-
     private static final String NEWLINE = "\n";
-    private static final String META_URL =
-            "https://raw.githubusercontent.com/ballerina-platform/ballerina-distribution/master/examples/%s/";
-    private static final String DESCRIPTION_FILE = "%s.description";
-    private static final String EXAMPLE_FILE = "%s.bal";
 
     @Override
     public void getTopic(String[] args, StringBuilder output) throws HelpProviderException {
-        boolean isExample = (args.length > 1) && args[1].equals("example");
+        String helpExamplePostfix = PropertiesLoader.getProperty(HELP_EXAMPLE_POSTFIX);
+        boolean isExample = (args.length > 1) && args[1].equals(helpExamplePostfix);
         String topic = args[0];
 
         if (!topic.matches("^[a-zA-Z-_]+$")) {
@@ -48,10 +49,12 @@ public class RemoteBbeHelpProvider implements HelpProvider {
         }
 
         try {
-            String metaUrl = String.format(META_URL, topic);
+            String descriptionUrl = PropertiesLoader.getProperty(DESCRIPTION_URL_TEMPLATE);
+            String exampleUrl = PropertiesLoader.getProperty(EXAMPLE_URL_TEMPLATE);
             String fileName = topic.replace(HYPHEN, UNDERSCORE);
-            String file = String.format(isExample ? EXAMPLE_FILE : DESCRIPTION_FILE, fileName);
-            String content = FileUtils.readFromUrl(metaUrl + file).trim();
+
+            String file = String.format(isExample ? exampleUrl : descriptionUrl, topic, fileName);
+            String content = FileUtils.readFromUrl(file).trim();
             if (!isExample) {
                 content = content
                         .replaceAll("[^|\n]//\\w*", NEWLINE) // Comment sign at start of lines

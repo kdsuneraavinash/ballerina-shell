@@ -18,6 +18,7 @@
 
 package io.ballerina.shell.cli.jline;
 
+import io.ballerina.shell.cli.PropertiesLoader;
 import io.ballerina.shell.cli.utils.FileUtils;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
@@ -27,40 +28,46 @@ import org.jline.reader.impl.completer.StringsCompleter;
 
 import java.util.List;
 
+import static io.ballerina.shell.cli.PropertiesLoader.COMMANDS_FILE;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_HELP;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_PREFIX;
+import static io.ballerina.shell.cli.PropertiesLoader.HELP_DESCRIPTION_POSTFIX;
+import static io.ballerina.shell.cli.PropertiesLoader.HELP_EXAMPLE_POSTFIX;
+import static io.ballerina.shell.cli.PropertiesLoader.KEYWORDS_FILE;
+import static io.ballerina.shell.cli.PropertiesLoader.TOPICS_FILE;
+
 /**
  * A simple completer to give completions based on the input line.
  * If the input starts with /, built-in commands are given.
  * Otherwise keyword completion is given.
  */
 public class JlineSimpleCompleter implements Completer {
-    private static final String TOPICS_FILE = "commands.help.topics.txt";
-    private static final String KEYWORDS_FILE = "command.keywords.txt";
-    private static final String COMMANDS_FILE = "command.commands.txt";
-
     private final StringsCompleter topicsCompleter;
     private final StringsCompleter topicsOptionCompleter;
     private final StringsCompleter commandsCompleter;
     private final StringsCompleter keywordsCompleter;
 
     public JlineSimpleCompleter() {
-        List<String> topicsKeywords = FileUtils.readKeywords(TOPICS_FILE);
-        List<String> commandsKeywords = FileUtils.readKeywords(COMMANDS_FILE);
-        List<String> codeKeywords = FileUtils.readKeywords(KEYWORDS_FILE);
+        List<String> topicsKeywords = FileUtils.readKeywords(PropertiesLoader.getProperty(TOPICS_FILE));
+        List<String> commandsKeywords = FileUtils.readKeywords(PropertiesLoader.getProperty(COMMANDS_FILE));
+        List<String> codeKeywords = FileUtils.readKeywords(PropertiesLoader.getProperty(KEYWORDS_FILE));
         this.topicsCompleter = new StringsCompleter(topicsKeywords);
-        this.topicsOptionCompleter = new StringsCompleter("description", "example");
         this.commandsCompleter = new StringsCompleter(commandsKeywords);
         this.keywordsCompleter = new StringsCompleter(codeKeywords);
+        String helpDescriptionPostfix = PropertiesLoader.getProperty(HELP_DESCRIPTION_POSTFIX);
+        String helpExamplePostfix = PropertiesLoader.getProperty(HELP_EXAMPLE_POSTFIX);
+        this.topicsOptionCompleter = new StringsCompleter(helpDescriptionPostfix, helpExamplePostfix);
     }
 
     @Override
     public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-        if (line.line().trim().startsWith("/help")) {
+        if (line.line().trim().startsWith(PropertiesLoader.getProperty(COMMAND_HELP))) {
             if (line.wordIndex() == 1) {
                 topicsCompleter.complete(reader, line, candidates);
             } else {
                 topicsOptionCompleter.complete(reader, line, candidates);
             }
-        } else if (line.line().trim().startsWith("/")) {
+        } else if (line.line().trim().startsWith(PropertiesLoader.getProperty(COMMAND_PREFIX))) {
             commandsCompleter.complete(reader, line, candidates);
         } else {
             keywordsCompleter.complete(reader, line, candidates);

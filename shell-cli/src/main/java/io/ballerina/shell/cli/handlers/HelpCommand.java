@@ -20,16 +20,18 @@ package io.ballerina.shell.cli.handlers;
 
 
 import io.ballerina.shell.cli.BallerinaShell;
+import io.ballerina.shell.cli.PropertiesLoader;
 import io.ballerina.shell.cli.handlers.help.HelpProvider;
 import io.ballerina.shell.cli.handlers.help.HelpProviderException;
 import io.ballerina.shell.cli.handlers.help.RemoteBbeHelpProvider;
 import io.ballerina.shell.cli.utils.FileUtils;
 
+import static io.ballerina.shell.cli.PropertiesLoader.HELP_FILE;
+
 /**
  * Outputs help messages to the shell.
  */
 public class HelpCommand extends AbstractCommand {
-    private static final String HELP_FILE = "command.help.txt";
     private final HelpProvider helpProvider;
 
     public HelpCommand(BallerinaShell ballerinaShell) {
@@ -40,7 +42,9 @@ public class HelpCommand extends AbstractCommand {
     @Override
     public void run(String... args) {
         if (args.length == 0) {
-            ballerinaShell.outputInfo(FileUtils.readResource(HELP_FILE));
+            String helpFile = PropertiesLoader.getProperty(HELP_FILE);
+            String helpContent = FileUtils.readResource(helpFile);
+            ballerinaShell.outputInfo(helpContent);
         } else {
             try {
                 StringBuilder content = new StringBuilder();

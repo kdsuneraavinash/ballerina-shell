@@ -35,14 +35,22 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_DCLNS;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_DEBUG;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_EXIT;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_HELP;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_IMPORTS;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_RESET;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_STATE;
+import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_VARS;
+import static io.ballerina.shell.cli.PropertiesLoader.HEADER_FILE;
+import static io.ballerina.shell.cli.PropertiesLoader.REPL_PROMPT;
+
 /**
  * REPL shell terminal executor. Launches the terminal.
  * Independent of third party libraries.
  */
 public class BallerinaShell {
-    private static final String HEADER_FILE = "command.header.txt";
-    private static final String REPL_PROMPT = "=$ ";
-
     protected final Configuration configuration;
     protected final TerminalAdapter terminal;
     protected final Evaluator evaluator;
@@ -61,8 +69,9 @@ public class BallerinaShell {
      * Runs the terminal application using the given config.
      */
     public void run() {
-        String leftPrompt = terminal.color(REPL_PROMPT, TerminalAdapter.GREEN);
-        terminal.println(FileUtils.readResource(HEADER_FILE));
+        String leftPrompt = terminal.color(PropertiesLoader.getProperty(REPL_PROMPT),
+                TerminalAdapter.GREEN);
+        terminal.println(FileUtils.readResource(PropertiesLoader.getProperty(HEADER_FILE)));
 
         // Initialize. This must not fail.
         // If this fails, an error would be directly thrown.
@@ -109,7 +118,8 @@ public class BallerinaShell {
      * @param diagnostic Diagnostic to output.
      */
     protected void outputDiagnostic(Diagnostic diagnostic) {
-        if (diagnostic.getKind() == DiagnosticKind.DEBUG && !configuration.isDebug()) {
+        if (diagnostic.getKind() == DiagnosticKind.DEBUG &&
+                !configuration.isDebug()) {
             return;
         }
 
@@ -143,14 +153,18 @@ public class BallerinaShell {
      */
     protected CommandHandler createCommandHandler() {
         CommandHandler commandHandler = new CommandHandler();
-        commandHandler.attach("/exit", new ExitCommand(this));
-        commandHandler.attach("/help", new HelpCommand(this));
-        commandHandler.attach("/reset", new ResetStateCommand(this));
-        commandHandler.attach("/debug", new ToggleDebugCommand(this));
-        commandHandler.attach("/state", new StringInfoCommand(this, this.evaluator::toString));
-        commandHandler.attach("/vars", new StringInfoCommand(this, this.evaluator::availableVariables));
-        commandHandler.attach("/imports", new StringInfoCommand(this, this.evaluator::availableImports));
-        commandHandler.attach("/dclns", new StringInfoCommand(this, this.evaluator::availableModuleDeclarations));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_EXIT), new ExitCommand(this));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_HELP), new HelpCommand(this));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_RESET), new ResetStateCommand(this));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_DEBUG), new ToggleDebugCommand(this));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_STATE),
+                new StringInfoCommand(this, evaluator::toString));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_VARS),
+                new StringInfoCommand(this, evaluator::availableVariables));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_IMPORTS),
+                new StringInfoCommand(this, evaluator::availableImports));
+        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_DCLNS),
+                new StringInfoCommand(this, evaluator::availableModuleDeclarations));
         return commandHandler;
     }
 
