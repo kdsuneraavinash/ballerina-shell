@@ -32,8 +32,8 @@ import java.util.concurrent.Callable;
 public class ReplShellLauncher implements Callable<Integer> {
     @SuppressWarnings("FieldMayBeFinal")
     @CommandLine.Option(names = {"-m", "--mode"}, description = "Mode to operate the REPL.",
-            type = ApplicationConfiguration.EvaluatorMode.class)
-    private ApplicationConfiguration.EvaluatorMode mode = ApplicationConfiguration.EvaluatorMode.CLASSLOAD;
+            type = Configuration.EvaluatorMode.class)
+    private Configuration.EvaluatorMode mode = Configuration.EvaluatorMode.DEFAULT;
 
     @SuppressWarnings("FieldMayBeFinal")
     @CommandLine.Option(names = {"-d", "--debug"}, description = "Whether to enable debug mode from start.")
@@ -41,7 +41,7 @@ public class ReplShellLauncher implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        Configuration configuration = new ApplicationConfiguration(isDebug, mode);
+        Configuration configuration = new Configuration(isDebug, mode);
         ReplShellApplication.execute(configuration);
         return 0;
     }

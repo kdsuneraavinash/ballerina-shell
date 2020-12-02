@@ -19,19 +19,41 @@
 package io.ballerina.shell.cli;
 
 import io.ballerina.shell.Evaluator;
+import io.ballerina.shell.EvaluatorBuilder;
+
+import java.util.Objects;
 
 /**
- * Configuration base class.
- * Holds information required for the application to run.
- * Independent of third party libraries.
+ * Configuration that uses command utils to provide options.
  */
-public abstract class Configuration {
+public class Configuration {
     protected boolean isDebug;
     protected Evaluator evaluator;
 
-    public Configuration() {
-        this.isDebug = false;
-        this.evaluator = null;
+    /**
+     * Modes to create the evaluator.
+     */
+    public enum EvaluatorMode {
+        DEFAULT
+    }
+
+    public Configuration(boolean isDebug, EvaluatorMode mode) {
+        Objects.requireNonNull(mode, "Mode is a required parameter.");
+        this.isDebug = isDebug;
+        this.evaluator = createEvaluator(mode);
+    }
+
+    /**
+     * Creates and returns an evaluator based on the config.
+     *
+     * @param mode Mode to create the evaluator on.
+     * @return Created evaluator.
+     */
+    private Evaluator createEvaluator(EvaluatorMode mode) {
+        if (mode == EvaluatorMode.DEFAULT) {
+            return new EvaluatorBuilder().build();
+        }
+        throw new RuntimeException("Unknown mode given.");
     }
 
     /**

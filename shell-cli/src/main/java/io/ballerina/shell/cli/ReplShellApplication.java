@@ -68,8 +68,8 @@ public class ReplShellApplication {
     }
 
     public static void main(String... args) throws Exception {
-        Configuration configuration = new ApplicationConfiguration(false,
-                ApplicationConfiguration.EvaluatorMode.CLASSLOAD);
+        Configuration configuration = new Configuration(false,
+                Configuration.EvaluatorMode.DEFAULT);
         ReplShellApplication.execute(configuration);
     }
 }
