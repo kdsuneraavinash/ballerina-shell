@@ -29,7 +29,6 @@ import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.timeit.TimeIt;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -38,10 +37,18 @@ import java.util.Optional;
  * a terminal and evaluate each expression.
  */
 public class Evaluator extends DiagnosticReporter {
-    private Preprocessor preprocessor;
-    private TreeParser treeParser;
-    private SnippetFactory snippetFactory;
-    private Invoker invoker;
+    private final Preprocessor preprocessor;
+    private final TreeParser treeParser;
+    private final SnippetFactory snippetFactory;
+    private final Invoker invoker;
+
+    public Evaluator(Preprocessor preprocessor, TreeParser treeParser,
+                     SnippetFactory snippetFactory, Invoker invoker) {
+        this.preprocessor = preprocessor;
+        this.treeParser = treeParser;
+        this.snippetFactory = snippetFactory;
+        this.invoker = invoker;
+    }
 
     /**
      * Initialized the required components.
@@ -70,11 +77,6 @@ public class Evaluator extends DiagnosticReporter {
      * @return String output from the evaluator. This will be the last output.
      */
     public String evaluate(String source) throws BallerinaShellException {
-        Objects.requireNonNull(preprocessor, "Preprocessor not set");
-        Objects.requireNonNull(treeParser, "Tree Parser not set");
-        Objects.requireNonNull(snippetFactory, "Snippet Factory not set");
-        Objects.requireNonNull(invoker, "Invoker not set");
-
         String result = null;
         try {
             Collection<String> statements = TimeIt.timeIt(preprocessor, () -> preprocessor.process(source));
@@ -124,22 +126,6 @@ public class Evaluator extends DiagnosticReporter {
 
     public String availableModuleDeclarations() {
         return invoker.availableModuleDeclarations();
-    }
-
-    public void setInvoker(Invoker invoker) {
-        this.invoker = invoker;
-    }
-
-    public void setPreprocessor(Preprocessor preprocessor) {
-        this.preprocessor = preprocessor;
-    }
-
-    public void setSnippetFactory(SnippetFactory snippetFactory) {
-        this.snippetFactory = snippetFactory;
-    }
-
-    public void setTreeParser(TreeParser treeParser) {
-        this.treeParser = treeParser;
     }
 
     @Override

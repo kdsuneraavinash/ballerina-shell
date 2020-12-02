@@ -41,7 +41,8 @@ public class ReplShellLauncher implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        ReplShellApplication.execute(isDebug, mode);
+        Configuration configuration = new ApplicationConfiguration(isDebug, mode);
+        ReplShellApplication.execute(configuration);
         return 0;
     }
 

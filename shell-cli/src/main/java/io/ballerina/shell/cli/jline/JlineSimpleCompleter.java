@@ -18,6 +18,7 @@
 
 package io.ballerina.shell.cli.jline;
 
+import io.ballerina.shell.cli.utils.FileUtils;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
@@ -42,10 +43,13 @@ public class JlineSimpleCompleter implements Completer {
     private final StringsCompleter keywordsCompleter;
 
     public JlineSimpleCompleter() {
-        this.topicsCompleter = new FileKeywordsCompleter(TOPICS_FILE);
+        List<String> topicsKeywords = FileUtils.readKeywords(TOPICS_FILE);
+        List<String> commandsKeywords = FileUtils.readKeywords(COMMANDS_FILE);
+        List<String> codeKeywords = FileUtils.readKeywords(KEYWORDS_FILE);
+        this.topicsCompleter = new StringsCompleter(topicsKeywords);
         this.topicsOptionCompleter = new StringsCompleter("description", "example");
-        this.commandsCompleter = new FileKeywordsCompleter(COMMANDS_FILE);
-        this.keywordsCompleter = new FileKeywordsCompleter(KEYWORDS_FILE);
+        this.commandsCompleter = new StringsCompleter(commandsKeywords);
+        this.keywordsCompleter = new StringsCompleter(codeKeywords);
     }
 
     @Override
@@ -61,6 +65,5 @@ public class JlineSimpleCompleter implements Completer {
         } else {
             keywordsCompleter.complete(reader, line, candidates);
         }
-
     }
 }

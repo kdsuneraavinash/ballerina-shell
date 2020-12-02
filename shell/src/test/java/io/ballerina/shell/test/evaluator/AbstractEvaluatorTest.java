@@ -19,13 +19,11 @@
 package io.ballerina.shell.test.evaluator;
 
 import io.ballerina.shell.Evaluator;
+import io.ballerina.shell.EvaluatorBuilder;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
 import io.ballerina.shell.invoker.classload.NoExitVmSecManager;
-import io.ballerina.shell.parser.TrialTreeParser;
-import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
-import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
 import io.ballerina.shell.test.TestUtils;
 import org.testng.Assert;
 
@@ -96,11 +94,6 @@ public abstract class AbstractEvaluatorTest {
     }
 
     private Evaluator getEvaluator(Invoker invoker) {
-        Evaluator evaluator = new Evaluator();
-        evaluator.setSnippetFactory(new BasicSnippetFactory());
-        evaluator.setTreeParser(new TrialTreeParser());
-        evaluator.setPreprocessor(new SeparatorPreprocessor());
-        evaluator.setInvoker(invoker);
-        return evaluator;
+        return new EvaluatorBuilder().build();
     }
 }

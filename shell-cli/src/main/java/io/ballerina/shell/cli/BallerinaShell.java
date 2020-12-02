@@ -21,58 +21,40 @@ package io.ballerina.shell.cli;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticKind;
 import io.ballerina.shell.Evaluator;
-import io.ballerina.shell.cli.help.HelpProvider;
-import io.ballerina.shell.cli.help.RemoteBbeHelpProvider;
+import io.ballerina.shell.cli.handlers.CommandHandler;
+import io.ballerina.shell.cli.handlers.ExitCommand;
+import io.ballerina.shell.cli.handlers.HelpCommand;
+import io.ballerina.shell.cli.handlers.ResetStateCommand;
+import io.ballerina.shell.cli.handlers.StringInfoCommand;
+import io.ballerina.shell.cli.handlers.ToggleDebugCommand;
+import io.ballerina.shell.cli.utils.FileUtils;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Scanner;
-import java.util.function.Consumer;
 
 /**
  * REPL shell terminal executor. Launches the terminal.
  * Independent of third party libraries.
  */
 public class BallerinaShell {
-    private static final String HELP_FILE = "command.help.txt";
     private static final String HEADER_FILE = "command.header.txt";
-    private static final String SPECIAL_DELIMITER = "\\A";
     private static final String REPL_PROMPT = "=$ ";
-
-    private static final String COMMAND_PREFIX = "/";
-    private static final String HELP_COMMAND = "/help";
-    private static final String EXIT_COMMAND = "/exit";
-    private static final String TOGGLE_DEBUG = "/debug";
-    private static final String RESET_COMMAND = "/reset";
-    private static final String STATE_COMMAND = "/state";
-    private static final String IMPORTS_COMMAND = "/imports";
-    private static final String MODULE_DCLNS_COMMAND = "/dclns";
-    private static final String VARIABLES_COMMAND = "/vars";
 
     protected final Configuration configuration;
     protected final TerminalAdapter terminal;
     protected final Evaluator evaluator;
-    protected final Map<String, Consumer<String[]>> handlers;
-    private final HelpProvider helpProvider;
-    protected boolean continueLoop;
+    protected final CommandHandler commandHandler;
+    protected boolean isRunning;
 
     public BallerinaShell(Configuration configuration, TerminalAdapter terminal) {
         this.configuration = configuration;
         this.terminal = terminal;
-        this.continueLoop = true;
+        this.isRunning = true;
         this.evaluator = configuration.getEvaluator();
-        this.helpProvider = new RemoteBbeHelpProvider();
-        this.handlers = availableCommands();
+        this.commandHandler = createCommandHandler();
     }
 
     /**
@@ -80,41 +62,32 @@ public class BallerinaShell {
      */
     public void run() {
         String leftPrompt = terminal.color(REPL_PROMPT, TerminalAdapter.GREEN);
-        terminal.println(readFile(HEADER_FILE));
+        terminal.println(FileUtils.readResource(HEADER_FILE));
 
         // Initialize. This must not fail.
         // If this fails, an error would be directly thrown.
-        Instant start = Instant.now();
         try {
             evaluator.initialize();
         } catch (BallerinaShellException e) {
             throw new RuntimeException("Shell initialization failed.", e);
         }
-        Instant end = Instant.now();
 
-        while (continueLoop) {
+        Instant start = Instant.now();
+        Instant end = Instant.now();
+        while (isRunning) {
             Duration previousDuration = Duration.between(start, end);
             String rightPrompt = String.format("took %s ms", previousDuration.toMillis());
-            String source = terminal.readLine(leftPrompt, rightPrompt).trim();
-            start = Instant.now();
+            rightPrompt = terminal.color(rightPrompt, TerminalAdapter.BRIGHT);
 
+            String source = terminal.readLine(leftPrompt, rightPrompt).trim();
+
+            start = Instant.now();
             try {
-                // Ignore blank lines
-                if (source.isBlank()) {
-                    continue;
-                }
-                // Check if starts with /
-                if (source.startsWith(COMMAND_PREFIX)) {
-                    String[] args = source.split(" ");
-                    if (this.handlers.containsKey(args[0])) {
-                        this.handlers.get(args[0]).accept(args);
-                        continue;
+                if (!commandHandler.handle(source)) {
+                    String result = evaluator.evaluate(source);
+                    if (result != null) {
+                        terminal.result(result);
                     }
-                }
-                // Evaluate line
-                String result = evaluator.evaluate(source);
-                if (result != null) {
-                    terminal.result(result);
                 }
             } catch (Exception e) {
                 if (!evaluator.hasErrors()) {
@@ -131,26 +104,11 @@ public class BallerinaShell {
     }
 
     /**
-     * Reads the file content from the resources.
-     *
-     * @param path Path of the file to read.
-     * @return Read text.
-     */
-    private String readFile(String path) {
-        ClassLoader classLoader = BallerinaShell.class.getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream(path);
-        Objects.requireNonNull(inputStream, "File does not exist: " + path);
-        InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-        Scanner scanner = new Scanner(reader).useDelimiter(SPECIAL_DELIMITER);
-        return scanner.hasNext() ? scanner.next() : "";
-    }
-
-    /**
      * Output a diagnostic to the terminal.
      *
      * @param diagnostic Diagnostic to output.
      */
-    private void outputDiagnostic(Diagnostic diagnostic) {
+    protected void outputDiagnostic(Diagnostic diagnostic) {
         if (diagnostic.getKind() == DiagnosticKind.DEBUG && !configuration.isDebug()) {
             return;
         }
@@ -169,7 +127,7 @@ public class BallerinaShell {
      *
      * @param e Exception to output.
      */
-    private void outputException(Exception e) {
+    protected void outputException(Exception e) {
         if (configuration.isDebug()) {
             StringWriter stringWriter = new StringWriter();
             PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -178,66 +136,41 @@ public class BallerinaShell {
         }
     }
 
-    // Commands  ======================================================
-
     /**
      * Attaches commands to the handler which handles internal command.
      *
-     * @return Command attached handler map.
+     * @return Command attached handler.
      */
-    protected Map<String, Consumer<String[]>> availableCommands() {
-        Map<String, Consumer<String[]>> handlers = new HashMap<>();
-        handlers.put(RESET_COMMAND, this::handleReset);
-        handlers.put(HELP_COMMAND, this::handleHelp);
-        handlers.put(TOGGLE_DEBUG, this::handleToggleDebug);
-        handlers.put(STATE_COMMAND, this::handleDumpState);
-        handlers.put(IMPORTS_COMMAND, this::handleDumpImports);
-        handlers.put(VARIABLES_COMMAND, this::handleDumpVars);
-        handlers.put(MODULE_DCLNS_COMMAND, this::handleDumpDclns);
-        handlers.put(EXIT_COMMAND, this::handleExit);
-        return handlers;
+    protected CommandHandler createCommandHandler() {
+        CommandHandler commandHandler = new CommandHandler();
+        commandHandler.attach("/exit", new ExitCommand(this));
+        commandHandler.attach("/help", new HelpCommand(this));
+        commandHandler.attach("/reset", new ResetStateCommand(this));
+        commandHandler.attach("/debug", new ToggleDebugCommand(this));
+        commandHandler.attach("/state", new StringInfoCommand(this, this.evaluator::toString));
+        commandHandler.attach("/vars", new StringInfoCommand(this, this.evaluator::availableVariables));
+        commandHandler.attach("/imports", new StringInfoCommand(this, this.evaluator::availableImports));
+        commandHandler.attach("/dclns", new StringInfoCommand(this, this.evaluator::availableModuleDeclarations));
+        return commandHandler;
     }
 
-    protected void handleReset(String... args) {
-        this.evaluator.reset();
-        terminal.info("REPL state was reset.");
+    public void outputInfo(String text) {
+        this.terminal.info(text);
     }
 
-    protected void handleHelp(String... args) {
-        StringBuilder content = new StringBuilder();
-        if (args.length <= 1) {
-            content.append(readFile(HELP_FILE));
-        } else {
-            String[] newArgs = Arrays.copyOfRange(args, 1, args.length);
-            helpProvider.getTopic(newArgs, content);
-        }
-        terminal.info(content.toString());
+    public void outputError(String text) {
+        this.terminal.error(text);
     }
 
-    protected void handleToggleDebug(String... args) {
+    public void toggleDebug() {
         this.configuration.toggleDebug();
-        terminal.info("Toggled debug mode. Debug mode: "
-                + this.configuration.isDebug);
     }
 
-    protected void handleDumpState(String... args) {
-        this.terminal.info(evaluator.toString());
+    public void reset() {
+        this.evaluator.reset();
     }
 
-    protected void handleDumpImports(String... args) {
-        this.terminal.info(evaluator.availableImports());
-    }
-
-    protected void handleDumpVars(String... args) {
-        this.terminal.info(evaluator.availableVariables());
-    }
-
-    protected void handleDumpDclns(String... args) {
-        this.terminal.info(evaluator.availableModuleDeclarations());
-    }
-
-    protected void handleExit(String... args) {
-        this.continueLoop = false;
-        terminal.info("Bye!!");
+    public void exit() {
+        this.isRunning = false;
     }
 }

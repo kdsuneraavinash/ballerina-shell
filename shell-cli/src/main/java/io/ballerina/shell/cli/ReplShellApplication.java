@@ -33,33 +33,41 @@ import org.jline.terminal.TerminalBuilder;
  * Main entry point for REPL shell application.
  */
 public class ReplShellApplication {
-    public static void execute(boolean isDebug, ApplicationConfiguration.EvaluatorMode mode) throws Exception {
-        Configuration configuration = new ApplicationConfiguration(isDebug, mode);
+    /**
+     * Executes the repl shell.
+     *
+     * @param configuration Configuration to use.
+     * @throws Exception If the execution failed with an unexpected error.
+     */
+    public static void execute(Configuration configuration) throws Exception {
         Terminal terminal = TerminalBuilder.terminal();
+        Completer completer = new JlineSimpleCompleter();
+        DefaultHighlighter highlighter = new DefaultHighlighter();
+
         DefaultParser parser = new DefaultParser();
         parser.setEofOnUnclosedBracket(DefaultParser.Bracket.CURLY,
                 DefaultParser.Bracket.ROUND, DefaultParser.Bracket.SQUARE);
         parser.setQuoteChars(new char[]{'"'});
-
-        Completer completer = new JlineSimpleCompleter();
-        DefaultHighlighter highlighter = new DefaultHighlighter();
+        parser.setEscapeChars(new char[]{});
 
         LineReader lineReader = LineReaderBuilder.builder()
-                .appName("Ballerina Shell REPL")
-                .terminal(terminal)
-                .completer(completer)
-                .highlighter(highlighter)
-                .parser(parser)
                 .variable(LineReader.SECONDARY_PROMPT_PATTERN, "%P > ")
                 .variable(LineReader.INDENTATION, 2)
-                .option(LineReader.Option.INSERT_BRACKET, true)
+                .appName("Ballerina Shell REPL")
+                .highlighter(highlighter)
+                .completer(completer)
+                .terminal(terminal)
+                .parser(parser)
                 .build();
 
-        BallerinaShell shell = new BallerinaShell(configuration, new JlineTerminalAdapter(lineReader));
+        TerminalAdapter adapter = new JlineTerminalAdapter(lineReader);
+        BallerinaShell shell = new BallerinaShell(configuration, adapter);
         shell.run();
     }
 
-    public static void main(String[] args) throws Exception {
-        ReplShellApplication.execute(false, ApplicationConfiguration.EvaluatorMode.CLASSLOAD);
+    public static void main(String... args) throws Exception {
+        Configuration configuration = new ApplicationConfiguration(false,
+                ApplicationConfiguration.EvaluatorMode.CLASSLOAD);
+        ReplShellApplication.execute(configuration);
     }
 }

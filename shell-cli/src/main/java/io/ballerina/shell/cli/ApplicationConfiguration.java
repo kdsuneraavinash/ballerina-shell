@@ -19,18 +19,13 @@
 package io.ballerina.shell.cli;
 
 import io.ballerina.shell.Evaluator;
-import io.ballerina.shell.invoker.Invoker;
-import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
-import io.ballerina.shell.parser.TrialTreeParser;
-import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
-import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
+import io.ballerina.shell.EvaluatorBuilder;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
  * Configuration that uses command utils to provide options.
+ * TODO: Replace with a property based config.
  */
 public class ApplicationConfiguration extends Configuration {
     /**
@@ -54,13 +49,7 @@ public class ApplicationConfiguration extends Configuration {
      */
     private Evaluator createEvaluator(EvaluatorMode mode) {
         if (mode == EvaluatorMode.CLASSLOAD) {
-            Invoker invoker = new ClassLoadInvoker();
-            Evaluator evaluator = new Evaluator();
-            evaluator.setPreprocessor(new SeparatorPreprocessor());
-            evaluator.setTreeParser(new TrialTreeParser());
-            evaluator.setSnippetFactory(new BasicSnippetFactory());
-            evaluator.setInvoker(invoker);
-            return evaluator;
+            return new EvaluatorBuilder().build();
         }
         throw new RuntimeException("Unknown mode given.");
     }

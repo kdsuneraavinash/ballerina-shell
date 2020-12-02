@@ -16,18 +16,21 @@
  * under the License.
  */
 
-package io.ballerina.shell.cli.help;
+package io.ballerina.shell.cli.handlers;
+
+import io.ballerina.shell.cli.BallerinaShell;
 
 /**
- * Help provider interface for the providing classes.
- * Provides help for a given topic.
+ * Exits from the shell.
  */
-public interface HelpProvider {
-    /**
-     * Get the content for a given topic.
-     *
-     * @param args   All the arguments given by requester.
-     * @param output Builder to append output.
-     */
-    void getTopic(String[] args, StringBuilder output);
+public class ExitCommand extends AbstractCommand {
+    public ExitCommand(BallerinaShell ballerinaShell) {
+        super(ballerinaShell);
+    }
+
+    @Override
+    public void run(String... args) {
+        ballerinaShell.exit();
+        ballerinaShell.outputInfo("Bye!!!");
+    }
 }

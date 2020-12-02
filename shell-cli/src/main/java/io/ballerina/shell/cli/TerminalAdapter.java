@@ -39,6 +39,8 @@ public abstract class TerminalAdapter {
     protected static final int WHITE = 7;
     protected static final int BRIGHT = 8;
 
+    private static final String NEWLINE = "\n";
+
     /**
      * Returns the writer object to write.
      *
@@ -64,8 +66,18 @@ public abstract class TerminalAdapter {
      */
     public abstract String readLine(String prefix, String postfix);
 
+    /**
+     * Prints a line of text to the terminal.
+     *
+     * @param text Text to output.
+     */
+    public void println(String text) {
+        this.writer().println(text);
+        this.writer().flush();
+    }
+
     public void result(String text) {
-        this.println(this.color(text, BLUE));
+        this.println(this.color(text, BLUE | BRIGHT));
     }
 
     public void error(String text) {
@@ -88,14 +100,14 @@ public abstract class TerminalAdapter {
         this.println(this.color(indented(text), CYAN));
     }
 
-    public void println(String text) {
-        this.writer().println(text);
-        this.writer().flush();
-    }
-
+    /**
+     * Indent each new line in a string with | characters.
+     *
+     * @param text Text to indent.
+     * @return Indented text.
+     */
     private String indented(String text) {
-        // All info data is appended with |, similar to jshell
-        return Arrays.stream(text.split("\n")).map(s -> "|  " + s)
-                .collect(Collectors.joining("\n"));
+        return Arrays.stream(text.split(NEWLINE)).map(s -> "| " + s)
+                .collect(Collectors.joining(NEWLINE));
     }
 }

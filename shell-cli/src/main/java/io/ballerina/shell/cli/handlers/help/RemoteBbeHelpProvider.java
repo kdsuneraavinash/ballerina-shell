@@ -16,14 +16,12 @@
  * under the License.
  */
 
-package io.ballerina.shell.cli.help;
+package io.ballerina.shell.cli.handlers.help;
+
+import io.ballerina.shell.cli.utils.FileUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.util.Scanner;
 
 /**
  * Help provider that will fetch data from the BBE.
@@ -33,57 +31,42 @@ import java.util.Scanner;
 public class RemoteBbeHelpProvider implements HelpProvider {
     private static final char HYPHEN = '-';
     private static final char UNDERSCORE = '_';
+
     private static final String NEWLINE = "\n";
-    private static final String SPECIAL_DELIMITER = "\\A";
     private static final String META_URL =
             "https://raw.githubusercontent.com/ballerina-platform/ballerina-distribution/master/examples/%s/";
     private static final String DESCRIPTION_FILE = "%s.description";
     private static final String EXAMPLE_FILE = "%s.bal";
 
     @Override
-    public void getTopic(String[] args, StringBuilder output) {
-        assert args.length > 0;
+    public void getTopic(String[] args, StringBuilder output) throws HelpProviderException {
+        boolean isExample = (args.length > 1) && args[1].equals("example");
         String topic = args[0];
 
-        boolean isExample = false;
-        if (args.length > 1) {
-            isExample = args[1].equals("example");
+        if (!topic.matches("^[a-zA-Z-_]+$")) {
+            throw new HelpProviderException("Not a valid topic name.");
         }
 
         try {
             String metaUrl = String.format(META_URL, topic);
             String fileName = topic.replace(HYPHEN, UNDERSCORE);
             String file = String.format(isExample ? EXAMPLE_FILE : DESCRIPTION_FILE, fileName);
-            String content = getLinkContent(metaUrl + file).trim();
+            String content = FileUtils.readFromUrl(metaUrl + file).trim();
             if (!isExample) {
                 content = content
-                        .replaceAll("^// ", NEWLINE)
-                        .replaceAll("\n// ", NEWLINE)
-                        .replaceAll("<br/>", NEWLINE)
+                        .replaceAll("[^|\n]//\\w*", NEWLINE) // Comment sign at start of lines
+                        .replaceAll("<br/>", NEWLINE) // <br/> tag
                         .trim();
             }
             output.append(content).append(NEWLINE);
         } catch (FileNotFoundException e) {
-            output.append("No ballerina documentation found for '")
-                    .append(topic).append("'").append(NEWLINE);
-            output.append("Use '/help TOPIC' to get help on a specific topic.");
+            throw new HelpProviderException("" +
+                    "No ballerina documentation found for '" + topic + "'.\n" +
+                    "Use '/help TOPIC' to get help on a specific topic.");
         } catch (IOException e) {
-            output.append("Help retrieval failed.").append(NEWLINE);
-            output.append(e);
+            throw new HelpProviderException("" +
+                    "Help retrieval failed.\n" +
+                    "Use '/help TOPIC' to get help on a specific topic.");
         }
-    }
-
-    /**
-     * Get the content that is in the given link.
-     *
-     * @param link Link to fetch.
-     * @return String content of the file.
-     * @throws IOException If the file does not exist or fetching failed.
-     */
-    private String getLinkContent(String link) throws IOException {
-        URL url = new URL(link);
-        InputStream inputStream = url.openStream();
-        Scanner scanner = new Scanner(inputStream, Charset.defaultCharset()).useDelimiter(SPECIAL_DELIMITER);
-        return scanner.hasNext() ? scanner.next() : "";
     }
 }
