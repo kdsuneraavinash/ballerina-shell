@@ -57,7 +57,8 @@ public class RemoteBbeHelpProvider implements HelpProvider {
             String content = FileUtils.readFromUrl(file).trim();
             if (!isExample) {
                 content = content
-                        .replaceAll("[^|\n]//\\w*", NEWLINE) // Comment sign at start of lines
+                        .replaceAll("^//\\s*", NEWLINE) // Comment sign at start of file
+                        .replaceAll("\n//\\s*", NEWLINE) // Comment sign at start of new lines
                         .replaceAll("<br/>", NEWLINE) // <br/> tag
                         .trim();
             }
