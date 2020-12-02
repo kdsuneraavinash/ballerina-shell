@@ -51,6 +51,8 @@ import static io.ballerina.shell.cli.PropertiesLoader.REPL_PROMPT;
  * Independent of third party libraries.
  */
 public class BallerinaShell {
+    private static final int INIT_WARNING_THRESH_S = 2;
+
     protected final Configuration configuration;
     protected final TerminalAdapter terminal;
     protected final Evaluator evaluator;
@@ -73,6 +75,7 @@ public class BallerinaShell {
                 TerminalAdapter.GREEN);
         terminal.println(FileUtils.readResource(PropertiesLoader.getProperty(HEADER_FILE)));
 
+        Instant start = Instant.now();
         // Initialize. This must not fail.
         // If this fails, an error would be directly thrown.
         try {
@@ -80,9 +83,12 @@ public class BallerinaShell {
         } catch (BallerinaShellException e) {
             throw new RuntimeException("Shell initialization failed.", e);
         }
-
-        Instant start = Instant.now();
         Instant end = Instant.now();
+        // Output a warning if initialization took too long.
+        if (Duration.between(start, end).getSeconds() > INIT_WARNING_THRESH_S) {
+            terminal.warn("Compiler initialization took longer than expected.");
+        }
+
         while (isRunning) {
             Duration previousDuration = Duration.between(start, end);
             String rightPrompt = String.format("took %s ms", previousDuration.toMillis());
