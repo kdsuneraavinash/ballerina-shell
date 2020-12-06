@@ -37,6 +37,15 @@ gradlew.bat fatJar
 java -jar -Dballerina.home=home shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
 ```
 
+**To run with an installed ballerina distribution,** (This will enable stdlib imports)
+In the following script, `$BALLERINA_HOME` refers to the ballerina distribution directory.
+Ballerina shell is compatible with `ballerina-slp7` or higher.
+
+```bash
+java -jar -Dballerina.home=$BALLERINA_HOME shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+# eg: java -jar -Dballerina.home=~/ballerina/distributions/ballerina-slp7 shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+```
+
 ##  References
 
 [reple: "Replay-Based" REPLs for Compiled Languages](https://people.eecs.berkeley.edu/~brock/blog/reple.php) - A blog post on reple: "Replay-Based" REPLs for Compiled Languages and limitations/fixes possible.
