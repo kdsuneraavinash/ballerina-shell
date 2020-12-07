@@ -28,6 +28,7 @@ public class BasicTypeEvaluatorTest extends AbstractEvaluatorTest {
     private static final String STRING_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.strings.json";
     private static final String TUPLES_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.tuples.json";
     private static final String ARRAYS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.arrays.json";
+    private static final String TABLE_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.table.json";
 
     @Test
     public void testEvaluateString() throws BallerinaShellException {
@@ -42,5 +43,13 @@ public class BasicTypeEvaluatorTest extends AbstractEvaluatorTest {
     @Test
     public void testEvaluateArrays() throws BallerinaShellException {
         testEvaluate(ARRAYS_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateTable() throws BallerinaShellException {
+        // TODO: Creating table with map constrained members is not working.
+        //  table<map<any>> customerTab = table [{id: 13 , fname: "Dan", lname: "Bing"}];
+        //  The type is taken as table<map> instead of table<map<any>> which causes an error.
+        testEvaluate(TABLE_EVALUATOR_TESTCASE);
     }
 }

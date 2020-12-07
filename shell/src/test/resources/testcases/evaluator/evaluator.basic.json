@@ -13,5 +13,15 @@
     "description": "Increments the variable.",
     "code": "i+1",
     "expr": "101"
+  },
+  {
+    "description": "Declares an union type variable.",
+    "code": "int|string x = 10; x is int",
+    "expr": "true"
+  },
+  {
+    "description": "Declares an optional type variable.",
+    "code": "string? y = (); y is string",
+    "expr": "false"
   }
 ]

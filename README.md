@@ -60,6 +60,8 @@ The project is implemented in two base modules.
   [a, b] = [1, 2]
   ```
 
+- **Enums cannot be used as types** - Enum types are not correctly inferred under the current implementation. So enums cannot be used as types. Because of the same implementation limitation, `table<map<any>>` cannot be used as a type.
+
 ## Implementation
 
 For implementation details please refer [this](shell/README.md).
