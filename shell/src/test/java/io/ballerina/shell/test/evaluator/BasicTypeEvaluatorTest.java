@@ -29,6 +29,7 @@ public class BasicTypeEvaluatorTest extends AbstractEvaluatorTest {
     private static final String TUPLES_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.tuples.json";
     private static final String ARRAYS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.arrays.json";
     private static final String TABLE_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.table.json";
+    private static final String MAPS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.maps.json";
 
     @Test
     public void testEvaluateString() throws BallerinaShellException {
@@ -48,5 +49,10 @@ public class BasicTypeEvaluatorTest extends AbstractEvaluatorTest {
     @Test
     public void testEvaluateTable() throws BallerinaShellException {
         testEvaluate(TABLE_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateMaps() throws BallerinaShellException {
+        testEvaluate(MAPS_EVALUATOR_TESTCASE);
     }
 }
