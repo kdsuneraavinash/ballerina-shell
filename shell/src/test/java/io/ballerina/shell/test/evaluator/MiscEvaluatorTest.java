@@ -26,15 +26,15 @@ import org.testng.annotations.Test;
  */
 public class MiscEvaluatorTest extends AbstractEvaluatorTest {
     private static final String ENUM_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.enum.json";
+    private static final String RAW_TEMP_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.raw.template.json";
 
     @Test
     public void testEvaluateEnum() throws BallerinaShellException {
-        // TODO: An enum can also be used as a type.
-        //  Language language = getLanguage("e"); language
-        //  Language sinhala = "Sinhala"; sinhala
-        //  EN english = "English"; english
-        //  Language type is not correctly inferred.
-        //  The enums are extracted so the type inferred is incorrect.
         testEvaluate(ENUM_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateRawTemplate() throws BallerinaShellException {
+        testEvaluate(RAW_TEMP_EVALUATOR_TESTCASE);
     }
 }

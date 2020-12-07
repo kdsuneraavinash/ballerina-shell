@@ -28,5 +28,20 @@
   {
     "description": "Helper function to get the enum value.",
     "code": "function getLanguage(string symbol) returns Language { match symbol { \"e\" => { return EN; } \"t\" => { return TA; } } return SI; }"
+  },
+  {
+    "description": "Enum type can be used as a type.",
+    "code": "Language language = getLanguage(\"e\"); language",
+    "expr": "English"
+  },
+  {
+    "description": "Enum value can be used as a type assigned by a string.",
+    "code": "Language sinhala = \"Sinhala\"; sinhala",
+    "expr": "Sinhala"
+  },
+  {
+    "description": "Enum value can be used as a type.",
+    "code": "EN english = \"English\"; english",
+    "expr": "English"
   }
 ]

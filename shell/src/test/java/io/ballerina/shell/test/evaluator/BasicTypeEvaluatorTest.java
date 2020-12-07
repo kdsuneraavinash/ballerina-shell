@@ -47,9 +47,6 @@ public class BasicTypeEvaluatorTest extends AbstractEvaluatorTest {
 
     @Test
     public void testEvaluateTable() throws BallerinaShellException {
-        // TODO: Creating table with map constrained members is not working.
-        //  table<map<any>> customerTab = table [{id: 13 , fname: "Dan", lname: "Bing"}];
-        //  The type is taken as table<map> instead of table<map<any>> which causes an error.
         testEvaluate(TABLE_EVALUATOR_TESTCASE);
     }
 }

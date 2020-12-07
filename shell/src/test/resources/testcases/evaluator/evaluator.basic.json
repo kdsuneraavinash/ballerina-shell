@@ -23,5 +23,10 @@
     "description": "Declares an optional type variable.",
     "code": "string? y = (); y is string",
     "expr": "false"
+  },
+  {
+    "description": "Uses i in a string template.",
+    "code": "string template = string `Hello ${i}!!!`; template",
+    "expr": "Hello 100!!!"
   }
 ]

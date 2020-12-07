@@ -35,5 +35,10 @@
     "description": "Remove a table entry.",
     "code": "string filtered = \"\"; employeeTab.forEach(function (Employee employee) {if (employee.salary < 400.0) {filtered += employee.name;filtered += \" \";} }); filtered",
     "expr": "John "
+  },
+  {
+    "description": "Creating table with map constrained members.",
+    "code": "table<map<any>> customerTab = table [{id: 13 , fname: \"Dan\", lname: \"Bing\"}]; customerTab.toArray()",
+    "expr": "[{\"id\":13,\"fname\":\"Dan\",\"lname\":\"Bing\"}]"
   }
 ]

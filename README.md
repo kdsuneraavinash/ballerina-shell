@@ -19,7 +19,7 @@ The project is implemented in two base modules.
 
 - **The parser is imperfect** - Current parser is imperfect and is sometimes unable to detect the type of statement. Please file an issue if you come across any wrong categorization of a snippet. The parser is also relatively slow compared to the compilation phase, acting as a bottle-neck. So a timeout is employed to stop invalid statement parsing from taking too much time. However, this might cause issues in some old hardware where the execution might be slower than expected (where even valid executions might exceed the timeout).
 
-- **Assignments to global variables in closures or class methods will not work** - Assignments done to global variables in closures will not be reflected after the execution. The changes will be visible only for the scope belonging to the snippet where the closure was defined. However the value of the global variables inside a closure will reflect the current real value of the said variable.
+- **Assignments to global variables in closures or class methods will not work** - Assignments done to global variables in closures will not be reflected after the execution. The changes will be visible only for the scope belonging to the snippet where the closure was defined.
 
   ```ballerina
   int x = 10
@@ -59,8 +59,6 @@ The project is implemented in two base modules.
   int a = 0; int b = 0;
   [a, b] = [1, 2]
   ```
-
-- **Enums cannot be used as types** - Enum types are not correctly inferred under the current implementation. So enums cannot be used as types. Because of the same implementation limitation, `table<map<any>>` cannot be used as a type.
 
 ## Implementation
 
