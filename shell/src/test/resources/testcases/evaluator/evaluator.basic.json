@@ -1,19 +1,16 @@
 [
   {
-    "code": "int i = 4"
-  },
-  {
-    "code": "i",
+    "description": "Declares a simple variable.",
+    "code": "int i = 4; i",
     "expr": "4"
   },
   {
-    "code": "i = 100"
-  },
-  {
-    "code": "i",
+    "description": "Assigns to the variable.",
+    "code": "i = 100; i",
     "expr": "100"
   },
   {
+    "description": "Increments the variable.",
     "code": "i+1",
     "expr": "101"
   }

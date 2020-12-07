@@ -1,92 +1,93 @@
 [
   {
+    "description": "Imports string module.",
     "code": "import ballerina/lang.'string;",
     "stdout": null
   },
   {
+    "description": "Declares string variable.",
     "code": "string statement = \"Lion in Town. Catch the Lion\";"
   },
   {
+    "description": "Converts to uppercase.",
     "code": "string s1 = statement.toUpperAscii(); s1",
     "expr": "LION IN TOWN. CATCH THE LION"
   },
   {
+    "description": "Converts to lowercase.",
     "code": "string s2 = statement.toLowerAscii(); s2",
     "expr": "lion in town. catch the lion"
   },
   {
+    "description": "Get the substring.",
     "code": "string s3 = statement.substring(0, 4); s3",
     "expr": "Lion"
   },
   {
-    "code": "int? index = statement.indexOf(\"on\");"
+    "description": "Get the index of a substring.",
+    "code": "int? index = statement.indexOf(\"on\"); index",
+    "expr": "2"
   },
   {
-    "code": "if (index is int) {\n io:println(\"IndexOf: \", index);}",
-    "stdout": "IndexOf: 2\n"
-  },
-  {
+    "description": "Get the length of a string.",
     "code": "int length = statement.length(); length",
     "expr": "28"
   },
   {
-    "code": "string hello = \"Hello\";"
+    "description": "Define simple strings.",
+    "code": "string hello = \"Hello\"; string ballerina = \"Ballerina!\";"
   },
   {
-    "code": "string ballerina = \"Ballerina!\";"
-  },
-  {
+    "description": "Concat strings together.",
     "code": "string s4 = hello.concat(\" \", ballerina); s4",
     "expr": "Hello Ballerina!"
   },
   {
+    "description": "Join strings together.",
     "code": "string s5 = \",\".'join(hello, ballerina); s5",
     "expr": "Hello,Ballerina!"
   },
   {
+    "description": "Get the byte array of string.",
     "code": "byte[] bArray = hello.toBytes(); bArray",
     "expr": "[72,101,108,108,111]"
   },
   {
-    "code": "string|error s6 = 'string:fromBytes(bArray);"
+    "description": "Get the string from bytes.",
+    "code": "string|error s6 = 'string:fromBytes(bArray); s6",
+    "expr": "Hello"
   },
   {
-    "code": "if (s6 is string) {\nio:println(\"From bytes: \", s6);}",
-    "stdout": "From bytes: Hello\n"
-  },
-  {
+    "description": "Trims strings.",
     "code": "string toTrim = \"  Ballerina Programming Language  \"; toTrim.trim();",
     "expr": "Ballerina Programming Language"
   },
   {
+    "description": "Check for suffix.",
     "code": "boolean hasSuffix = statement.endsWith(\"Lion\"); hasSuffix",
     "expr": "true"
   },
   {
+    "description": "Check for prefix.",
     "code": "boolean hasPrefix = statement.startsWith(\"Lion\"); hasPrefix",
     "expr": "true"
   },
   {
-    "code": "string name = \"Sam\";"
+    "description": "Define helper variables.",
+    "code": "string name = \"Sam\"; float average = 71.5; int marks = 90;"
   },
   {
-    "code": "int marks = 90;"
-  },
-  {
+    "description": "Define string array.",
     "code": "string[] subjects = [\"English\", \"Science\"];"
   },
   {
-    "code": "float average = 71.5;"
-  },
-  {
+    "description": "Format a string with given arguments.",
     "code": "io:sprintf(\"%s scored %d for %s and has an average of %.2f.\", name, marks, subjects[0], average);",
     "expr": "Sam scored 90 for English and has an average of 71.50."
   },
   {
-    "code": "string country = \"Sri Lanka\";"
-  },
-  {
-    "code": "string c = country[4]; c",
+    "description": "Get the character at index.",
+    "code": "string country = \"Sri Lanka\"; string c = country[4]; c",
     "expr": "L"
   }
 ]

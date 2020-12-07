@@ -38,6 +38,7 @@ import java.util.ArrayList;
  */
 public abstract class AbstractEvaluatorTest {
     private static class TestCaseLine {
+        String description;
         String code;
         String expr;
         String stdout = "";
@@ -49,7 +50,7 @@ public abstract class AbstractEvaluatorTest {
 
     private static class TestInvoker extends ClassLoadInvoker {
         private String output;
-        private int expectingExitCode;
+        private TestCaseLine testCaseLine;
 
         @Override
         protected int invokeMethod(Method method) throws IllegalAccessException {
@@ -65,8 +66,7 @@ public abstract class AbstractEvaluatorTest {
                 System.setSecurityManager(secManager);
                 return (int) method.invoke(null, new Object[]{args});
             } catch (InvocationTargetException ignored) {
-                Assert.assertEquals(secManager.getExitCode(), expectingExitCode,
-                        "Exit code was unexpected:" + bracketed(stdOutBaOs.toString()));
+                Assert.assertEquals(secManager.getExitCode(), testCaseLine.exitCode, testCaseLine.description);
                 return secManager.getExitCode();
             } finally {
                 // Restore everything
@@ -84,18 +84,19 @@ public abstract class AbstractEvaluatorTest {
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
         for (TestCaseLine testCaseLine : testCase) {
             try {
-                invoker.expectingExitCode = testCaseLine.exitCode;
+                invoker.testCaseLine = testCaseLine;
                 String expr = evaluator.evaluate(testCaseLine.code);
-                Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.code);
-                Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.code);
+                Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.description);
+                Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.description);
             } catch (BallerinaShellException e) {
                 StringBuilder diagnosticsStr = new StringBuilder();
                 evaluator.diagnostics().stream()
                         .filter(d -> d.getKind() == DiagnosticKind.ERROR)
                         .forEach(diagnosticsStr::append);
-                Assert.fail("Exception occurred in:" + bracketed(testCaseLine.code) +
-                        "err:" + bracketed(e.getMessage()) +
-                        "diagnostics:" + bracketed(diagnosticsStr));
+                Assert.fail(
+                        "Exception occurred in:" + bracketed(testCaseLine.description) +
+                                "err:" + bracketed(e.getMessage()) +
+                                "diagnostics:" + bracketed(diagnosticsStr));
                 throw e;
             } finally {
                 evaluator.resetDiagnostics();

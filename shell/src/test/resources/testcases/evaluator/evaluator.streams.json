@@ -1,72 +1,61 @@
 [
   {
+    "description": "Define class required for stream.",
     "code": "class OddNumberGenerator { int i = 1; public isolated function next() returns record {|int value;|}|error? { self.i += 2; return {value: self.i};}}"
   },
   {
-    "code": "type ResultValue record {| int value;  |};"
+    "description": "Defines types required for stream.",
+    "code": "type ResultValue record {| int value;  |}; type Student record {  string firstName;   string lastName;   float score; }; type StudentValue record {|  Student value;  |}; type FullName record {| string firstName; string lastName;|}; type Subscription record {| string firstName; string lastName; float score; string degree; |};"
   },
   {
-    "code": "type Student record {  string firstName;   string lastName;   float score; };"
-  },
-  {
-    "code": "type StudentValue record {|  Student value;  |};"
-  },
-  {
-    "code": "type FullName record {| string firstName; string lastName;|};"
-  },
-  {
-    "code": "type Subscription record {| string firstName; string lastName; float score; string degree; |};"
-  },
-  {
+    "description": "Define Odd number generation object.",
     "code": "OddNumberGenerator oddGen = new;"
   },
   {
+    "description": "Define Odd number generation stream.",
     "code": "var oddNumberStream = new stream<int, error>(oddGen);"
   },
   {
-    "code": "record {|int value;|}|error? oddNumber = oddNumberStream.next();"
+    "description": "Get the next value from the stream.",
+    "code": "ResultValue|error? oddNumber = oddNumberStream.next();"
   },
   {
-    "code": "oddNumber is ResultValue",
-    "expr": "true"
-  },
-  {
+    "description": "Get the value from the stream result.",
     "code": "var oddNumberRv = <ResultValue> oddNumber; io:println(oddNumberRv.value)",
     "stdout": "3\n"
   },
   {
-    "code": "Student s1 = {firstName: \"Alex\", lastName: \"George\", score: 1.5};"
+    "description": "Define student records required for stream.",
+    "code": "Student s1 = {firstName: \"Alex\", lastName: \"George\", score: 1.5}; Student s2 = {firstName: \"Ranjan\", lastName: \"Fonseka\", score: 0.9}; Student s3 = {firstName: \"John\", lastName: \"David\", score: 1.2};"
   },
   {
-    "code": "Student s2 = {firstName: \"Ranjan\", lastName: \"Fonseka\", score: 0.9};"
-  },
-  {
-    "code": "Student s3 = {firstName: \"John\", lastName: \"David\", score: 1.2};"
-  },
-  {
+    "description": "Define student record array required for stream.",
     "code": "Student[] studentList = [s1, s2, s3];"
   },
   {
+    "description": "Create stream from students array.",
     "code": "stream<Student> studentStream = studentList.toStream();"
   },
   {
-    "code": "type StudentStreamResult record {|Student value;|};"
+    "description": "Get the next student from stream.",
+    "code": "StudentValue|error? student = studentStream.next();"
   },
   {
-    "code": "StudentStreamResult|error? student = studentStream.next();"
-  },
-  {
-    "code": "var studentSr = <StudentStreamResult> student; studentSr.value",
+    "description": "Check the stream result student.",
+    "code": "var studentSr = <StudentValue> student; studentSr.value",
     "expr": "{\"firstName\":\"Alex\",\"lastName\":\"George\",\"score\":1.5}"
   },
   {
+    "description": "Create another stream from students array.",
     "code": "stream<Student> studentStream2 = studentList.toStream();"
   },
   {
-    "code": "StudentStreamResult|error? nextStudent = studentStream2.iterator().next();"
+    "description": "Get the next student from iterator stream.",
+    "code": "StudentValue|error? nextStudent = studentStream2.iterator().next();"
   },
   {
-    "code": "StudentStreamResult  nextStudentV = <StudentStreamResult> nextStudent; nextStudentV.value;",
+    "description": "Check the iterator result student.",
+    "code": "StudentValue  nextStudentV = <StudentValue> nextStudent; nextStudentV.value;",
     "expr": "{\"firstName\":\"Alex\",\"lastName\":\"George\",\"score\":1.5}"
   }
 ]
