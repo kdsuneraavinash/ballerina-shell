@@ -50,6 +50,16 @@ The project is implemented in two base modules.
   pqr:TypeX x = abc:getX();
   ```
 
+- **Only captured binding patterns are supported to define variables** - You may not use list binding pattern/mapping binding pattern to define global variables in REPL. (Local variables can still be defined using these)
+
+  ```ballerina
+  // This will not work
+  var [a, b] = [1, 2]
+  // Use following instead
+  int a = 0; int b = 0;
+  [a, b] = [1, 2]
+  ```
+
 ## Implementation
 
 For implementation details please refer [this](shell/README.md).

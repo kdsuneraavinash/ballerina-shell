@@ -1,0 +1,50 @@
+[
+  {
+    "code": "import ballerina/lang.array;",
+    "stdout": null
+  },
+  {
+    "code": "int[] a = []; a",
+    "expr": "[]"
+  },
+  {
+    "code": "int[] b = [1, 2, 3, 4, 5, 6, 7, 8]; b",
+    "expr": "[1,2,3,4,5,6,7,8]"
+  },
+  {
+    "code": "b.reverse()",
+    "expr": "[8,7,6,5,4,3,2,1]"
+  },
+  {
+    "code": "b.pop()",
+    "expr": "8"
+  },
+  {
+    "code": "b",
+    "expr": "[1,2,3,4,5,6,7]"
+  },
+  {
+    "code": "int[] sortedArray = b.sort(array:DESCENDING, isolated function (int value) returns string[] { if (value < 5) {return [\"A\",value.toString()]; } else { return [\"B\",value.toString()]; } }); sortedArray",
+    "expr": "[7,6,5,4,3,2,1]"
+  },
+  {
+    "code": "b[999] = 23; b[999]",
+    "expr": "23"
+  },
+  {
+    "code": "int[][] iarray = [[1, 2, 3], [10, 20, 30], [5, 6, 7]]; iarray.length()",
+    "expr": "3"
+  },
+  {
+    "code": "iarray[0] = [9]; iarray[0][0]",
+    "expr": "9"
+  },
+  {
+    "code": "int[5] e = [1, 2, 3, 4, 5]; e.length()",
+    "expr": "5"
+  },
+  {
+    "code": "int[*] g = [1, 2, 3, 4]; g.length()",
+    "expr": "4"
+  }
+]

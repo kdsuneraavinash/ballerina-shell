@@ -26,9 +26,21 @@ import org.testng.annotations.Test;
  */
 public class BasicTypeEvaluatorTest extends AbstractEvaluatorTest {
     private static final String STRING_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.strings.json";
+    private static final String TUPLES_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.tuples.json";
+    private static final String ARRAYS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.arrays.json";
 
     @Test
     public void testEvaluateString() throws BallerinaShellException {
         testEvaluate(STRING_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateTuples() throws BallerinaShellException {
+        testEvaluate(TUPLES_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateArrays() throws BallerinaShellException {
+        testEvaluate(ARRAYS_EVALUATOR_TESTCASE);
     }
 }
