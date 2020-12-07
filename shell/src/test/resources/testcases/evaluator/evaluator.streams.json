@@ -1,0 +1,72 @@
+[
+  {
+    "code": "class OddNumberGenerator { int i = 1; public isolated function next() returns record {|int value;|}|error? { self.i += 2; return {value: self.i};}}"
+  },
+  {
+    "code": "type ResultValue record {| int value;  |};"
+  },
+  {
+    "code": "type Student record {  string firstName;   string lastName;   float score; };"
+  },
+  {
+    "code": "type StudentValue record {|  Student value;  |};"
+  },
+  {
+    "code": "type FullName record {| string firstName; string lastName;|};"
+  },
+  {
+    "code": "type Subscription record {| string firstName; string lastName; float score; string degree; |};"
+  },
+  {
+    "code": "OddNumberGenerator oddGen = new;"
+  },
+  {
+    "code": "var oddNumberStream = new stream<int, error>(oddGen);"
+  },
+  {
+    "code": "record {|int value;|}|error? oddNumber = oddNumberStream.next();"
+  },
+  {
+    "code": "oddNumber is ResultValue",
+    "expr": "true"
+  },
+  {
+    "code": "var oddNumberRv = <ResultValue> oddNumber; io:println(oddNumberRv.value)",
+    "stdout": "3\n"
+  },
+  {
+    "code": "Student s1 = {firstName: \"Alex\", lastName: \"George\", score: 1.5};"
+  },
+  {
+    "code": "Student s2 = {firstName: \"Ranjan\", lastName: \"Fonseka\", score: 0.9};"
+  },
+  {
+    "code": "Student s3 = {firstName: \"John\", lastName: \"David\", score: 1.2};"
+  },
+  {
+    "code": "Student[] studentList = [s1, s2, s3];"
+  },
+  {
+    "code": "stream<Student> studentStream = studentList.toStream();"
+  },
+  {
+    "code": "type StudentStreamResult record {|Student value;|};"
+  },
+  {
+    "code": "StudentStreamResult|error? student = studentStream.next();"
+  },
+  {
+    "code": "var studentSr = <StudentStreamResult> student; studentSr.value",
+    "expr": "{\"firstName\":\"Alex\",\"lastName\":\"George\",\"score\":1.5}"
+  },
+  {
+    "code": "stream<Student> studentStream2 = studentList.toStream();"
+  },
+  {
+    "code": "StudentStreamResult|error? nextStudent = studentStream2.iterator().next();"
+  },
+  {
+    "code": "StudentStreamResult  nextStudentV = <StudentStreamResult> nextStudent; nextStudentV.value;",
+    "expr": "{\"firstName\":\"Alex\",\"lastName\":\"George\",\"score\":1.5}"
+  }
+]

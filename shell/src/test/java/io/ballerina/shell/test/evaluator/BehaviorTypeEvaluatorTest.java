@@ -24,11 +24,11 @@ import org.testng.annotations.Test;
 /**
  * Test simple snippets.
  */
-public class StringEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String STRING_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.strings.json";
+public class BehaviorTypeEvaluatorTest extends AbstractEvaluatorTest {
+    private static final String STREAM_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.streams.json";
 
     @Test
-    public void testEvaluateString() throws BallerinaShellException {
-        testEvaluate(STRING_EVALUATOR_TESTCASE);
+    public void testEvaluateSteams() throws BallerinaShellException {
+        testEvaluate(STREAM_EVALUATOR_TESTCASE);
     }
 }

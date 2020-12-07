@@ -30,7 +30,7 @@ ${lastVarDcln}
 ${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("${varNameType.first}");
 </#list>
 
-function save(){
+function save() {
     <#list saveVarDclns as varNameType>
     memorize_var("${varNameType.first}", ${varNameType.first});
     </#list>
@@ -52,7 +52,7 @@ function run() returns @untainted any|error {
 public function main() returns error? {
     any|error ${exprVarName} = trap run();
      if (${exprVarName} is error){
-        io:println("Exception occurred: ", ${exprVarName}.message());
+        io:println("Exception occurred: ", ${exprVarName});
         return ${exprVarName};
     }
     memorize_var("${exprVarName}", ${exprVarName});

@@ -18,6 +18,7 @@
 
 package io.ballerina.shell.test.evaluator;
 
+import io.ballerina.shell.DiagnosticKind;
 import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.EvaluatorBuilder;
 import io.ballerina.shell.exceptions.BallerinaShellException;
@@ -38,8 +39,8 @@ import java.util.ArrayList;
 public abstract class AbstractEvaluatorTest {
     private static class TestCaseLine {
         String code;
-        String stdout = "";
         String expr;
+        String stdout = "";
         int exitCode = 0;
     }
 
@@ -64,11 +65,12 @@ public abstract class AbstractEvaluatorTest {
                 System.setSecurityManager(secManager);
                 return (int) method.invoke(null, new Object[]{args});
             } catch (InvocationTargetException ignored) {
-                Assert.assertEquals(secManager.getExitCode(), expectingExitCode, "Exit code was unexpected");
-                return 0;
+                Assert.assertEquals(secManager.getExitCode(), expectingExitCode,
+                        "Exit code was unexpected:" + bracketed(stdOutBaOs.toString()));
+                return secManager.getExitCode();
             } finally {
                 // Restore everything
-                this.output = new String(stdOutBaOs.toByteArray());
+                this.output = stdOutBaOs.toString();
                 System.setSecurityManager(null);
                 System.setErr(stdErr);
                 System.setOut(stdOut);
@@ -87,10 +89,22 @@ public abstract class AbstractEvaluatorTest {
                 Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.code);
                 Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.code);
             } catch (BallerinaShellException e) {
-                Assert.fail("Exception occurred in " + testCaseLine.code + " " + e);
+                StringBuilder diagnosticsStr = new StringBuilder();
+                evaluator.diagnostics().stream()
+                        .filter(d -> d.getKind() == DiagnosticKind.ERROR)
+                        .forEach(diagnosticsStr::append);
+                Assert.fail("Exception occurred in:" + bracketed(testCaseLine.code) +
+                        "err:" + bracketed(e.getMessage()) +
+                        "diagnostics:" + bracketed(diagnosticsStr));
                 throw e;
+            } finally {
+                evaluator.resetDiagnostics();
             }
         }
+    }
+
+    protected static String bracketed(Object input) {
+        return " [" + input + "] ";
     }
 
     private TestInvoker getInvoker() {

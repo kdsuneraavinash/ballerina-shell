@@ -80,7 +80,7 @@
   },
   {
     "code": "j12",
-    "stdout": "Exception occurred: {ballerina/lang.value}MergeJsonError\n",
+    "stdout": "Exception occurred: error(\"{ballerina/lang.value}MergeJsonError\",message=\"Cannot merge JSON values of types 'float' and 'boolean'\")\n",
     "exitCode": 1
   },
   {
