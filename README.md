@@ -21,6 +21,34 @@ The project is implemented in two base modules.
 
 - **Assignments to global variables in closures or class methods will not work** - Assignments done to global variables in closures will not be reflected after the execution. The changes will be visible only for the scope belonging to the snippet where the closure was defined. However the value of the global variables inside a closure will reflect the current real value of the said variable.
 
+  ```ballerina
+  int x = 10
+  var f = function () { x = 12; }
+  f()
+  x   // <- this should output 12 but will output 10 instead
+  ```
+
+- **Type guards for global variables do not work** - Since all the variables defined in REPL top level act as global variables, type guards won't work. To remedy this you can explicitly cast the variable to the required type.
+
+  ```ballerina
+  string|int x = "hello"
+  
+  // Following will not work
+  if (x is string) { io:println(x.length()); }
+  // Use following instead
+  string x_str = <string> x;
+  io:println(x_str.length());
+  ```
+
+- **Variable declarations with var should not be assigned with un-imported types** - All var declarations should be assigned with variable types which are imported to the shell. (With the same prefix) Best alternative to avoid these type of issues is to use the type directly instead of var.
+
+  ```ballerina
+  // Following will fail if the value returned is of an un-imported module. (eg: pqr:TypeX)
+  var x = abc:getX();
+  // Use following instead
+  import pqr
+  pqr:TypeX x = abc:getX();
+  ```
 
 ## Implementation
 
@@ -43,7 +71,7 @@ Ballerina shell is compatible with `ballerina-slp7` or higher.
 
 ```bash
 java -jar -Dballerina.home=$BALLERINA_HOME shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
-# eg: java -jar -Dballerina.home=~/ballerina/distributions/ballerina-slp7 shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+# eg: java -jar -Dballerina.home=/usr/lib/ballerina/distributions/ballerina-slp7 shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
 ```
 
 ##  References
