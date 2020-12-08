@@ -50,7 +50,6 @@ import io.ballerina.compiler.syntax.tree.PanicStatementNode;
 import io.ballerina.compiler.syntax.tree.RetryStatementNode;
 import io.ballerina.compiler.syntax.tree.ReturnStatementNode;
 import io.ballerina.compiler.syntax.tree.RollbackStatementNode;
-import io.ballerina.compiler.syntax.tree.ServiceConstructorExpressionNode;
 import io.ballerina.compiler.syntax.tree.ServiceDeclarationNode;
 import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.compiler.syntax.tree.Token;
@@ -182,12 +181,8 @@ public class BasicSnippetFactory extends SnippetFactory {
     }
 
     @Override
-    public ExpressionSnippet createExpressionSnippet(Node node) throws SnippetException {
+    public ExpressionSnippet createExpressionSnippet(Node node) {
         if (node instanceof ExpressionNode) {
-            if (node instanceof ServiceConstructorExpressionNode) {
-                addDiagnostic(Diagnostic.error("Service expressions are not allowed within REPL."));
-                throw new SnippetException();
-            }
             return new ExpressionSnippet((ExpressionNode) node);
         }
         return null;

@@ -140,11 +140,6 @@
     "expected": "TransactionalExpressionNode"
   },
   {
-    "name": "Service Constructor Expression",
-    "input": "service {};",
-    "expected": "ServiceConstructorExpressionNode"
-  },
-  {
     "name": "Byte Array Expression",
     "input": "base16 `112233`;",
     "expected": "ByteArrayLiteralNode"

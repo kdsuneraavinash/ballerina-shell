@@ -140,11 +140,6 @@
     "accepted": true
   },
   {
-    "name": "Service Constructor Expression",
-    "input": "service {};",
-    "accepted": false
-  },
-  {
     "name": "Byte Array Expression",
     "input": "base16 `112233`;",
     "accepted": true
