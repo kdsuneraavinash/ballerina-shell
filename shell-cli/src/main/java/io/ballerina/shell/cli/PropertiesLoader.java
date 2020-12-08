@@ -89,7 +89,7 @@ public class PropertiesLoader {
      *
      * @return Property loader instance.
      */
-    public static PropertiesLoader getInstance() {
+    public static synchronized PropertiesLoader getInstance() {
         try {
             if (propertiesLoader == null) {
                 propertiesLoader = new PropertiesLoader();

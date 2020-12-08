@@ -27,6 +27,7 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -36,6 +37,10 @@ import io.ballerina.tools.text.TextDocuments;
  * TODO: Improve performance.
  */
 public class StatementTrial extends DualTreeParserTrial {
+    public StatementTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
+
     @Override
     public Node parseSource(String source) throws ParserTrialFailedException {
         String sourceCode = String.format("function main(){%s}", source);

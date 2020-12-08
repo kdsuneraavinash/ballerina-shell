@@ -19,6 +19,7 @@
 package io.ballerina.shell.parser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.parser.TrialTreeParser;
 
 /**
  * Trial to reject metadata and public keywords.
@@ -28,6 +29,10 @@ import io.ballerina.compiler.syntax.tree.Node;
 public class RejectInvalidStmtTrial extends TreeParserTrial {
     private static final String DOCUMENTATION_START = "#";
     private static final String PUBLIC_START = "public";
+
+    public RejectInvalidStmtTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
 
     @Override
     public Node parse(String source) throws ParserTrialFailedException {

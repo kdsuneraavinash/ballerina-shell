@@ -20,11 +20,16 @@ package io.ballerina.shell.parser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ReturnStatementNode;
+import io.ballerina.shell.parser.TrialTreeParser;
 
 /**
  * Attempts to parse source as a expression.
  */
 public class ExpressionTrial extends StatementTrial {
+    public ExpressionTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
+
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
         String statementCode = String.format("return %s", source);

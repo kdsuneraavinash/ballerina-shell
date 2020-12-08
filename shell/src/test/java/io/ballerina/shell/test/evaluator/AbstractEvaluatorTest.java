@@ -31,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 /**
@@ -61,8 +62,8 @@ public abstract class AbstractEvaluatorTest {
             ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
             NoExitVmSecManager secManager = new NoExitVmSecManager(System.getSecurityManager());
             try {
-                System.setErr(new PrintStream(new ByteArrayOutputStream()));
-                System.setOut(new PrintStream(stdOutBaOs));
+                System.setErr(new PrintStream(new ByteArrayOutputStream(), true, Charset.defaultCharset()));
+                System.setOut(new PrintStream(stdOutBaOs, true, Charset.defaultCharset()));
                 System.setSecurityManager(secManager);
                 return (int) method.invoke(null, new Object[]{args});
             } catch (InvocationTargetException ignored) {
@@ -70,7 +71,7 @@ public abstract class AbstractEvaluatorTest {
                 return secManager.getExitCode();
             } finally {
                 // Restore everything
-                this.output = stdOutBaOs.toString();
+                this.output = stdOutBaOs.toString(Charset.defaultCharset());
                 System.setSecurityManager(null);
                 System.setErr(stdErr);
                 System.setOut(stdOut);
@@ -80,7 +81,9 @@ public abstract class AbstractEvaluatorTest {
 
     protected void testEvaluate(String fileName) throws BallerinaShellException {
         TestInvoker invoker = getInvoker();
-        Evaluator evaluator = new EvaluatorBuilder().invoker(invoker).build();
+        Evaluator evaluator = new EvaluatorBuilder()
+                .treeParser(TestUtils.getTestTreeParser())
+                .invoker(invoker).build();
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
         for (TestCaseLine testCaseLine : testCase) {
             try {

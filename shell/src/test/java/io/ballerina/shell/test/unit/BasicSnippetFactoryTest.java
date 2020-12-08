@@ -82,7 +82,7 @@ public class BasicSnippetFactoryTest {
         // TODO: Improve this test to check for the sub kinds, errors and ignores
         //  after implementing them in the Snippets.
         List<TestCase> testCases = TestUtils.loadTestCases(fileName, TestCases.class);
-        TreeParser treeParser = new TrialTreeParser();
+        TreeParser treeParser = TestUtils.getTestTreeParser();
         SnippetFactory snippetFactory = new BasicSnippetFactory();
         for (TestCase testCase : testCases) {
             try {

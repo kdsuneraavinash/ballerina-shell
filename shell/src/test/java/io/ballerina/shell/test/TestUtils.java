@@ -19,8 +19,11 @@
 package io.ballerina.shell.test;
 
 import com.google.gson.Gson;
+import io.ballerina.shell.parser.TreeParser;
+import io.ballerina.shell.parser.TrialTreeParser;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -30,6 +33,7 @@ import java.util.Scanner;
  */
 public abstract class TestUtils {
     private static final String SPECIAL_DELIMITER = "\\A";
+    private static final long TEST_TREE_PARSER_TIMEOUT_MS = 200;
 
     /**
      * Loads a JSON fie with the given class format.
@@ -43,9 +47,18 @@ public abstract class TestUtils {
         Gson gson = new Gson();
         InputStream inputStream = TestUtils.class.getClassLoader().getResourceAsStream(fileName);
         Objects.requireNonNull(inputStream, "Test file does not exist: " + fileName);
-        try (Scanner scanner = new Scanner(inputStream).useDelimiter(SPECIAL_DELIMITER)) {
+        try (Scanner scanner = new Scanner(inputStream, Charset.defaultCharset()).useDelimiter(SPECIAL_DELIMITER)) {
             String content = scanner.hasNext() ? scanner.next() : "";
             return gson.fromJson(content, testCasesClazz);
         }
+    }
+
+    /**
+     * Creates a tree parser with extended timeout.
+     *
+     * @return Created tree parser.
+     */
+    public static TreeParser getTestTreeParser() {
+        return new TrialTreeParser(TEST_TREE_PARSER_TIMEOUT_MS);
     }
 }

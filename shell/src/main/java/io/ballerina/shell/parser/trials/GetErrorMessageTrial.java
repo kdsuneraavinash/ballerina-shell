@@ -20,6 +20,7 @@ package io.ballerina.shell.parser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.diagnostics.DiagnosticInfo;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
@@ -40,8 +41,12 @@ import java.util.concurrent.TimeoutException;
  * Otherwise error will be just 'timed out'
  */
 public class GetErrorMessageTrial extends TreeParserTrial {
-    private static final long LONG_TIME_OUT_DURATION_MS = 1000;
+    private static final int ERROR_TIMEOUT_MULTIPLIER = 10;
     private static final Set<String> MODULE_LEVEL_ERROR_CODES = Set.of("BCE0007", "BCE0646");
+
+    public GetErrorMessageTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
 
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
@@ -96,6 +101,6 @@ public class GetErrorMessageTrial extends TreeParserTrial {
 
     @Override
     protected long getTimeOutDurationMs() {
-        return LONG_TIME_OUT_DURATION_MS;
+        return super.getTimeOutDurationMs() * ERROR_TIMEOUT_MULTIPLIER;
     }
 }

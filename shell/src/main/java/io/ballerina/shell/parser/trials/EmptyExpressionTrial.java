@@ -23,6 +23,7 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -36,6 +37,10 @@ public class EmptyExpressionTrial extends TreeParserTrial {
     private static final Node EMPTY_NODE = NodeFactory.createNilLiteralNode(
             NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
             NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN));
+
+    public EmptyExpressionTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
 
     @Override
     public Node parse(String source) throws ParserTrialFailedException {

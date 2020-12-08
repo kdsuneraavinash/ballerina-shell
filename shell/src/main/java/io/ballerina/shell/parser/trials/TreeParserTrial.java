@@ -20,6 +20,7 @@ package io.ballerina.shell.parser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.tools.diagnostics.Diagnostic;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 import io.ballerina.tools.text.TextDocument;
@@ -35,7 +36,11 @@ import java.util.concurrent.TimeoutException;
  * Trial for testing for the correct syntax tree.
  */
 public abstract class TreeParserTrial {
-    private static final long TIME_OUT_DURATION_MS = 100;
+    protected final TrialTreeParser parentParser;
+
+    protected TreeParserTrial(TrialTreeParser parentParser) {
+        this.parentParser = parentParser;
+    }
 
     /**
      * Tries to parse the source into a syntax tree.
@@ -92,8 +97,12 @@ public abstract class TreeParserTrial {
         }
     }
 
+    /**
+     * Get the timeout set from the parent trial parser.
+     *
+     * @return The timeout for parsing the tree.
+     */
     protected long getTimeOutDurationMs() {
-        // TODO: Refactor this to load from a config/cli
-        return TIME_OUT_DURATION_MS;
+        return parentParser.getTimeOutDurationMs();
     }
 }

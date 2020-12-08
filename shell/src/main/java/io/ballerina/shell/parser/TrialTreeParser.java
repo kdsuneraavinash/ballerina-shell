@@ -41,20 +41,31 @@ import java.util.Objects;
  * This continues until the correct type can be determined.
  */
 public class TrialTreeParser extends TreeParser {
-    private static final List<TreeParserTrial> NODE_PARSER_TRIALS = List.of(
-            new ImportDeclarationTrial(),
-            new RejectInvalidStmtTrial(),
-            new ModuleMemberTrial(),
-            new ExpressionTrial(),
-            new StatementTrial(),
-            new EmptyExpressionTrial(),
-            new GetErrorMessageTrial()
-    );
+    private static final long DEFAULT_TIMEOUT_MS = 100;
+    private final List<TreeParserTrial> nodeParserTrials;
+    private final long timeOutDurationMs;
+
+    public TrialTreeParser(long timeOutDurationMs) {
+        this.timeOutDurationMs = timeOutDurationMs;
+        this.nodeParserTrials = List.of(
+                new ImportDeclarationTrial(this),
+                new RejectInvalidStmtTrial(this),
+                new ModuleMemberTrial(this),
+                new ExpressionTrial(this),
+                new StatementTrial(this),
+                new EmptyExpressionTrial(this),
+                new GetErrorMessageTrial(this)
+        );
+    }
+
+    public TrialTreeParser() {
+        this(DEFAULT_TIMEOUT_MS);
+    }
 
     @Override
     public Node parse(String source) throws TreeParserException {
         String errorMessage = "";
-        for (TreeParserTrial trial : NODE_PARSER_TRIALS) {
+        for (TreeParserTrial trial : nodeParserTrials) {
             try {
                 return Objects.requireNonNull(trial.parse(source), "trial returned no nodes");
             } catch (ParserTrialFailedException e) {
@@ -75,5 +86,9 @@ public class TrialTreeParser extends TreeParser {
         addDiagnostic(Diagnostic.error(errorMessage));
         addDiagnostic(Diagnostic.error("Parsing aborted because of errors."));
         throw new TreeParserException();
+    }
+
+    public long getTimeOutDurationMs() {
+        return timeOutDurationMs;
     }
 }

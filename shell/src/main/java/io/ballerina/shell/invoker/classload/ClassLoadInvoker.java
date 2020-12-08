@@ -122,6 +122,8 @@ public class ClassLoadInvoker extends Invoker {
         // newSnippet.modify(new GlobalLoadModifier(globalVars));
 
         if (newSnippet.isVariableDeclaration()) {
+            assert newSnippet instanceof VariableDeclarationSnippet;
+
             // If the type can be inferred without compiling, do so.
             ((VariableDeclarationSnippet) newSnippet).findVariableNamesAndTypes()
                     .forEach(p -> newVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
@@ -148,6 +150,7 @@ public class ClassLoadInvoker extends Invoker {
             // This is an import. A test import is done to check for errors.
             // It should not give 'module not found' error.
             // Only compilation is done to verify package resolution.
+            assert newSnippet instanceof ImportDeclarationSnippet;
             ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
 
             ClassLoadContext importCheckingContext = createImportCheckingContext(importDcln);

@@ -23,6 +23,7 @@ import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -33,6 +34,10 @@ import io.ballerina.tools.text.TextDocuments;
  * Only checked if the source starts with import keyword.
  */
 public class ImportDeclarationTrial extends TreeParserTrial {
+    public ImportDeclarationTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
+
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
         assertIf(source.trim().startsWith("import "), "expected to start with 'import'");

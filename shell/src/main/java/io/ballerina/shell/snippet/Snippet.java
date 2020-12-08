@@ -46,6 +46,23 @@ import java.util.Set;
  * However, any valid redeclaration in a different scope may be possible.
  */
 public abstract class Snippet {
+    /**
+     * A helper class to find the imports used in a snippet.
+     */
+    protected static class ImportNameFinder extends NodeVisitor {
+        private final Set<String> imports;
+
+        public ImportNameFinder(Set<String> imports) {
+            this.imports = imports;
+        }
+
+        @Override
+        public void visit(QualifiedNameReferenceNode qualifiedNameReferenceNode) {
+            super.visit(qualifiedNameReferenceNode);
+            imports.add(qualifiedNameReferenceNode.modulePrefix().text());
+        }
+    }
+
     protected final SnippetSubKind subKind;
     protected Node rootNode;
 
@@ -61,13 +78,7 @@ public abstract class Snippet {
      */
     public Set<String> usedImports() {
         Set<String> imports = new HashSet<>();
-        rootNode.accept(new NodeVisitor() {
-            @Override
-            public void visit(QualifiedNameReferenceNode qualifiedNameReferenceNode) {
-                super.visit(qualifiedNameReferenceNode);
-                imports.add(qualifiedNameReferenceNode.modulePrefix().text());
-            }
-        });
+        rootNode.accept(new ImportNameFinder(imports));
         return imports;
     }
 

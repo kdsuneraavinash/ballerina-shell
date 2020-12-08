@@ -79,7 +79,7 @@ public class TrialTreeParserTest {
 
     private void testParse(String fileName, Class<?> parentClazz) {
         TestCases testCases = TestUtils.loadTestCases(fileName, TestCases.class);
-        TreeParser treeParser = new TrialTreeParser();
+        TreeParser treeParser = TestUtils.getTestTreeParser();
         for (TestCase testCase : testCases) {
             try {
                 Node node = treeParser.parse(testCase.input);

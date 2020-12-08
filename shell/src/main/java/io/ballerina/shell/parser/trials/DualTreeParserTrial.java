@@ -19,12 +19,17 @@
 package io.ballerina.shell.parser.trials;
 
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.parser.TrialTreeParser;
 
 /**
  * Trial which is run with and without trailing semicolon.
  */
 public abstract class DualTreeParserTrial extends TreeParserTrial {
     private static final String SEMICOLON = ";";
+
+    public DualTreeParserTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
 
     @Override
     public Node parse(String source) throws ParserTrialFailedException {

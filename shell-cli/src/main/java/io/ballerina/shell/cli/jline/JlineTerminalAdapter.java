@@ -51,9 +51,8 @@ public class JlineTerminalAdapter extends TerminalAdapter {
 
     @Override
     public String readLine(String prefix, String postfix) {
-        Character mask = null;
         try {
-            return lineReader.readLine(prefix, postfix, mask, null);
+            return lineReader.readLine(prefix, postfix, (Character) null, null);
         } catch (UserInterruptException | EndOfFileException e) {
             return "";
         }

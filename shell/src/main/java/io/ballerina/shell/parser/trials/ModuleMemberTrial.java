@@ -24,6 +24,7 @@ import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -34,6 +35,10 @@ import io.ballerina.tools.text.TextDocuments;
  * any error is rejected. Otherwise, it is still checked.
  */
 public class ModuleMemberTrial extends DualTreeParserTrial {
+    public ModuleMemberTrial(TrialTreeParser parentParser) {
+        super(parentParser);
+    }
+
     @Override
     public Node parseSource(String source) throws ParserTrialFailedException {
         TextDocument document = TextDocuments.from(source);
