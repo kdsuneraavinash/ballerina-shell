@@ -1,0 +1,16 @@
+[
+  {
+    "description": "Define helper variables.",
+    "code": "int[5] intArray = [0, 1, 2, 3, 4]; string[] animals = [\"Cat\", \"Canine\", \"Mouse\", \"Horse\"];"
+  },
+  {
+    "description": "Match with an integer.",
+    "code": "foreach var counter in intArray { match counter { 0 => { io:println(\"value is: 0\"); } 1 => { io:println(\"value is: 1\"); } 2 => { io:println(\"value is: 2\"); } 3 => { io:println(\"value is: 3\"); } 4 => { io:println(\"value is: 4\"); } 5 => { io:println(\"value is: 5\"); } } }",
+    "stdout": "value is: 0\nvalue is: 1\nvalue is: 2\nvalue is: 3\nvalue is: 4\n"
+  },
+  {
+    "description": "Match with a string.",
+    "code": "foreach string animal in animals { match animal { \"Mouse\" => { io:println(\"Mouse\"); } \"Dog\"|\"Canine\" => { io:println(\"Dog\"); } \"Cat\"|\"Feline\" => { io:println(\"Cat\"); }  _ => { io:println(\"Match All\"); } } }",
+    "stdout": "Cat\nDog\nMouse\nMatch All\n"
+  }
+]
