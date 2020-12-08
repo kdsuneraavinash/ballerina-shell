@@ -92,6 +92,7 @@ public abstract class AbstractEvaluatorTest {
                 StringBuilder diagnosticsStr = new StringBuilder();
                 evaluator.diagnostics().stream()
                         .filter(d -> d.getKind() == DiagnosticKind.ERROR)
+                        .map(s -> s + "\n")
                         .forEach(diagnosticsStr::append);
                 Assert.fail(
                         "Exception occurred in:" + bracketed(testCaseLine.description) +

@@ -60,6 +60,16 @@ The project is implemented in two base modules.
   [a, b] = [1, 2]
   ```
 
+- **When using query expressions, use them only as assignments** - If a query expression is done as a variable declaration, it would throw an exception. Input the expression as an assignment instead. (Declare the variables first)
+
+  ```ballerina
+  // This will not work
+  string x = from var y in z where ....
+  // Use following instead
+  string x = ""
+  x = from var y in z where ....
+  ```
+
 ## Implementation
 
 For implementation details please refer [this](shell/README.md).
