@@ -23,13 +23,11 @@ import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.EvaluatorBuilder;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
-import io.ballerina.shell.invoker.classload.NoExitVmSecManager;
 import io.ballerina.shell.test.TestUtils;
 import org.testng.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -55,25 +53,16 @@ public abstract class AbstractEvaluatorTest {
 
         @Override
         protected int invokeMethod(Method method) throws IllegalAccessException {
-            String[] args = new String[0];
-
-            PrintStream stdErr = System.err;
             PrintStream stdOut = System.out;
             ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
-            NoExitVmSecManager secManager = new NoExitVmSecManager(System.getSecurityManager());
             try {
-                System.setErr(new PrintStream(new ByteArrayOutputStream(), true, Charset.defaultCharset()));
                 System.setOut(new PrintStream(stdOutBaOs, true, Charset.defaultCharset()));
-                System.setSecurityManager(secManager);
-                return (int) method.invoke(null, new Object[]{args});
-            } catch (InvocationTargetException ignored) {
-                Assert.assertEquals(secManager.getExitCode(), testCaseLine.exitCode, testCaseLine.description);
-                return secManager.getExitCode();
+                int exitCode = super.invokeMethod(method);
+                Assert.assertEquals(exitCode, testCaseLine.exitCode, testCaseLine.description);
+                return exitCode;
             } finally {
-                // Restore everything
                 this.output = stdOutBaOs.toString(Charset.defaultCharset());
-                System.setSecurityManager(null);
-                System.setErr(stdErr);
+                this.output = this.output.replace("\r\n", "\n");
                 System.setOut(stdOut);
             }
         }
