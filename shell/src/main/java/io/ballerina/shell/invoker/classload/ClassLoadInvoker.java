@@ -47,12 +47,14 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -76,9 +78,35 @@ public class ClassLoadInvoker extends Invoker {
     protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id", "'$annotation_data");
     private static final String QUOTE = "'";
 
+    /**
+     * List of imports done. These are imported to the read generated code as necessary.
+     * This is a map of import prefix to the import statement used.
+     * Import prefix must be a quoted identifier.
+     */
     protected final Map<String, Snippet> imports;
+
+    /**
+     * List of module level declarations such as functions, classes, etc...
+     * The snippets are saved as is.
+     */
     protected final List<Snippet> moduleDclns;
+
+    /**
+     * List of global variables used in the code.
+     * This is a map of variable name to its type.
+     * The variable name must be a quoted identifier.
+     */
     protected final Map<String, String> globalVars;
+
+    /**
+     * Snippets of the global variables used.
+     * These snippets must not have an initializer.
+     */
+    protected final List<VariableDeclarationSnippet> globalVarSnippets;
+
+    /**
+     * Id of the current invoker context.
+     */
     protected final String contextId;
 
     /**
@@ -91,6 +119,7 @@ public class ClassLoadInvoker extends Invoker {
         this.imports = new HashMap<>();
         this.moduleDclns = new ArrayList<>();
         this.globalVars = new HashMap<>();
+        this.globalVarSnippets = new ArrayList<>();
     }
 
     @Override
@@ -192,7 +221,9 @@ public class ClassLoadInvoker extends Invoker {
         if (isSuccess) {
             addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
             if (newSnippet.isVariableDeclaration()) {
+                assert newSnippet instanceof VariableDeclarationSnippet;
                 newVariables.forEach(globalVars::put);
+                globalVarSnippets.add(((VariableDeclarationSnippet) newSnippet).withoutInitializer());
             } else if (newSnippet.isModuleMemberDeclaration()) {
                 moduleDclns.add(newSnippet);
             }
@@ -401,11 +432,18 @@ public class ClassLoadInvoker extends Invoker {
      * @return List of imports.
      */
     protected List<String> getUsedImportStrings(Snippet snippet) {
-        List<String> importStrings = new ArrayList<>();
-        snippet.usedImports().stream().map(this::quotedIdentifier)
+        Set<String> importStrings = new HashSet<>();
+        Consumer<Snippet> snippetProcessor = (s) -> s.usedImports().stream()
+                .map(this::quotedIdentifier)
                 .map(imports::get).filter(Objects::nonNull)
                 .map(Snippet::toString).forEach(importStrings::add);
-        return importStrings;
+
+        // Process current snippet
+        snippetProcessor.accept(snippet);
+        // Process module dclns and variables to check old used imports
+        moduleDclns.forEach(snippetProcessor);
+        globalVarSnippets.forEach(snippetProcessor);
+        return List.copyOf(importStrings);
     }
 
     /**

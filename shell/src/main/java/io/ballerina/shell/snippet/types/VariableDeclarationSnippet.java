@@ -24,6 +24,7 @@ import io.ballerina.compiler.syntax.tree.BuiltinSimpleNameReferenceNode;
 import io.ballerina.compiler.syntax.tree.CaptureBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.TypeDescriptorNode;
 import io.ballerina.shell.snippet.Snippet;
@@ -40,6 +41,24 @@ import java.util.Optional;
 public class VariableDeclarationSnippet extends Snippet {
     public VariableDeclarationSnippet(ModuleVariableDeclarationNode rootNode) {
         super(SnippetSubKind.VARIABLE_DECLARATION, rootNode);
+    }
+
+    /**
+     * Returns the snippet without the initializer expression.
+     * Initializer will be replaced by nil literal ().
+     *
+     * @return Resultant snippet.
+     */
+    public VariableDeclarationSnippet withoutInitializer() {
+        assert rootNode instanceof ModuleVariableDeclarationNode;
+        return new VariableDeclarationSnippet(
+                ((ModuleVariableDeclarationNode) rootNode).modify()
+                        .withInitializer(
+                                NodeFactory.createNilLiteralNode(
+                                        NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
+                                        NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)))
+                        .apply()
+        );
     }
 
     /**
