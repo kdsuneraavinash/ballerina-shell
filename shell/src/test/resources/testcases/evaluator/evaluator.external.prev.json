@@ -1,0 +1,25 @@
+[
+  {
+    "description": "Import statement.",
+    "code": "import ballerina/math;",
+    "stdout": null
+  },
+  {
+    "description": "Function that uses the import.",
+    "code": "function pi() returns float { return math:PI; }"
+  },
+  {
+    "description": "Use function with import.",
+    "code": "pi()",
+    "expr": "3.141592653589793"
+  },
+  {
+    "description": "Variable type that uses the import.",
+    "code": "math:ArithmeticError err = math:ArithmeticError(\"Error\")"
+  },
+  {
+    "description": "Get the variable message.",
+    "code": "err.message()",
+    "expr": "Error"
+  }
+]
