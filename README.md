@@ -40,16 +40,6 @@ The project is implemented in two base modules.
   io:println(x_str.length());
   ```
 
-- **Variable declarations with var should not be assigned with un-imported types** - All var declarations should be assigned with variable types which are imported to the shell. (With the same prefix) Best alternative to avoid these type of issues is to use the type directly instead of var.
-
-  ```ballerina
-  // Following will fail if the value returned is of an un-imported module. (eg: pqr:TypeX)
-  var x = abc:getX();
-  // Use following instead
-  import pqr
-  pqr:TypeX x = abc:getX();
-  ```
-
 - **Only captured binding patterns are supported to define variables** - You may not use list binding pattern/mapping binding pattern to define global variables in REPL. (Local variables can still be defined using these)
 
   ```ballerina

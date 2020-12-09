@@ -21,5 +21,14 @@
     "description": "Get the variable message.",
     "code": "err.message()",
     "expr": "Error"
+  },
+  {
+    "description": "Variable type that uses the import with var.",
+    "code": "var err2 = math:ArithmeticError(\"Error\")"
+  },
+  {
+    "description": "Get the variable message.",
+    "code": "err2.message()",
+    "expr": "Error"
   }
 ]

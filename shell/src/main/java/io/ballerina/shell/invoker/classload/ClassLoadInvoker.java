@@ -36,6 +36,7 @@ import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
 import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
@@ -57,7 +58,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -86,7 +86,7 @@ public class ClassLoadInvoker extends Invoker {
      * This is a map of import prefix to the import statement used.
      * Import prefix must be a quoted identifier.
      */
-    protected final Map<String, Snippet> imports;
+    protected final Map<String, String> imports;
 
     /**
      * List of module level declarations such as functions, classes, etc...
@@ -102,15 +102,23 @@ public class ClassLoadInvoker extends Invoker {
     protected final Map<String, String> globalVars;
 
     /**
-     * Snippets of the global variables used.
-     * These snippets must not have an initializer.
+     * Imports that should be done regardless of usage in the current snippet.
+     * These are possibly the imports that are done previously
+     * in module level declarations or variable declarations.
      */
-    protected final List<VariableDeclarationSnippet> globalVarSnippets;
+    protected final Set<String> mustImports;
 
     /**
      * Id of the current invoker context.
      */
     protected final String contextId;
+
+    /**
+     * Anonymous import prefix for importing modules with var.
+     * These imports should happen anonymously. Thus a 'ID format is used.
+     * TODO: Verify that user snippets do not contain 'ID format texts.
+     */
+    protected Long lastAnonImportPrefixId;
 
     /**
      * Creates a class load invoker from the given ballerina home.
@@ -122,7 +130,8 @@ public class ClassLoadInvoker extends Invoker {
         this.imports = new HashMap<>();
         this.moduleDclns = new ArrayList<>();
         this.globalVars = new HashMap<>();
-        this.globalVarSnippets = new ArrayList<>();
+        this.mustImports = new HashSet<>();
+        this.lastAnonImportPrefixId = 0L;
     }
 
     @Override
@@ -143,100 +152,9 @@ public class ClassLoadInvoker extends Invoker {
         this.imports.clear();
         this.moduleDclns.clear();
         this.globalVars.clear();
+        this.mustImports.clear();
+        this.lastAnonImportPrefixId = 0L;
         ClassLoadMemory.forgetAll(contextId);
-    }
-
-    @Override
-    public Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException {
-        Map<String, String> newVariables = new HashMap<>();
-
-        // TODO: Fix the closure bug. Following will not work with isolated functions.
-        // newSnippet.modify(new GlobalLoadModifier(globalVars));
-
-        if (newSnippet.isVariableDeclaration()) {
-            assert newSnippet instanceof VariableDeclarationSnippet;
-
-            // If the type can be inferred without compiling, do so.
-            ((VariableDeclarationSnippet) newSnippet).findVariableNamesAndTypes()
-                    .forEach(p -> newVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
-
-            // This is a variable declaration.
-            // So we have to compile once and know the names and types of variables.
-            // The reason is some types (var) are determined at compile time.
-            // Only compilation is done.
-            VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
-            ClassLoadContext varTypeInferContext = createVarTypeInferContext(varDcln);
-            SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
-            PackageCompilation compilation = compile(project);
-
-            for (BLangSimpleVariable variable : compilation.defaultModuleBLangPackage().getGlobalVariables()) {
-                // If the variable is not a init var or a known global var, add it.
-                // TODO: If var is used with an imported type, issue a warning
-                String variableName = quotedIdentifier(variable.name.value);
-                if (!INIT_VAR_NAMES.contains(variableName)
-                        && !globalVars.containsKey(variableName)
-                        && !newVariables.containsKey(variableName)) {
-                    newVariables.put(variableName, variable.type.toString());
-                }
-            }
-        } else if (newSnippet.isImport()) {
-            // This is an import. A test import is done to check for errors.
-            // It should not give 'module not found' error.
-            // Only compilation is done to verify package resolution.
-            assert newSnippet instanceof ImportDeclarationSnippet;
-            ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
-
-            ClassLoadContext importCheckingContext = createImportCheckingContext(importDcln);
-            SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
-            PackageCompilation compilation = project.currentPackage().getCompilation();
-            for (io.ballerina.tools.diagnostics.Diagnostic diagnostic :
-                    compilation.diagnosticResult().diagnostics()) {
-                if (diagnostic.diagnosticInfo().code()
-                        .equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
-                    addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
-                    return new Pair<>(false, Optional.empty());
-                }
-            }
-            // No imports are actually done. Not possible for a valid import.
-            if (compilation.defaultModuleBLangPackage().imports.isEmpty()) {
-                addDiagnostic(Diagnostic.error("Not a valid import statement."));
-                return new Pair<>(false, Optional.empty());
-            }
-            BLangImportPackage importPackage = compilation.defaultModuleBLangPackage().imports.get(0);
-            String importPrefix = quotedIdentifier(importPackage.alias.value);
-            if (INIT_IMPORTS.containsKey(importPrefix)) {
-                addDiagnostic(Diagnostic.error("Import is already available by default."));
-                return new Pair<>(false, Optional.empty());
-            } else if (imports.containsKey(importPrefix)) {
-                addDiagnostic(Diagnostic.error("A module was previously imported with the same prefix."));
-                return new Pair<>(false, Optional.empty());
-            }
-            imports.put(importPrefix, importDcln);
-            return new Pair<>(true, Optional.empty());
-        }
-
-        // Compile and execute the real program.
-        ClassLoadContext context = createContext(newSnippet, newVariables);
-        SingleFileProject project = getProject(context, TEMPLATE_FILE);
-        PackageCompilation compilation = compile(project);
-        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
-        boolean isSuccess = execute(project, jBallerinaBackend);
-
-        // Save required data if execution was successful
-        if (isSuccess) {
-            addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
-            if (newSnippet.isVariableDeclaration()) {
-                assert newSnippet instanceof VariableDeclarationSnippet;
-                newVariables.forEach(globalVars::put);
-                globalVarSnippets.add(((VariableDeclarationSnippet) newSnippet).withoutInitializer());
-            } else if (newSnippet.isModuleMemberDeclaration()) {
-                moduleDclns.add(newSnippet);
-            }
-        } else {
-            addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
-        }
-        Object result = ClassLoadMemory.recall(contextId, EXPR_VAR_NAME);
-        return new Pair<>(isSuccess, Optional.ofNullable(result));
     }
 
     @Override
@@ -250,50 +168,136 @@ public class ClassLoadInvoker extends Invoker {
     }
 
     @Override
-    public String availableImports() {
-        // Imports with prefixes
-        Map<String, String> importMapped = new HashMap<>(INIT_IMPORTS);
-        for (Map.Entry<String, Snippet> entry : imports.entrySet()) {
-            importMapped.put(entry.getKey(), entry.getValue().toString());
-        }
-        List<String> importStrings = new ArrayList<>(importMapped.values());
-        return String.join("\n", importStrings);
-    }
+    public Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException {
+        // New variables defined in this iteration.
+        Map<String, String> newVariables = new HashMap<>();
+        // Imports that should be persisted to the next iteration.
+        Set<String> persistImports = new HashSet<>();
 
-    @Override
-    public String availableVariables() {
-        // Available variables and values as string.
-        List<String> varStrings = new ArrayList<>();
-        for (Map.Entry<String, String> entry : globalVars.entrySet()) {
-            String value = shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
-            String varString = String.format("%s %s = %s", entry.getValue(), entry.getKey(), value);
-            varStrings.add(varString);
-        }
-        return String.join("\n", varStrings);
-    }
+        // TODO: Fix the closure bug. Following will not work with isolated functions.
+        // newSnippet.modify(new GlobalLoadModifier(globalVars));
 
-    @Override
-    public String availableModuleDeclarations() {
-        // Module level dclns.
-        return moduleDclns.stream().map(this::shortenedString)
-                .collect(Collectors.joining("\n"));
+        if (newSnippet.isVariableDeclaration()) {
+            assert newSnippet instanceof VariableDeclarationSnippet;
+            VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
+            // Infer types of possible variables using the syntax tree.
+            // TODO: Remove type finding
+            varDcln.findVariableNamesAndTypes()
+                    .forEach(p -> newVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
+            processVariableDeclaration(varDcln, newVariables, persistImports);
+        } else if (newSnippet.isImport()) {
+            assert newSnippet instanceof ImportDeclarationSnippet;
+            boolean importSuccess = processImport((ImportDeclarationSnippet) newSnippet);
+            return new Pair<>(importSuccess, Optional.empty());
+        } else if (newSnippet.isModuleMemberDeclaration()) {
+            newSnippet.usedImports().stream().map(this::quotedIdentifier)
+                    .forEach(persistImports::add);
+        }
+
+        // Compile and execute the real program.
+        ClassLoadContext context = createContext(newSnippet, newVariables);
+        SingleFileProject project = getProject(context, TEMPLATE_FILE);
+        PackageCompilation compilation = compile(project);
+        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
+        boolean isSuccess = execute(project, jBallerinaBackend);
+
+        // Save required data if execution was successful
+        if (isSuccess) {
+            this.mustImports.addAll(persistImports);
+            addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
+            if (newSnippet.isVariableDeclaration()) {
+                newVariables.forEach(globalVars::put);
+            } else if (newSnippet.isModuleMemberDeclaration()) {
+                moduleDclns.add(newSnippet);
+            }
+        } else {
+            addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
+        }
+        Object result = ClassLoadMemory.recall(contextId, EXPR_VAR_NAME);
+        return new Pair<>(isSuccess, Optional.ofNullable(result));
     }
 
     /**
-     * Short a string to a certain length.
+     * Processes a variable declaration snippet.
+     * We need to know all the variable types.
+     * Some types (var) are determined at compile time.
+     * So we have to compile once and know the names and types of variables.
+     * Only compilation is done.
      *
-     * @param input Input string to shorten.
-     * @return Shortened string.
+     * @param newSnippet     New variable declaration snippet.
+     * @param foundVariables Map to add extracted data to.
+     * @param foundImports   Set to add imports that should be persisted.
+     * @throws InvokerException If type/name inferring failed.
      */
-    private String shortenedString(Object input) {
-        String value = String.valueOf(input);
-        value = value.replaceAll("\n", "");
-        if (value.length() > MAX_VAR_STRING_LENGTH) {
-            int subStrLength = MAX_VAR_STRING_LENGTH / 2;
-            return value.substring(0, subStrLength)
-                    + "..." + value.substring(value.length() - subStrLength);
+    private void processVariableDeclaration(VariableDeclarationSnippet newSnippet, Map<String, String> foundVariables,
+                                            Set<String> foundImports) throws InvokerException {
+        ClassLoadContext varTypeInferContext = createVarTypeInferContext(newSnippet);
+        SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
+        PackageCompilation compilation = compile(project);
+
+        for (BLangSimpleVariable variable : compilation.defaultModuleBLangPackage().getGlobalVariables()) {
+            // If the variable is not a init var or a known global var, add it.
+            String variableName = quotedIdentifier(variable.name.value);
+            if (!INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
+                    && !foundVariables.containsKey(variableName)) {
+                if (variable.isDeclaredWithVar && variable.type.getKind().equals(TypeKind.ERROR)) {
+                    // Then we need to infer the type and find the imports
+                    // that are required for the inferred type.
+                    // TODO: Reuse same imports
+                    String importPrefix = getPossibleImportPrefix();
+                    String importStatement = String.format("import %s/%s as %s;",
+                            variable.type.tsymbol.pkgID.orgName, variable.type.tsymbol.pkgID.name, importPrefix);
+                    String varTypeBaseName = quotedIdentifier(variable.type.tsymbol.name.toString());
+                    String varType = String.format("%s:%s", importPrefix, varTypeBaseName);
+                    foundVariables.put(variableName, varType);
+                    imports.put(importPrefix, importStatement);
+                    foundImports.add(importPrefix);
+                } else {
+                    // Declared without var, then the user
+                    // must already have done required imports.
+                    foundVariables.put(variableName, variable.type.toString());
+                }
+            }
         }
-        return value;
+    }
+
+    /**
+     * This is an import. A test import is done to check for errors.
+     * It should not give 'module not found' error.
+     * Only compilation is done to verify package resolution.
+     *
+     * @param newSnippet New import snippet.
+     * @return Whether import is a valid import.
+     * @throws InvokerException If compilation failed.
+     */
+    private boolean processImport(ImportDeclarationSnippet newSnippet) throws InvokerException {
+        ClassLoadContext importCheckingContext = createImportCheckingContext(newSnippet);
+        SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
+        PackageCompilation compilation = project.currentPackage().getCompilation();
+        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic :
+                compilation.diagnosticResult().diagnostics()) {
+            if (diagnostic.diagnosticInfo().code()
+                    .equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
+                addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
+                return false;
+            }
+        }
+        // No imports are actually done. Not possible for a valid import.
+        if (compilation.defaultModuleBLangPackage().imports.isEmpty()) {
+            addDiagnostic(Diagnostic.error("Not a valid import statement."));
+            return false;
+        }
+        BLangImportPackage importPackage = compilation.defaultModuleBLangPackage().imports.get(0);
+        String importPrefix = quotedIdentifier(importPackage.alias.value);
+        if (INIT_IMPORTS.containsKey(importPrefix)) {
+            addDiagnostic(Diagnostic.error("Import is already available by default."));
+            return false;
+        } else if (imports.containsKey(importPrefix)) {
+            addDiagnostic(Diagnostic.error("A module was previously imported with the same prefix."));
+            return false;
+        }
+        imports.put(importPrefix, newSnippet.toString());
+        return true;
     }
 
     /**
@@ -306,10 +310,14 @@ public class ClassLoadInvoker extends Invoker {
         List<String> moduleDclnStrings = new ArrayList<>();
         List<Pair<String, String>> initVarDclns = new ArrayList<>();
         List<Pair<String, String>> saveVarDclns = new ArrayList<>();
-        List<String> importStrings = getUsedImportStrings(newSnippet);
         globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
         globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
+
+        // Imports = snippet imports + module def imports
+        Set<String> importStrings = getUsedImportStrings(newSnippet);
+        mustImports.stream().map(imports::get)
+                .filter(Objects::nonNull).forEach(importStrings::add);
 
         String lastVarDcln = newSnippet.toString();
 
@@ -344,6 +352,21 @@ public class ClassLoadInvoker extends Invoker {
     }
 
     /**
+     * Get a possible unused import identifier in the format 'ID.
+     * TODO: Restrict user from using this identifier.
+     *
+     * @return The free import prefix.
+     */
+    private String getPossibleImportPrefix() {
+        String possiblePrefix;
+        do {
+            possiblePrefix = quotedIdentifier(lastAnonImportPrefixId.toString());
+            lastAnonImportPrefixId++;
+        } while (imports.containsKey(possiblePrefix));
+        return possiblePrefix;
+    }
+
+    /**
      * Creates the context object to be passed to template.
      * The new snippets are not added here. Instead they are added to copies.
      *
@@ -360,10 +383,14 @@ public class ClassLoadInvoker extends Invoker {
         List<Pair<String, String>> initVarDclns = new ArrayList<>();
         List<Pair<String, String>> saveVarDclns = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>();
-        List<String> importStrings = getUsedImportStrings(newSnippet);
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
         globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
         globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
+
+        // Imports = snippet imports + var def imports + module def imports
+        Set<String> importStrings = getUsedImportStrings(newSnippet);
+        mustImports.stream().map(imports::get)
+                .filter(Objects::nonNull).forEach(importStrings::add);
 
         Pair<String, Boolean> lastExpr = null;
         String lastVarDcln = null;
@@ -471,19 +498,14 @@ public class ClassLoadInvoker extends Invoker {
      * @param snippet Snippet to check.
      * @return List of imports.
      */
-    protected List<String> getUsedImportStrings(Snippet snippet) {
+    protected Set<String> getUsedImportStrings(Snippet snippet) {
         Set<String> importStrings = new HashSet<>();
-        Consumer<Snippet> snippetProcessor = (s) -> s.usedImports().stream()
+        snippet.usedImports().stream()
                 .map(this::quotedIdentifier)
                 .map(imports::get).filter(Objects::nonNull)
-                .map(Snippet::toString).forEach(importStrings::add);
-
-        // Process current snippet
-        snippetProcessor.accept(snippet);
-        // Process module dclns and variables to check old used imports
-        moduleDclns.forEach(snippetProcessor);
-        globalVarSnippets.forEach(snippetProcessor);
-        return List.copyOf(importStrings);
+                .forEach(importStrings::add);
+        // Process current snippet, module dclns and indirect imports
+        return importStrings;
     }
 
     /**
@@ -514,5 +536,52 @@ public class ClassLoadInvoker extends Invoker {
             System.setSecurityManager(null);
             System.setErr(stdErr);
         }
+    }
+
+    @Override
+    public String availableImports() {
+        // Imports with prefixes
+        Map<String, String> importMapped = new HashMap<>(INIT_IMPORTS);
+        for (Map.Entry<String, String> entry : imports.entrySet()) {
+            importMapped.put(entry.getKey(), entry.getValue());
+        }
+        List<String> importStrings = new ArrayList<>(importMapped.values());
+        return String.join("\n", importStrings);
+    }
+
+    @Override
+    public String availableVariables() {
+        // Available variables and values as string.
+        List<String> varStrings = new ArrayList<>();
+        for (Map.Entry<String, String> entry : globalVars.entrySet()) {
+            String value = shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
+            String varString = String.format("%s %s = %s", entry.getValue(), entry.getKey(), value);
+            varStrings.add(varString);
+        }
+        return String.join("\n", varStrings);
+    }
+
+    @Override
+    public String availableModuleDeclarations() {
+        // Module level dclns.
+        return moduleDclns.stream().map(this::shortenedString)
+                .collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Short a string to a certain length.
+     *
+     * @param input Input string to shorten.
+     * @return Shortened string.
+     */
+    private String shortenedString(Object input) {
+        String value = String.valueOf(input);
+        value = value.replaceAll("\n", "");
+        if (value.length() > MAX_VAR_STRING_LENGTH) {
+            int subStrLength = MAX_VAR_STRING_LENGTH / 2;
+            return value.substring(0, subStrLength)
+                    + "..." + value.substring(value.length() - subStrLength);
+        }
+        return value;
     }
 }
