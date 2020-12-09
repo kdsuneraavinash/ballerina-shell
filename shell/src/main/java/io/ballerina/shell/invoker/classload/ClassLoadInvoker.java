@@ -19,6 +19,7 @@
 package io.ballerina.shell.invoker.classload;
 
 import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import io.ballerina.projects.BuildOptions;
 import io.ballerina.projects.BuildOptionsBuilder;
 import io.ballerina.projects.JBallerinaBackend;
@@ -41,7 +42,9 @@ import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
@@ -167,7 +170,8 @@ public class ClassLoadInvoker extends Invoker {
             PackageCompilation compilation = compile(project);
 
             for (BLangSimpleVariable variable : compilation.defaultModuleBLangPackage().getGlobalVariables()) {
-                // If the variable is a init var or a known global var, add it.
+                // If the variable is not a init var or a known global var, add it.
+                // TODO: If var is used with an imported type, issue a warning
                 String variableName = quotedIdentifier(variable.name.value);
                 if (!INIT_VAR_NAMES.contains(variableName)
                         && !globalVars.containsKey(variableName)
@@ -193,6 +197,7 @@ public class ClassLoadInvoker extends Invoker {
                     return new Pair<>(false, Optional.empty());
                 }
             }
+            // No imports are actually done. Not possible for a valid import.
             if (compilation.defaultModuleBLangPackage().imports.isEmpty()) {
                 addDiagnostic(Diagnostic.error("Not a valid import statement."));
                 return new Pair<>(false, Optional.empty());
@@ -232,6 +237,16 @@ public class ClassLoadInvoker extends Invoker {
         }
         Object result = ClassLoadMemory.recall(contextId, EXPR_VAR_NAME);
         return new Pair<>(isSuccess, Optional.ofNullable(result));
+    }
+
+    @Override
+    public Pair<Boolean, Optional<Object>> execute(String source) throws InvokerException {
+        // An alternative execute to directly execute a string source.
+        SingleFileProject project = getProject(source);
+        PackageCompilation compilation = compile(project);
+        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
+        boolean isSuccess = execute(project, jBallerinaBackend);
+        return new Pair<>(isSuccess, null);
     }
 
     @Override
@@ -419,10 +434,35 @@ public class ClassLoadInvoker extends Invoker {
      */
     protected SingleFileProject getProject(Object context, String templateFile) throws InvokerException {
         Template template = super.getTemplate(templateFile);
-        File mainBal = writeToFile(template, context);
-        addDiagnostic(Diagnostic.debug("Using main file: " + mainBal));
-        BuildOptions buildOptions = new BuildOptionsBuilder().offline(true).build();
-        return SingleFileProject.load(mainBal.toPath(), buildOptions);
+        try (StringWriter stringWriter = new StringWriter()) {
+            template.process(context, stringWriter);
+            return getProject(stringWriter.toString());
+        } catch (TemplateException e) {
+            addDiagnostic(Diagnostic.error("Template processing failed: " + e.getMessage()));
+            throw new InvokerException(e);
+        } catch (IOException e) {
+            addDiagnostic(Diagnostic.error("File generation failed: " + e.getMessage()));
+            throw new InvokerException(e);
+        }
+    }
+
+    /**
+     * Get the project with the context data.
+     *
+     * @param source Source to use for generating project.
+     * @return Created ballerina project.
+     * @throws InvokerException If file writing failed.
+     */
+    protected SingleFileProject getProject(String source) throws InvokerException {
+        try {
+            File mainBal = writeToFile(source);
+            addDiagnostic(Diagnostic.debug("Using main file: " + mainBal));
+            BuildOptions buildOptions = new BuildOptionsBuilder().offline(true).build();
+            return SingleFileProject.load(mainBal.toPath(), buildOptions);
+        } catch (IOException e) {
+            addDiagnostic(Diagnostic.error("File writing failed: " + e.getMessage()));
+            throw new InvokerException(e);
+        }
     }
 
     /**

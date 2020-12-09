@@ -45,11 +45,20 @@ public abstract class TestUtils {
      */
     public static <T> T loadTestCases(String fileName, Class<T> testCasesClazz) {
         Gson gson = new Gson();
+        return gson.fromJson(readFile(fileName), testCasesClazz);
+    }
+
+    /**
+     * Reads a file from resources with the given file name.
+     *
+     * @param fileName Resource name.
+     * @return File content.
+     */
+    public static String readFile(String fileName) {
         InputStream inputStream = TestUtils.class.getClassLoader().getResourceAsStream(fileName);
         Objects.requireNonNull(inputStream, "Test file does not exist: " + fileName);
         try (Scanner scanner = new Scanner(inputStream, Charset.defaultCharset()).useDelimiter(SPECIAL_DELIMITER)) {
-            String content = scanner.hasNext() ? scanner.next() : "";
-            return gson.fromJson(content, testCasesClazz);
+            return scanner.hasNext() ? scanner.next() : "";
         }
     }
 

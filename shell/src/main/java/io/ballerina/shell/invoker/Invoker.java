@@ -20,7 +20,6 @@ package io.ballerina.shell.invoker;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import io.ballerina.projects.DiagnosticResult;
 import io.ballerina.projects.Document;
 import io.ballerina.projects.DocumentId;
@@ -80,6 +79,16 @@ public abstract class Invoker extends DiagnosticReporter {
      * @return Execution output result.
      */
     public abstract Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException;
+
+    /**
+     * Executes a source and returns the output lines.
+     * Will not change the state in the invoker directly.
+     * However the generated code may change the state.
+     *
+     * @param source Source to evaluate.
+     * @return Execution output result.
+     */
+    public abstract Pair<Boolean, Optional<Object>> execute(String source) throws InvokerException;
 
     /**
      * Returns available imports in the module.
@@ -179,28 +188,18 @@ public abstract class Invoker extends DiagnosticReporter {
     }
 
     /**
-     * Helper method to write a template populated with context to a file.
-     * Writes to a temporary file and returns the file obj.
+     * Helper method to write a string source to a file.
      *
-     * @param template Template name.
-     * @param context  Context object to use to populate.
+     * @param source Content to write to the file.
      * @return The created temp file.
-     * @throws InvokerException If writing was unsuccessful.
+     * @throws IOException If writing was unsuccessful.
      */
-    protected File writeToFile(Template template, Object context) throws InvokerException {
-        try {
-            File createdFile = File.createTempFile("main-", ".bal");
-            try (FileWriter fileWriter = new FileWriter(createdFile, Charset.defaultCharset())) {
-                template.process(context, fileWriter);
-            }
-            createdFile.deleteOnExit();
-            return createdFile;
-        } catch (TemplateException e) {
-            addDiagnostic(Diagnostic.error("Template processing failed: " + e.getMessage()));
-            throw new InvokerException(e);
-        } catch (IOException e) {
-            addDiagnostic(Diagnostic.error("File generation failed: " + e.getMessage()));
-            throw new InvokerException(e);
+    protected File writeToFile(String source) throws IOException {
+        File createdFile = File.createTempFile("main-", ".bal");
+        createdFile.deleteOnExit();
+        try (FileWriter fileWriter = new FileWriter(createdFile, Charset.defaultCharset())) {
+            fileWriter.write(source);
         }
+        return createdFile;
     }
 }
