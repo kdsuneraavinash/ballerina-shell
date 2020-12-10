@@ -44,6 +44,12 @@ public class VariableDeclarationSnippet extends Snippet {
         super(SnippetSubKind.VARIABLE_DECLARATION, rootNode);
     }
 
+    public VariableDeclarationSnippet withoutInitializer() {
+        assert rootNode instanceof ModuleVariableDeclarationNode;
+        return new VariableDeclarationSnippet(((ModuleVariableDeclarationNode) rootNode).modify()
+                .withInitializer(null).apply());
+    }
+
     /**
      * Finds the variable names and types in the snippet.
      * If the type cannot be determined, (var) it is ignored.
@@ -56,14 +62,14 @@ public class VariableDeclarationSnippet extends Snippet {
         if (declarationNode.typedBindingPattern().bindingPattern() instanceof CaptureBindingPatternNode) {
             // TODO: Are there other dclns we cannot infer?
 
-            // If array with asterisk, cannot infer: int[*] a = 1212;
-            if (isAsteriskArrayDef(declarationNode.typedBindingPattern().typeDescriptor())) {
+            TypeDescriptorNode typeDescriptorNode = declarationNode.typedBindingPattern().typeDescriptor();
+
+            if (isAsteriskArrayDef(typeDescriptorNode) // If array with asterisk: int[*] a = 1212;
+                    || isVarDef(typeDescriptorNode)   // If var type: var x = 1212;
+            ) {
                 return List.of();
             }
-            // If var type, cannot infer: var x = 1212;
-            if (isVarDef(declarationNode.typedBindingPattern().typeDescriptor())) {
-                return List.of();
-            }
+
             // Otherwise we can infer.
             String variableName = ((CaptureBindingPatternNode) declarationNode.typedBindingPattern().bindingPattern())
                     .variableName().text().trim();

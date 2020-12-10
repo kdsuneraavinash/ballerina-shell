@@ -226,6 +226,10 @@ public class ClassLoadInvoker extends Invoker {
         newSnippet.findVariableNamesAndTypes(this)
                 .forEach(p -> foundVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
 
+        // Imports required for the var dcln.
+        newSnippet.withoutInitializer().usedImports().stream()
+                .map(this::quotedIdentifier).forEach(foundImports::add);
+
         ClassLoadContext varTypeInferContext = createVarTypeInferContext(newSnippet);
         SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
@@ -235,7 +239,7 @@ public class ClassLoadInvoker extends Invoker {
             String variableName = quotedIdentifier(variable.name.value);
             if (!INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
                     && !foundVariables.containsKey(variableName)) {
-                if (variable.isDeclaredWithVar && variable.type.getKind().equals(TypeKind.ERROR)) {
+                if (variable.type.getKind().equals(TypeKind.ERROR)) {
                     // Then we need to infer the type and find the imports
                     // that are required for the inferred type.
                     Name type = variable.type.tsymbol.name;

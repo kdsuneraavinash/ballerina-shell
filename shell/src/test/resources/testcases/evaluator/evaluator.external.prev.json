@@ -15,20 +15,29 @@
   },
   {
     "description": "Variable type that uses the import.",
-    "code": "math:ArithmeticError err = math:ArithmeticError(\"Error\")"
+    "code": "math:ArithmeticError err = math:ArithmeticError(\"Error 1\")"
   },
   {
     "description": "Get the variable message.",
     "code": "err.message()",
-    "expr": "Error"
+    "expr": "Error 1"
   },
   {
     "description": "Variable type that uses the import with var.",
-    "code": "var err2 = math:ArithmeticError(\"Error\")"
+    "code": "var err2 = math:ArithmeticError(\"Error 2\")"
   },
   {
     "description": "Get the variable message.",
     "code": "err2.message()",
-    "expr": "Error"
+    "expr": "Error 2"
+  },
+  {
+    "description": "Variable type that uses the import with imported type.",
+    "code": "math:ArithmeticError err3 = math:ArithmeticError(\"Error 3\")"
+  },
+  {
+    "description": "Get the variable message.",
+    "code": "err3.message()",
+    "expr": "Error 3"
   }
 ]
