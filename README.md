@@ -65,7 +65,7 @@ The project is implemented in two base modules.
   [a, b] = [1, 2]
   ```
 
-- **When using query expressions, use them only as assignments** - If a query expression is done as a variable
+- **When using query expressions/actions, use them only as assignments** - If a query expression is done as a variable
   declaration, it would throw an exception. Input the expression as an assignment instead. (Declare the variables first)
 
   ```ballerina
@@ -75,9 +75,6 @@ The project is implemented in two base modules.
   string x = ""
   x = from var y in z where ....
   ```
-
-- **ballerina/log is unsupported** - `ballerina/log` module is not currently supported. As a result any module that uses
-  the log module is unsupported as well.
 
 ## Implementation
 
@@ -91,7 +88,7 @@ Run following commands in order.
 
 ```batch
 gradlew.bat fatJar
-java -jar -Dballerina.home=home shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+java -jar -Dballerina.home=home -Djava.util.logging.manager="org.ballerinalang.logging.BLogManager" shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
 ```
 
 **To run with an installed ballerina distribution,** (This will enable stdlib imports)
@@ -99,8 +96,8 @@ In the following script, `$BALLERINA_HOME` refers to the ballerina distribution 
 with `ballerina-slp7` or higher.
 
 ```bash
-java -jar -Dballerina.home=$BALLERINA_HOME shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
-# eg: java -jar -Dballerina.home=/usr/lib/ballerina/distributions/ballerina-slp7 shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+java -jar -Djava.util.logging.manager="org.ballerinalang.logging.BLogManager" -Dballerina.home=$BALLERINA_HOME shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+# eg: java -jar -Djava.util.logging.manager="org.ballerinalang.logging.BLogManager" -Dballerina.home=/usr/lib/ballerina/distributions/ballerina-slp7 shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
 ```
 
 ## References
@@ -111,5 +108,6 @@ post on reple: "Replay-Based" REPLs for Compiled Languages and limitations/fixes
 [RCRL](https://github.com/onqtam/rcrl) - Read-Compile-Run-Loop: tiny and powerful interactive C++ compiler (REPL)
 
 [JShell](https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm#JSHEL-GUID-630F27C8-1195-4989-9F6B-2C51D46F52C8)
+
 - A REPL for Java programming language.
 

@@ -37,7 +37,6 @@ import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import org.ballerinalang.model.Name;
 import org.ballerinalang.model.elements.PackageID;
-import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
 import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
@@ -75,6 +74,7 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
     protected static final String EXPR_VAR_NAME = "expr";
+    protected static final String QUALIFIED_NAME_SEP = ":";
     // Variables that are set from the start. These should not be cached.
     protected static final Map<String, String> INIT_IMPORTS = Map.of(
             "'io", "import ballerina/io;",
@@ -243,7 +243,8 @@ public class ClassLoadInvoker extends Invoker {
             String variableName = quotedIdentifier(variable.name.value);
             if (!INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
                     && !foundVariables.containsKey(variableName)) {
-                if (variable.type.getKind().equals(TypeKind.ERROR)) {
+                // TODO: This is a weak test, need a better test to check for imported types
+                if (variable.type.toString().contains(QUALIFIED_NAME_SEP)) {
                     // Then we need to infer the type and find the imports
                     // that are required for the inferred type.
                     Name type = variable.type.tsymbol.name;
@@ -363,7 +364,7 @@ public class ClassLoadInvoker extends Invoker {
         if (importPrefix == null) {
             throw new InvokerException();
         }
-        String varType = String.format("%s:%s", importPrefix, quotedIdentifier(type));
+        String varType = importPrefix + QUALIFIED_NAME_SEP + quotedIdentifier(type);
         return new Pair<>(importPrefix, varType);
     }
 
