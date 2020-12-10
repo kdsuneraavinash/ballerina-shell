@@ -172,10 +172,6 @@ public class ClassLoadInvoker extends Invoker {
         if (newSnippet.isVariableDeclaration()) {
             assert newSnippet instanceof VariableDeclarationSnippet;
             VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
-            // Infer types of possible variables using the syntax tree.
-            // TODO: Remove type finding
-            varDcln.findVariableNamesAndTypes()
-                    .forEach(p -> newVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
             processVariableDeclaration(varDcln, newVariables, persistImports);
         } else if (newSnippet.isImport()) {
             String importPrefix = processImport(newSnippet.toString());
@@ -214,6 +210,9 @@ public class ClassLoadInvoker extends Invoker {
      * Some types (var) are determined at compile time.
      * So we have to compile once and know the names and types of variables.
      * Only compilation is done.
+     * 1. First try to find type using syntax tree.
+     * 2. If not, try to infer type straight from compilation.
+     * 3. Import required imports to define types if needed.
      *
      * @param newSnippet     New variable declaration snippet.
      * @param foundVariables Map to add extracted data to.
@@ -222,6 +221,11 @@ public class ClassLoadInvoker extends Invoker {
      */
     private void processVariableDeclaration(VariableDeclarationSnippet newSnippet, Map<String, String> foundVariables,
                                             Set<String> foundImports) throws InvokerException {
+        // Infer types of possible variables using the syntax tree.
+        // TODO: Remove type finding
+        newSnippet.findVariableNamesAndTypes(this)
+                .forEach(p -> foundVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
+
         ClassLoadContext varTypeInferContext = createVarTypeInferContext(newSnippet);
         SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);

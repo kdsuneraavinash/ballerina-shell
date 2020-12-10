@@ -24,9 +24,10 @@ import io.ballerina.compiler.syntax.tree.BuiltinSimpleNameReferenceNode;
 import io.ballerina.compiler.syntax.tree.CaptureBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.compiler.syntax.tree.TypeDescriptorNode;
+import io.ballerina.shell.Diagnostic;
+import io.ballerina.shell.DiagnosticReporter;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
 import io.ballerina.shell.utils.Pair;
@@ -44,33 +45,17 @@ public class VariableDeclarationSnippet extends Snippet {
     }
 
     /**
-     * Returns the snippet without the initializer expression.
-     * Initializer will be replaced by nil literal ().
-     *
-     * @return Resultant snippet.
-     */
-    public VariableDeclarationSnippet withoutInitializer() {
-        assert rootNode instanceof ModuleVariableDeclarationNode;
-        return new VariableDeclarationSnippet(
-                ((ModuleVariableDeclarationNode) rootNode).modify()
-                        .withInitializer(
-                                NodeFactory.createNilLiteralNode(
-                                        NodeFactory.createToken(SyntaxKind.OPEN_PAREN_TOKEN),
-                                        NodeFactory.createToken(SyntaxKind.CLOSE_PAREN_TOKEN)))
-                        .apply()
-        );
-    }
-
-    /**
      * Finds the variable names and types in the snippet.
      * If the type cannot be determined, (var) it is ignored.
      * The found vars are returned as a list of pairs of var name and type.
      *
      * @return Variable name and types found.
      */
-    public List<Pair<String, String>> findVariableNamesAndTypes() {
+    public List<Pair<String, String>> findVariableNamesAndTypes(DiagnosticReporter reporter) {
         ModuleVariableDeclarationNode declarationNode = (ModuleVariableDeclarationNode) rootNode;
         if (declarationNode.typedBindingPattern().bindingPattern() instanceof CaptureBindingPatternNode) {
+            // TODO: Are there other dclns we cannot infer?
+
             // If array with asterisk, cannot infer: int[*] a = 1212;
             if (isAsteriskArrayDef(declarationNode.typedBindingPattern().typeDescriptor())) {
                 return List.of();
@@ -84,6 +69,9 @@ public class VariableDeclarationSnippet extends Snippet {
                     .variableName().text().trim();
             String variableType = declarationNode.typedBindingPattern().typeDescriptor().toString().trim();
             return List.of(new Pair<>(variableName, variableType));
+        } else {
+            reporter.addDiagnostic(Diagnostic.warn("" +
+                    "Sorry, only captured binding patterns are fully supported at the moment."));
         }
         return List.of();
     }
