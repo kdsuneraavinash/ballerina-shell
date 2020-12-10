@@ -24,8 +24,8 @@ import io.ballerina.compiler.syntax.tree.BuiltinSimpleNameReferenceNode;
 import io.ballerina.compiler.syntax.tree.CaptureBindingPatternNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.NodeVisitor;
 import io.ballerina.compiler.syntax.tree.SyntaxKind;
-import io.ballerina.compiler.syntax.tree.TypeDescriptorNode;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticReporter;
 import io.ballerina.shell.snippet.Snippet;
@@ -40,10 +40,48 @@ import java.util.Optional;
  * Currently only module level variable declarations are accepted.
  */
 public class VariableDeclarationSnippet extends Snippet {
+    /**
+     * A node visitor that will check whether a variable declaration contains any
+     * compile time bindings (such as var, int[*],...). If so, isInfferrable will be
+     * set to false after visitor was applied.
+     */
+    private static class InferrableDecideVisitor extends NodeVisitor {
+        boolean isInferrable;
+
+        InferrableDecideVisitor() {
+            isInferrable = true;
+        }
+
+        @Override
+        public void visit(ArrayTypeDescriptorNode arrayTypeDescriptorNode) {
+            super.visit(arrayTypeDescriptorNode);
+            Optional<Node> arrayLength = arrayTypeDescriptorNode.arrayLength();
+            if (arrayLength.isPresent()) {
+                if (arrayLength.get() instanceof BasicLiteralNode) {
+                    isInferrable = false;
+                }
+            }
+        }
+
+        @Override
+        public void visit(BuiltinSimpleNameReferenceNode builtinSimpleNameReferenceNode) {
+            super.visit(builtinSimpleNameReferenceNode);
+            if (builtinSimpleNameReferenceNode.kind() == SyntaxKind.VAR_TYPE_DESC) {
+                isInferrable = false;
+            }
+        }
+    }
+
+
     public VariableDeclarationSnippet(ModuleVariableDeclarationNode rootNode) {
         super(SnippetSubKind.VARIABLE_DECLARATION, rootNode);
     }
 
+    /**
+     * Creates a new snippet where initializer is not provided.
+     *
+     * @return Var dcln snippet without the initializer (RHS).
+     */
     public VariableDeclarationSnippet withoutInitializer() {
         assert rootNode instanceof ModuleVariableDeclarationNode;
         return new VariableDeclarationSnippet(((ModuleVariableDeclarationNode) rootNode).modify()
@@ -58,44 +96,25 @@ public class VariableDeclarationSnippet extends Snippet {
      * @return Variable name and types found.
      */
     public List<Pair<String, String>> findVariableNamesAndTypes(DiagnosticReporter reporter) {
-        ModuleVariableDeclarationNode declarationNode = (ModuleVariableDeclarationNode) rootNode;
-        if (declarationNode.typedBindingPattern().bindingPattern() instanceof CaptureBindingPatternNode) {
-            // TODO: Are there other dclns we cannot infer?
+        ModuleVariableDeclarationNode declarationNode = (ModuleVariableDeclarationNode) withoutInitializer().rootNode;
 
-            TypeDescriptorNode typeDescriptorNode = declarationNode.typedBindingPattern().typeDescriptor();
-
-            if (isAsteriskArrayDef(typeDescriptorNode) // If array with asterisk: int[*] a = 1212;
-                    || isVarDef(typeDescriptorNode)   // If var type: var x = 1212;
-            ) {
-                return List.of();
-            }
-
-            // Otherwise we can infer.
-            String variableName = ((CaptureBindingPatternNode) declarationNode.typedBindingPattern().bindingPattern())
-                    .variableName().text().trim();
-            String variableType = declarationNode.typedBindingPattern().typeDescriptor().toString().trim();
-            return List.of(new Pair<>(variableName, variableType));
-        } else {
+        // If not captured binding patterns, skip.
+        if (!(declarationNode.typedBindingPattern().bindingPattern() instanceof CaptureBindingPatternNode)) {
             reporter.addDiagnostic(Diagnostic.warn("" +
-                    "Sorry, only captured binding patterns are fully supported at the moment."));
+                    "Warning, only captured binding patterns are fully supported at the moment."));
+            return List.of();
         }
-        return List.of();
-    }
 
-    private boolean isVarDef(TypeDescriptorNode typeDescriptorNode) {
-        return typeDescriptorNode instanceof BuiltinSimpleNameReferenceNode
-                && typeDescriptorNode.kind() == SyntaxKind.VAR_TYPE_DESC;
-    }
-
-    private boolean isAsteriskArrayDef(TypeDescriptorNode typeDescriptorNode) {
-        if (typeDescriptorNode instanceof ArrayTypeDescriptorNode) {
-            Optional<Node> arrayLength = ((ArrayTypeDescriptorNode) typeDescriptorNode).arrayLength();
-            if (arrayLength.isPresent()) {
-                if (arrayLength.get() instanceof BasicLiteralNode) {
-                    return arrayLength.get().kind() == SyntaxKind.ASTERISK_LITERAL;
-                }
-            }
+        // If not inferrable, skip.
+        InferrableDecideVisitor visitor = new InferrableDecideVisitor();
+        declarationNode.accept(visitor);
+        if (!visitor.isInferrable) {
+            return List.of();
         }
-        return false;
+
+        CaptureBindingPatternNode bindingPatternNode = (CaptureBindingPatternNode) declarationNode
+                .typedBindingPattern().bindingPattern();
+        return List.of(new Pair<>(bindingPatternNode.variableName().text(),
+                declarationNode.typedBindingPattern().typeDescriptor().toSourceCode()));
     }
 }

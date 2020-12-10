@@ -224,23 +224,28 @@ public class ClassLoadInvoker extends Invoker {
      */
     private void processVariableDeclaration(VariableDeclarationSnippet newSnippet, Map<String, String> foundVariables,
                                             Set<String> foundImports) throws InvokerException {
+        // No matter the approach, compile. This will confirm that syntax is valid.
+        ClassLoadContext varTypeInferContext = createVarTypeInferContext(newSnippet);
+        SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
+        PackageCompilation compilation = compile(project);
 
         // Infer types of possible variables using the syntax tree.
         // TODO: Remove syntax tree type finding and improve latter methodology
         List<Pair<String, String>> declaredVarNames = newSnippet.findVariableNamesAndTypes(this);
         if (!declaredVarNames.isEmpty()) {
-            declaredVarNames.forEach(p -> foundVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
-            // Imports required for the var dcln.
+            for (Pair<String, String> variable : declaredVarNames) {
+                String variableName = quotedIdentifier(variable.getFirst());
+                String type = variable.getSecond();
+                if (isValidNewVariableName(variableName, foundVariables)) {
+                    foundVariables.put(variableName, type);
+                }
+            }
             newSnippet.withoutInitializer().usedImports().stream()
                     .map(this::quotedIdentifier).forEach(foundImports::add);
             return;
         }
 
-        // If cannot be directly inferred, compile once and find the type.
-        ClassLoadContext varTypeInferContext = createVarTypeInferContext(newSnippet);
-        SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
-        PackageCompilation compilation = compile(project);
-
+        // Infer types using the compilation.
         // Get the main function reference
         Optional<BLangFunction> mainFunction = compilation.defaultModuleBLangPackage().functions.stream()
                 .filter(f -> f.name.value.equals("main")).findFirst();
@@ -248,16 +253,11 @@ public class ClassLoadInvoker extends Invoker {
             addDiagnostic(Diagnostic.error("main function definition not found."));
             throw new InvokerException();
         }
-
-        // Get the variable declarations from the main function
         for (Scope.ScopeEntry scopeEntry : mainFunction.get().body.scope.entries.values()) {
             // If the variable is not a init var or a known global var, add it.
             String variableName = quotedIdentifier(scopeEntry.symbol.name.value);
             BType type = scopeEntry.symbol.type;
-            if (!INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
-                    && !foundVariables.containsKey(variableName)) {
-                addDiagnostic(Diagnostic.debug("Found variable: " + variableName));
-
+            if (isValidNewVariableName(variableName, foundVariables)) {
                 // TODO: This is a weak test, need a better test to check for imported types
                 if (type.toString().contains(QUALIFIED_NAME_SEP)) {
                     // TODO: Handle union types
@@ -282,6 +282,18 @@ public class ClassLoadInvoker extends Invoker {
                 }
             }
         }
+    }
+
+    /**
+     * Checks if the variable name is a valid name for a new variable.
+     *
+     * @param variableName      Variable name to check.
+     * @param previousVariables Previously defined variables.
+     * @return Whether the name is valid.
+     */
+    private boolean isValidNewVariableName(String variableName, Map<String, String> previousVariables) {
+        return !INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
+                && !previousVariables.containsKey(variableName);
     }
 
     /**

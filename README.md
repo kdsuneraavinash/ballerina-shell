@@ -54,19 +54,17 @@ The project is implemented in two base modules.
   io:println(x_str.length());
   ```
 
-- **Only captured binding patterns are supported to define variables** - You may not use list binding pattern/mapping
-  binding pattern to define global variables in REPL. (Local variables can still be defined using these)
+- **Only captured binding patterns are fully supported to define variables** - List binding patterns/Map binding
+  patterns, etc... are not fully supported. As a result, there might be edge cases where such a binding pattern may fail
+  to evaluate. Use of enum types/imported types/table types may cause issues with these binding patterns.
 
   ```ballerina
-  // This will not work
-  var [a, b] = [1, 2]
-  // Use following instead
-  int a = 0; int b = 0;
-  [a, b] = [1, 2]
+  // This will work with a warning
+  [int ,int] [a, b] = [1, 2]
   ```
 
-- **Var will not work for union types which has to be imported** - If a var variable declaration has a type which has
-to be imported, it should not be a union type. In this case explicitly set the type.
+- **Var will not work for union types which has to be imported** - If a var variable declaration has a type which has to
+  be imported, it should not be a union type. In this case explicitly set the type.
 
   ```ballerina
   // This will not work if f returns of type (abc:p|abc:q)
