@@ -5,20 +5,21 @@ import ballerina/java as java;
     ${import}
 </#list>
 
-function recall_var(string name) returns any|error { return (); }
-function memorize_var(string name, any|error value) { }
-
 <#list moduleDclns as dcln>
 ${dcln}
 </#list>
 
-${lastVarDcln}
-<#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = // value
-    <${varNameType.second}> recall_var("x");
-</#list>
+function recall_var(string name) returns any|error { return (); }
+function memorize_var(string name, any|error value) { }
 
-public function main(){
+public function main() {
+    <#list initVarDclns as varNameType>
+    ${varNameType.second} ${varNameType.first} = // value
+    <${varNameType.second}> recall_var("x");
+    </#list>
+
+    ${lastVarDcln}
+
     io:println("Hello world");
     _ = java:JavaClassNotFoundError;
 }

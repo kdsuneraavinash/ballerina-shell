@@ -65,15 +65,14 @@ The project is implemented in two base modules.
   [a, b] = [1, 2]
   ```
 
-- **When using query expressions/actions, use them only as assignments** - If a query expression is done as a variable
-  declaration, it would throw an exception. Input the expression as an assignment instead. (Declare the variables first)
+- **Var will not work for union types which has to be imported** - If a var variable declaration has a type which has
+to be imported, it should not be a union type. In this case explicitly set the type.
 
   ```ballerina
-  // This will not work
-  string x = from var y in z where ....
+  // This will not work if f returns of type (abc:p|abc:q)
+  var x = f()
   // Use following instead
-  string x = ""
-  x = from var y in z where ....
+  (abc:p|abc:q) x = f()
   ```
 
 ## Implementation

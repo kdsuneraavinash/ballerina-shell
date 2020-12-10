@@ -37,9 +37,12 @@ import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import org.ballerinalang.model.Name;
 import org.ballerinalang.model.elements.PackageID;
+import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
+import org.wso2.ballerinalang.compiler.semantics.model.Scope;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
+import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
-import org.wso2.ballerinalang.compiler.tree.BLangSimpleVariable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -238,23 +241,44 @@ public class ClassLoadInvoker extends Invoker {
         SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
 
-        for (BLangSimpleVariable variable : compilation.defaultModuleBLangPackage().getGlobalVariables()) {
+        // Get the main function reference
+        Optional<BLangFunction> mainFunction = compilation.defaultModuleBLangPackage().functions.stream()
+                .filter(f -> f.name.value.equals("main")).findFirst();
+        if (mainFunction.isEmpty()) {
+            addDiagnostic(Diagnostic.error("main function definition not found."));
+            throw new InvokerException();
+        }
+
+        // Get the variable declarations from the main function
+        for (Scope.ScopeEntry scopeEntry : mainFunction.get().body.scope.entries.values()) {
             // If the variable is not a init var or a known global var, add it.
-            String variableName = quotedIdentifier(variable.name.value);
+            String variableName = quotedIdentifier(scopeEntry.symbol.name.value);
+            BType type = scopeEntry.symbol.type;
             if (!INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
                     && !foundVariables.containsKey(variableName)) {
+                addDiagnostic(Diagnostic.debug("Found variable: " + variableName));
+
                 // TODO: This is a weak test, need a better test to check for imported types
-                if (variable.type.toString().contains(QUALIFIED_NAME_SEP)) {
+                if (type.toString().contains(QUALIFIED_NAME_SEP)) {
+                    // TODO: Handle union types
+                    if (type.getKind().equals(TypeKind.UNION)) {
+                        addDiagnostic(Diagnostic.error("" +
+                                "var with union type return of external types is not supported.\n" +
+                                "Please directly specify the type without using var.\n" +
+                                "Detected type: " + type));
+                        throw new InvokerException();
+                    }
+
                     // Then we need to infer the type and find the imports
                     // that are required for the inferred type.
-                    Name type = variable.type.tsymbol.name;
-                    Pair<String, String> importStatement = createImportForVarType(variable.type.tsymbol.pkgID, type);
+                    Pair<String, String> importStatement = createImportForVarType(type.tsymbol.pkgID,
+                            type.tsymbol.name);
                     foundVariables.put(variableName, importStatement.getSecond());
                     foundImports.add(importStatement.getFirst());
                 } else {
                     // Declared without var, then the user
                     // must already have done required imports.
-                    foundVariables.put(variableName, variable.type.toString());
+                    foundVariables.put(variableName, type.toString());
                 }
             }
         }

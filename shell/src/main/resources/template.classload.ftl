@@ -24,17 +24,10 @@ ${dcln}
 </#list>
 
 handle context_id = java:fromString("${contextId}");
-${lastVarDcln}
 
 <#list initVarDclns as varNameType>
 ${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("${varNameType.first}");
 </#list>
-
-function save() {
-    <#list saveVarDclns as varNameType>
-    memorize_var("${varNameType.first}", ${varNameType.first});
-    </#list>
-}
 
 function run() returns @untainted any|error {
     <#if lastExpr.second>
@@ -55,6 +48,10 @@ public function main() returns error? {
         io:println("Exception occurred: ", ${exprVarName});
         return ${exprVarName};
     }
+
+    ${lastVarDcln}
     memorize_var("${exprVarName}", ${exprVarName});
-    return trap save();
+    <#list saveVarDclns as varNameType>
+    memorize_var("${varNameType.first}", ${varNameType.first});
+    </#list>
 }
