@@ -33,9 +33,10 @@ import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
+import org.ballerinalang.model.Name;
+import org.ballerinalang.model.elements.PackageID;
 import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
@@ -114,13 +115,6 @@ public class ClassLoadInvoker extends Invoker {
     protected final String contextId;
 
     /**
-     * Anonymous import prefix for importing modules with var.
-     * These imports should happen anonymously. Thus a 'ID format is used.
-     * TODO: Verify that user snippets do not contain 'ID format texts.
-     */
-    protected Long lastAnonImportPrefixId;
-
-    /**
      * Creates a class load invoker from the given ballerina home.
      * Ballerina home should be tha path that contains repo directory.
      * It is expected that the runtime is added in the class path.
@@ -131,7 +125,6 @@ public class ClassLoadInvoker extends Invoker {
         this.moduleDclns = new ArrayList<>();
         this.globalVars = new HashMap<>();
         this.mustImports = new HashSet<>();
-        this.lastAnonImportPrefixId = 0L;
     }
 
     @Override
@@ -153,7 +146,6 @@ public class ClassLoadInvoker extends Invoker {
         this.moduleDclns.clear();
         this.globalVars.clear();
         this.mustImports.clear();
-        this.lastAnonImportPrefixId = 0L;
         ClassLoadMemory.forgetAll(contextId);
     }
 
@@ -186,9 +178,8 @@ public class ClassLoadInvoker extends Invoker {
                     .forEach(p -> newVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
             processVariableDeclaration(varDcln, newVariables, persistImports);
         } else if (newSnippet.isImport()) {
-            assert newSnippet instanceof ImportDeclarationSnippet;
-            boolean importSuccess = processImport((ImportDeclarationSnippet) newSnippet);
-            return new Pair<>(importSuccess, Optional.empty());
+            String importPrefix = processImport(newSnippet.toString());
+            return new Pair<>(importPrefix != null, Optional.empty());
         } else if (newSnippet.isModuleMemberDeclaration()) {
             newSnippet.usedImports().stream().map(this::quotedIdentifier)
                     .forEach(persistImports::add);
@@ -243,15 +234,10 @@ public class ClassLoadInvoker extends Invoker {
                 if (variable.isDeclaredWithVar && variable.type.getKind().equals(TypeKind.ERROR)) {
                     // Then we need to infer the type and find the imports
                     // that are required for the inferred type.
-                    // TODO: Reuse same imports
-                    String importPrefix = getPossibleImportPrefix();
-                    String importStatement = String.format("import %s/%s as %s;",
-                            variable.type.tsymbol.pkgID.orgName, variable.type.tsymbol.pkgID.name, importPrefix);
-                    String varTypeBaseName = quotedIdentifier(variable.type.tsymbol.name.toString());
-                    String varType = String.format("%s:%s", importPrefix, varTypeBaseName);
-                    foundVariables.put(variableName, varType);
-                    imports.put(importPrefix, importStatement);
-                    foundImports.add(importPrefix);
+                    Name type = variable.type.tsymbol.name;
+                    Pair<String, String> importStatement = createImportForVarType(variable.type.tsymbol.pkgID, type);
+                    foundVariables.put(variableName, importStatement.getSecond());
+                    foundImports.add(importStatement.getFirst());
                 } else {
                     // Declared without var, then the user
                     // must already have done required imports.
@@ -266,12 +252,12 @@ public class ClassLoadInvoker extends Invoker {
      * It should not give 'module not found' error.
      * Only compilation is done to verify package resolution.
      *
-     * @param newSnippet New import snippet.
+     * @param importString New import snippet string.
      * @return Whether import is a valid import.
      * @throws InvokerException If compilation failed.
      */
-    private boolean processImport(ImportDeclarationSnippet newSnippet) throws InvokerException {
-        ClassLoadContext importCheckingContext = createImportCheckingContext(newSnippet);
+    private String processImport(String importString) throws InvokerException {
+        ClassLoadContext importCheckingContext = createImportCheckingContext(importString);
         SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
         PackageCompilation compilation = project.currentPackage().getCompilation();
         for (io.ballerina.tools.diagnostics.Diagnostic diagnostic :
@@ -279,25 +265,24 @@ public class ClassLoadInvoker extends Invoker {
             if (diagnostic.diagnosticInfo().code()
                     .equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
                 addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
-                return false;
+                return null;
             }
         }
         // No imports are actually done. Not possible for a valid import.
         if (compilation.defaultModuleBLangPackage().imports.isEmpty()) {
             addDiagnostic(Diagnostic.error("Not a valid import statement."));
-            return false;
+            return null;
         }
         BLangImportPackage importPackage = compilation.defaultModuleBLangPackage().imports.get(0);
         String importPrefix = quotedIdentifier(importPackage.alias.value);
         if (INIT_IMPORTS.containsKey(importPrefix)) {
             addDiagnostic(Diagnostic.error("Import is already available by default."));
-            return false;
+            return null;
         } else if (imports.containsKey(importPrefix)) {
-            addDiagnostic(Diagnostic.error("A module was previously imported with the same prefix."));
-            return false;
+            return importPrefix;
         }
-        imports.put(importPrefix, newSnippet.toString());
-        return true;
+        imports.put(importPrefix, importString);
+        return importPrefix;
     }
 
     /**
@@ -328,11 +313,11 @@ public class ClassLoadInvoker extends Invoker {
     /**
      * Creates a context which can be used to check import validation.
      *
-     * @param newSnippet New snippet. Must be a import dcln.
+     * @param importString Import declaration snippet string.
      * @return Context with import checking code.
      */
-    protected ClassLoadContext createImportCheckingContext(ImportDeclarationSnippet newSnippet) {
-        return new ClassLoadContext(this.contextId, List.of(newSnippet.toString()), List.of(),
+    protected ClassLoadContext createImportCheckingContext(String importString) {
+        return new ClassLoadContext(this.contextId, List.of(importString), List.of(),
                 List.of(), List.of(), null, null);
     }
 
@@ -342,28 +327,32 @@ public class ClassLoadInvoker extends Invoker {
      * used in the context.
      *
      * @param rawIdentifier Identifier without quote.
+     *                      (This can be any object, string representation is taken)
      * @return Quoted identifier.
      */
-    protected String quotedIdentifier(String rawIdentifier) {
-        if (rawIdentifier.startsWith(QUOTE)) {
-            return rawIdentifier;
+    protected String quotedIdentifier(Object rawIdentifier) {
+        if (String.valueOf(rawIdentifier).startsWith(QUOTE)) {
+            return String.valueOf(rawIdentifier);
         }
         return QUOTE + rawIdentifier;
     }
 
     /**
-     * Get a possible unused import identifier in the format 'ID.
-     * TODO: Restrict user from using this identifier.
+     * Get a possible unused identifier to import the package given.
      *
-     * @return The free import prefix.
+     * @param packageID Package ID to lookup import.
+     * @param type      Type from import to use.
+     * @return The import prefix and the type for the import.
      */
-    private String getPossibleImportPrefix() {
-        String possiblePrefix;
-        do {
-            possiblePrefix = quotedIdentifier(lastAnonImportPrefixId.toString());
-            lastAnonImportPrefixId++;
-        } while (imports.containsKey(possiblePrefix));
-        return possiblePrefix;
+    private Pair<String, String> createImportForVarType(PackageID packageID, Name type) throws InvokerException {
+        // TODO: Add version too?
+        String importStatement = String.format("import %s/%s;", packageID.orgName, packageID.name);
+        String importPrefix = processImport(importStatement);
+        if (importPrefix == null) {
+            throw new InvokerException();
+        }
+        String varType = String.format("%s:%s", importPrefix, quotedIdentifier(type));
+        return new Pair<>(importPrefix, varType);
     }
 
     /**
