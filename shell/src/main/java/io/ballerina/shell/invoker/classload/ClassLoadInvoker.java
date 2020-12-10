@@ -221,15 +221,19 @@ public class ClassLoadInvoker extends Invoker {
      */
     private void processVariableDeclaration(VariableDeclarationSnippet newSnippet, Map<String, String> foundVariables,
                                             Set<String> foundImports) throws InvokerException {
+
         // Infer types of possible variables using the syntax tree.
-        // TODO: Remove type finding
-        newSnippet.findVariableNamesAndTypes(this)
-                .forEach(p -> foundVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
+        // TODO: Remove syntax tree type finding and improve latter methodology
+        List<Pair<String, String>> declaredVarNames = newSnippet.findVariableNamesAndTypes(this);
+        if (!declaredVarNames.isEmpty()) {
+            declaredVarNames.forEach(p -> foundVariables.put(quotedIdentifier(p.getFirst()), p.getSecond()));
+            // Imports required for the var dcln.
+            newSnippet.withoutInitializer().usedImports().stream()
+                    .map(this::quotedIdentifier).forEach(foundImports::add);
+            return;
+        }
 
-        // Imports required for the var dcln.
-        newSnippet.withoutInitializer().usedImports().stream()
-                .map(this::quotedIdentifier).forEach(foundImports::add);
-
+        // If cannot be directly inferred, compile once and find the type.
         ClassLoadContext varTypeInferContext = createVarTypeInferContext(newSnippet);
         SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
