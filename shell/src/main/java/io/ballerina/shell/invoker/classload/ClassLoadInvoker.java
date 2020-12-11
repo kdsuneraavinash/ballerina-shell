@@ -35,8 +35,6 @@ import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
-import org.ballerinalang.model.Name;
-import org.ballerinalang.model.elements.PackageID;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.semantics.model.Scope;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BMapType;
@@ -44,7 +42,6 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
-import org.wso2.ballerinalang.compiler.util.Names;
 import org.wso2.ballerinalang.compiler.util.TypeTags;
 
 import java.io.ByteArrayOutputStream;
@@ -84,6 +81,7 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
     protected static final String EXPR_VAR_NAME = "expr";
     // Patterns
+    protected static final Pattern IMPORT_TYPE_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
     protected static final Pattern MAP_WITHOUT_LT_PATTERN = Pattern.compile("([<\\[(])map([>\\])])");
     // Initial context data
     protected static final Map<String, String> INIT_IMPORTS = Map.of(
@@ -276,18 +274,14 @@ public class ClassLoadInvoker extends Invoker {
             return "(" + String.join("|", typeStrings) + ")";
         } else {
             String typeString = type.toString();
-            PackageID packageID = type.tsymbol.pkgID;
 
-            // Check if type is an imported type.
-            if (packageID != PackageID.DEFAULT
-                    && !packageID.equals(PackageID.ANNOTATIONS)
-                    && packageID.name != Names.DEFAULT_PACKAGE) {
+            Matcher importTypeMatcher = IMPORT_TYPE_PATTERN.matcher(typeString);
+            if (importTypeMatcher.matches()) {
                 // Then we need to infer the type and find the imports
                 // that are required for the inferred type.
-                String orgName = packageID.orgName.value;
-                String[] compNames = packageID.nameComps.stream()
-                        .map(Name::getValue).toArray(String[]::new);
-                String impType = type.tsymbol.name.toString();
+                String orgName = importTypeMatcher.group(1);
+                String[] compNames = importTypeMatcher.group(2).split("\\.");
+                String impType = importTypeMatcher.group(3);
                 String importPrefix = createImportForVarType(orgName, compNames);
                 String varType = importPrefix + QUALIFIED_NAME_SEP + quotedIdentifier(impType);
                 foundImports.add(importPrefix);
