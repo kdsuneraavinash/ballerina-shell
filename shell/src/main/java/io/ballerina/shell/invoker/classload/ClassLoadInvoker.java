@@ -37,12 +37,8 @@ import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.semantics.model.Scope;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BMapType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
-import org.wso2.ballerinalang.compiler.util.TypeTags;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -62,8 +58,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -80,17 +74,29 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
     protected static final String EXPR_VAR_NAME = "expr";
-    // Patterns
-    protected static final Pattern IMPORT_TYPE_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
-    protected static final Pattern MAP_WITHOUT_LT_PATTERN = Pattern.compile("([<\\[(])map([>\\])])");
     // Initial context data
     protected static final Map<String, String> INIT_IMPORTS = Map.of(
             "'io", "import ballerina/io;",
             "'java", "import ballerina/java;");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id", "'$annotation_data");
     // Punctuations
-    protected static final String QUALIFIED_NAME_SEP = ":";
     private static final String QUOTE = "'";
+
+    /**
+     * A import creator to enable create imports required for variables.
+     */
+    protected class ClassLoadImportCreator implements BTypeStringGen.ImportCreator {
+        @Override
+        public String createImport(String orgName, String... compNames) throws InvokerException {
+            String quotedPackageName = Arrays.stream(compNames)
+                    .map(ClassLoadInvoker.this::quotedIdentifier)
+                    .collect(Collectors.joining("."));
+            String importStatement = String.format("import %s/%s;", orgName, quotedPackageName);
+            String importPrefix = ClassLoadInvoker.this.processImport(importStatement);
+            Objects.requireNonNull(importPrefix, "Import prefix fetch failed.");
+            return importPrefix;
+        }
+    }
 
     /**
      * List of imports done. These are imported to the read generated code as necessary.
@@ -245,7 +251,9 @@ public class ClassLoadInvoker extends Invoker {
             // If the variable is not a init var or a known global var, add it.
             String variableName = quotedIdentifier(scopeEntry.symbol.name.value);
             if (isValidNewVariableName(variableName, foundVariables)) {
-                String type = getTypeString(scopeEntry.symbol.type, foundImports);
+                BTypeStringGen stringGen = new BTypeStringGen(foundImports, new ClassLoadImportCreator());
+                scopeEntry.symbol.type.accept(stringGen);
+                String type = stringGen.getStringRepr();
                 foundVariables.put(variableName, type);
             }
         }
@@ -261,45 +269,6 @@ public class ClassLoadInvoker extends Invoker {
     private boolean isValidNewVariableName(String variableName, Map<String, String> previousVariables) {
         return !INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
                 && !previousVariables.containsKey(variableName);
-    }
-
-    private String getTypeString(BType type, Set<String> foundImports)
-            throws InvokerException {
-        // Support intersection as well?
-        if (type instanceof BUnionType) {
-            Set<String> typeStrings = new HashSet<>();
-            for (BType memberType : ((BUnionType) type).getMemberTypes()) {
-                typeStrings.add(getTypeString(memberType, foundImports));
-            }
-            return "(" + String.join("|", typeStrings) + ")";
-        } else {
-            String typeString = type.toString();
-
-            Matcher importTypeMatcher = IMPORT_TYPE_PATTERN.matcher(typeString);
-            if (importTypeMatcher.matches()) {
-                // Then we need to infer the type and find the imports
-                // that are required for the inferred type.
-                String orgName = importTypeMatcher.group(1);
-                String[] compNames = importTypeMatcher.group(2).split("\\.");
-                String impType = importTypeMatcher.group(3);
-                String importPrefix = createImportForVarType(orgName, compNames);
-                String varType = importPrefix + QUALIFIED_NAME_SEP + quotedIdentifier(impType);
-                foundImports.add(importPrefix);
-                return varType;
-            }
-
-            // If any constraint, return map<any> because any is removed from map defs
-            // If anywhere we find map without LT and RT, replace with map<any> as well.
-            Matcher mapWithoutLtMatcher = MAP_WITHOUT_LT_PATTERN.matcher(typeString);
-            if (type instanceof BMapType && ((BMapType) type).constraint.tag == TypeTags.ANY) {
-                return "map<any>";
-            } else if (mapWithoutLtMatcher.find()) {
-                return mapWithoutLtMatcher.replaceAll("$1map<any>$2");
-            }
-
-            // If we find map alone without lt token, replace with map<any>.
-            return typeString;
-        }
     }
 
     /**
@@ -390,27 +359,6 @@ public class ClassLoadInvoker extends Invoker {
             return String.valueOf(rawIdentifier);
         }
         return QUOTE + rawIdentifier;
-    }
-
-    /**
-     * Get a possible unused identifier to import the package given.
-     *
-     * @param orgName   Org name of the import.
-     * @param compNames Name parts of imported. (to be dot separated)
-     * @return The import prefix and the type for the import.
-     * @throws InvokerException If import resolution failed.
-     */
-    private String createImportForVarType(String orgName, String... compNames) throws InvokerException {
-        // TODO: Add version too?
-        String quotedPackageName = Arrays.stream(compNames)
-                .map(this::quotedIdentifier)
-                .collect(Collectors.joining("."));
-        String importStatement = String.format("import %s/%s;", orgName, quotedPackageName);
-        String importPrefix = processImport(importStatement);
-        if (importPrefix == null) {
-            throw new InvokerException();
-        }
-        return importPrefix;
     }
 
     /**
