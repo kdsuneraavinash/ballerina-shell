@@ -42,7 +42,8 @@ The project is implemented in two base modules.
   ```
 
 - **Type guards for global variables do not work** - Since all the variables defined in REPL top level act as global
-  variables, type guards won't work. To remedy this you can explicitly cast the variable to the required type.
+  variables, type guards won't work. To remedy this you can explicitly cast the variable to the required type. However,
+  note that this is the expected behavior and not a bug. This will be fixed once the SDK supports global type guards.
 
   ```ballerina
   string|int x = "hello"
@@ -54,23 +55,26 @@ The project is implemented in two base modules.
   io:println(x_str.length());
   ```
 
-- **Only captured binding patterns are fully supported to define variables** - List binding patterns/Map binding
-  patterns, etc... are not fully supported. As a result, there might be edge cases where such a binding pattern may fail
-  to evaluate. Use of enum types/imported types/table types may cause issues with these binding patterns.
+- **Var shouldn't be used with types that are not visible to the public** - When using var, be careful not to use it for
+  variable which will have a type that is not visible to the REPL. Since all var variables are desugared in the REPL to
+  the relevant type, these will not work. However, you can still evaluate their values or cast them to a type or use a
+  type which will contain the hidden type.
 
   ```ballerina
-  // This will work with a warning
-  [int ,int] [a, b] = [1, 2]
+  // This will not work if return type(say abc:x) is private.
+  var x = abc:func()
+  // Any of the following will work
+  abc:func()
+  abc:y x = <abc:y> abc:func()
+  any|error x = abc:func() 
   ```
 
-- **Var will not work for union types which has to be imported** - If a var variable declaration has a type which has to
-  be imported, it should not be a union type. In this case explicitly set the type.
+- **Enum definition with explicit expression is not supported** - Enum declarations with explicit expressions are not
+  supported. This is due to how the enum expressions are implemented using constants.
 
   ```ballerina
-  // This will not work if f returns of type (abc:p|abc:q)
-  var x = f()
-  // Use following instead
-  (abc:p|abc:q) x = f()
+  // This will not work
+  enum Language {EN="engish", TA="tamil", SI="sinhala"}
   ```
 
 ## Implementation

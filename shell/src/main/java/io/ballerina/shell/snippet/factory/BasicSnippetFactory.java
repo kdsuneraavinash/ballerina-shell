@@ -132,11 +132,6 @@ public class BasicSnippetFactory extends SnippetFactory {
             if (varNode.finalKeyword().isPresent()) {
                 qualifiers = NodeFactory.createNodeList(varNode.finalKeyword().get());
             }
-            if (varNode.initializer().isEmpty()) {
-                addDiagnostic(Diagnostic.warn("" +
-                        "Variables without initializers are not permitted. " +
-                        "Give an initial value for your variable."));
-            }
             dclnNode = NodeFactory.createModuleVariableDeclarationNode(
                     NodeFactory.createMetadataNode(null, varNode.annotations()),
                     qualifiers, varNode.typedBindingPattern(),
@@ -144,6 +139,12 @@ public class BasicSnippetFactory extends SnippetFactory {
                     varNode.semicolonToken()
             );
         } else {
+            return null;
+        }
+        if (dclnNode.initializer().isEmpty()) {
+            addDiagnostic(Diagnostic.error("" +
+                    "Variables without initializers are not permitted. " +
+                    "Give an initial value for your variable."));
             return null;
         }
         return new VariableDeclarationSnippet(dclnNode);

@@ -8,8 +8,8 @@
     "code": "function concat(string str1, string str2) returns string {return str1 + \" and \" + str2; }"
   },
   {
-    "description": "An enum member can explicitly specify an associated expression.",
-    "code": "enum Language {EN = \"English\", TA = \"Tamil\", SI = \"Sinhala\"}"
+    "description": "An enum declaration.",
+    "code": "enum Language {EN, TA, SI}"
   },
   {
     "description": "An enum declaration can consist of a combination of members.",
@@ -32,16 +32,16 @@
   {
     "description": "Enum type can be used as a type.",
     "code": "Language language = getLanguage(\"e\"); language",
-    "expr": "English"
+    "expr": "EN"
   },
   {
     "description": "Enum value can be used as a type assigned by a string.",
-    "code": "Language sinhala = \"Sinhala\"; sinhala",
-    "expr": "Sinhala"
+    "code": "Language sinhala = \"SI\"; sinhala",
+    "expr": "SI"
   },
   {
     "description": "Enum value can be used as a type.",
-    "code": "EN english = \"English\"; english",
-    "expr": "English"
+    "code": "EN english = \"EN\"; english",
+    "expr": "EN"
   }
 ]

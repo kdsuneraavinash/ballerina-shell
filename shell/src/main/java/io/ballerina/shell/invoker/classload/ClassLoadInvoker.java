@@ -37,12 +37,15 @@ import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import org.ballerinalang.model.Name;
 import org.ballerinalang.model.elements.PackageID;
-import org.ballerinalang.model.types.TypeKind;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.semantics.model.Scope;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BMapType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
+import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
+import org.wso2.ballerinalang.compiler.util.Names;
+import org.wso2.ballerinalang.compiler.util.TypeTags;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -53,6 +56,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -61,6 +65,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -77,12 +83,15 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
     protected static final String EXPR_VAR_NAME = "expr";
-    protected static final String QUALIFIED_NAME_SEP = ":";
-    // Variables that are set from the start. These should not be cached.
+    // Patterns
+    protected static final Pattern MAP_WITHOUT_LT_PATTERN = Pattern.compile("([<\\[(])map([>\\])])");
+    // Initial context data
     protected static final Map<String, String> INIT_IMPORTS = Map.of(
             "'io", "import ballerina/io;",
             "'java", "import ballerina/java;");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id", "'$annotation_data");
+    // Punctuations
+    protected static final String QUALIFIED_NAME_SEP = ":";
     private static final String QUOTE = "'";
 
     /**
@@ -213,9 +222,6 @@ public class ClassLoadInvoker extends Invoker {
      * Some types (var) are determined at compile time.
      * So we have to compile once and know the names and types of variables.
      * Only compilation is done.
-     * 1. First try to find type using syntax tree.
-     * 2. If not, try to infer type straight from compilation.
-     * 3. Import required imports to define types if needed.
      *
      * @param newSnippet     New variable declaration snippet.
      * @param foundVariables Map to add extracted data to.
@@ -229,22 +235,6 @@ public class ClassLoadInvoker extends Invoker {
         SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
 
-        // Infer types of possible variables using the syntax tree.
-        // TODO: Remove syntax tree type finding and improve latter methodology
-        List<Pair<String, String>> declaredVarNames = newSnippet.findVariableNamesAndTypes(this);
-        if (!declaredVarNames.isEmpty()) {
-            for (Pair<String, String> variable : declaredVarNames) {
-                String variableName = quotedIdentifier(variable.getFirst());
-                String type = variable.getSecond();
-                if (isValidNewVariableName(variableName, foundVariables)) {
-                    foundVariables.put(variableName, type);
-                }
-            }
-            newSnippet.withoutInitializer().usedImports().stream()
-                    .map(this::quotedIdentifier).forEach(foundImports::add);
-            return;
-        }
-
         // Infer types using the compilation.
         // Get the main function reference
         Optional<BLangFunction> mainFunction = compilation.defaultModuleBLangPackage().functions.stream()
@@ -256,30 +246,9 @@ public class ClassLoadInvoker extends Invoker {
         for (Scope.ScopeEntry scopeEntry : mainFunction.get().body.scope.entries.values()) {
             // If the variable is not a init var or a known global var, add it.
             String variableName = quotedIdentifier(scopeEntry.symbol.name.value);
-            BType type = scopeEntry.symbol.type;
             if (isValidNewVariableName(variableName, foundVariables)) {
-                // TODO: This is a weak test, need a better test to check for imported types
-                if (type.toString().contains(QUALIFIED_NAME_SEP)) {
-                    // TODO: Handle union types
-                    if (type.getKind().equals(TypeKind.UNION)) {
-                        addDiagnostic(Diagnostic.error("" +
-                                "var with union type return of external types is not supported.\n" +
-                                "Please directly specify the type without using var.\n" +
-                                "Detected type: " + type));
-                        throw new InvokerException();
-                    }
-
-                    // Then we need to infer the type and find the imports
-                    // that are required for the inferred type.
-                    Pair<String, String> importStatement = createImportForVarType(type.tsymbol.pkgID,
-                            type.tsymbol.name);
-                    foundVariables.put(variableName, importStatement.getSecond());
-                    foundImports.add(importStatement.getFirst());
-                } else {
-                    // Declared without var, then the user
-                    // must already have done required imports.
-                    foundVariables.put(variableName, type.toString());
-                }
+                String type = getTypeString(scopeEntry.symbol.type, foundImports);
+                foundVariables.put(variableName, type);
             }
         }
     }
@@ -294,6 +263,49 @@ public class ClassLoadInvoker extends Invoker {
     private boolean isValidNewVariableName(String variableName, Map<String, String> previousVariables) {
         return !INIT_VAR_NAMES.contains(variableName) && !globalVars.containsKey(variableName)
                 && !previousVariables.containsKey(variableName);
+    }
+
+    private String getTypeString(BType type, Set<String> foundImports)
+            throws InvokerException {
+        // Support intersection as well?
+        if (type instanceof BUnionType) {
+            Set<String> typeStrings = new HashSet<>();
+            for (BType memberType : ((BUnionType) type).getMemberTypes()) {
+                typeStrings.add(getTypeString(memberType, foundImports));
+            }
+            return "(" + String.join("|", typeStrings) + ")";
+        } else {
+            String typeString = type.toString();
+            PackageID packageID = type.tsymbol.pkgID;
+
+            // Check if type is an imported type.
+            if (packageID != PackageID.DEFAULT
+                    && !packageID.equals(PackageID.ANNOTATIONS)
+                    && packageID.name != Names.DEFAULT_PACKAGE) {
+                // Then we need to infer the type and find the imports
+                // that are required for the inferred type.
+                String orgName = packageID.orgName.value;
+                String[] compNames = packageID.nameComps.stream()
+                        .map(Name::getValue).toArray(String[]::new);
+                String impType = type.tsymbol.name.toString();
+                String importPrefix = createImportForVarType(orgName, compNames);
+                String varType = importPrefix + QUALIFIED_NAME_SEP + quotedIdentifier(impType);
+                foundImports.add(importPrefix);
+                return varType;
+            }
+
+            // If any constraint, return map<any> because any is removed from map defs
+            // If anywhere we find map without LT and RT, replace with map<any> as well.
+            Matcher mapWithoutLtMatcher = MAP_WITHOUT_LT_PATTERN.matcher(typeString);
+            if (type instanceof BMapType && ((BMapType) type).constraint.tag == TypeTags.ANY) {
+                return "map<any>";
+            } else if (mapWithoutLtMatcher.find()) {
+                return mapWithoutLtMatcher.replaceAll("$1map<any>$2");
+            }
+
+            // If we find map alone without lt token, replace with map<any>.
+            return typeString;
+        }
     }
 
     /**
@@ -389,19 +401,22 @@ public class ClassLoadInvoker extends Invoker {
     /**
      * Get a possible unused identifier to import the package given.
      *
-     * @param packageID Package ID to lookup import.
-     * @param type      Type from import to use.
+     * @param orgName   Org name of the import.
+     * @param compNames Name parts of imported. (to be dot separated)
      * @return The import prefix and the type for the import.
+     * @throws InvokerException If import resolution failed.
      */
-    private Pair<String, String> createImportForVarType(PackageID packageID, Name type) throws InvokerException {
+    private String createImportForVarType(String orgName, String... compNames) throws InvokerException {
         // TODO: Add version too?
-        String importStatement = String.format("import %s/%s;", packageID.orgName, packageID.name);
+        String quotedPackageName = Arrays.stream(compNames)
+                .map(this::quotedIdentifier)
+                .collect(Collectors.joining("."));
+        String importStatement = String.format("import %s/%s;", orgName, quotedPackageName);
         String importPrefix = processImport(importStatement);
         if (importPrefix == null) {
             throw new InvokerException();
         }
-        String varType = importPrefix + QUALIFIED_NAME_SEP + quotedIdentifier(type);
-        return new Pair<>(importPrefix, varType);
+        return importPrefix;
     }
 
     /**

@@ -42,6 +42,12 @@ function run() returns @untainted any|error {
     </#if>
 }
 
+function importedTypeCheck() {
+    <#list saveVarDclns as varNameType>
+    ${varNameType.second} ${varNameType.first};
+    </#list>
+}
+
 public function main() returns error? {
     any|error ${exprVarName} = trap run();
      if (${exprVarName} is error){
