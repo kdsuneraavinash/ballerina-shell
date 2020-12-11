@@ -18,7 +18,11 @@
 
 package io.ballerina.shell.invoker.classload;
 
+import io.ballerina.shell.Diagnostic;
+import io.ballerina.shell.DiagnosticReporter;
 import io.ballerina.shell.exceptions.InvokerException;
+import org.ballerinalang.model.elements.PackageID;
+import org.ballerinalang.model.types.TypeKind;
 import org.wso2.ballerinalang.compiler.semantics.model.TypeVisitor;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.Symbols;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BAnnotationType;
@@ -50,12 +54,17 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTypedescType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BXMLType;
+import org.wso2.ballerinalang.compiler.util.Names;
 import org.wso2.ballerinalang.util.Flags;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Converts a type into its string format.
@@ -65,28 +74,14 @@ public class BTypeStringGen implements TypeVisitor {
     protected static final Pattern IMPORT_TYPE_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
     protected static final String QUALIFIED_NAME_SEP = ":";
     private static final String QUOTE = "'";
-
-    /**
-     * Creates an import and fetches a possible import prefix.
-     */
-    public interface ImportCreator {
-        /**
-         * Get a possible unused identifier to import the package given.
-         *
-         * @param orgName   Org name of the import.
-         * @param compNames Name parts of imported. (to be dot separated)
-         * @return The import prefix and the type for the import.
-         * @throws InvokerException If import resolution failed.
-         */
-        String createImport(String orgName, String... compNames) throws InvokerException;
-    }
-
-    private String stringRepr;
     private final Set<String> foundImports;
+    private final DiagnosticReporter reporter;
     private final ImportCreator importCreator;
+    private String stringRepr;
 
-    public BTypeStringGen(Set<String> foundImports, ImportCreator importCreator) {
+    public BTypeStringGen(Set<String> foundImports, DiagnosticReporter reporter, ImportCreator importCreator) {
         this.foundImports = foundImports;
+        this.reporter = reporter;
         this.importCreator = importCreator;
         this.stringRepr = "";
     }
@@ -133,6 +128,14 @@ public class BTypeStringGen implements TypeVisitor {
     public void visit(BUnionType bUnionType) {
         // Simply add all sub types separated by |.
         // Add a ? at the end if nullable.
+        // Also, if the type needs to be elevated, (because exported type not visible),
+        // do so.
+        Optional<String> elevatedType = getElevatedType(bUnionType.getMemberTypes());
+        if (elevatedType.isPresent()) {
+            this.stringRepr = elevatedType.get();
+            return;
+        }
+
         Set<String> typeStrings = new HashSet<>();
         for (BType memberType : bUnionType.getMemberTypes()) {
             memberType.accept(this);
@@ -150,6 +153,13 @@ public class BTypeStringGen implements TypeVisitor {
         // BArrayType string is always in format 'eType[.....]'
         // And there are no types between [].
         // So we can convert to string, and replace first 'eType' part.
+        // If the eType needs to be elevated, return it.
+        if (isNotVisible(bArrayType)) {
+            elevationWarning(List.of(bArrayType.eType), "any");
+            this.stringRepr = "any";
+            return;
+        }
+
         String original = bArrayType.toString();
         String originalETypeStr = bArrayType.eType.toString();
         bArrayType.eType.accept(this);
@@ -182,6 +192,57 @@ public class BTypeStringGen implements TypeVisitor {
                 ? String.format("table<%s> key(%s)", constraintRepr, keyRepr)
                 : String.format("table<%s>", constraintRepr);
         this.stringRepr = withReadOnly(bTableType, stringRepr);
+    }
+
+    private Optional<String> getElevatedType(Collection<BType> bTypes) {
+        // TODO: Write a visitor to get all the private types
+        List<BType> notVisibleTypes = bTypes.stream()
+                .filter(this::isNotVisible)
+                .collect(Collectors.toList());
+        if (notVisibleTypes.isEmpty()) {
+            return Optional.empty();
+        }
+
+        boolean isError = bTypes.stream().anyMatch(b -> b.getKind() == TypeKind.ERROR);
+        boolean isAny = bTypes.stream().anyMatch(b -> b.getKind() != TypeKind.ERROR);
+
+        String type;
+        if (isError && isAny) {
+            type = "(any|error)";
+        } else if (isError) {
+            type = "error";
+        } else {
+            type = "any";
+        }
+        elevationWarning(notVisibleTypes, type);
+        return Optional.of(type);
+    }
+
+    private void elevationWarning(Collection<BType> notVisibleTypes, String type) {
+        reporter.addDiagnostic(Diagnostic.warn("" +
+                "Export types " + notVisibleTypes + " are not visible for the REPL."));
+        reporter.addDiagnostic(Diagnostic.warn("" +
+                "Warning. Exported type not visible. Using '" + type + "' instead."));
+    }
+
+    private boolean isNotVisible(BType type) {
+        if (type.tsymbol.pkgID == PackageID.DEFAULT
+                || type.tsymbol.pkgID.equals(PackageID.ANNOTATIONS)
+                || type.tsymbol.pkgID.name == Names.DEFAULT_PACKAGE) {
+            return false;
+        }
+        return !Symbols.isPublic(type.tsymbol);
+    }
+
+    private String withReadOnly(BType bType, String withoutSuffix) {
+        if (Symbols.isFlagOn(bType.flags, Flags.READONLY)) {
+            return withoutSuffix + " & readonly";
+        }
+        return withoutSuffix;
+    }
+
+    public String getStringRepr() {
+        return stringRepr;
     }
 
     @Override
@@ -314,14 +375,18 @@ public class BTypeStringGen implements TypeVisitor {
         visit((BType) bHandleType);
     }
 
-    private String withReadOnly(BType bType, String withoutSuffix) {
-        if (Symbols.isFlagOn(bType.flags, Flags.READONLY)) {
-            return withoutSuffix + " & readonly";
-        }
-        return withoutSuffix;
-    }
-
-    public String getStringRepr() {
-        return stringRepr;
+    /**
+     * Creates an import and fetches a possible import prefix.
+     */
+    public interface ImportCreator {
+        /**
+         * Get a possible unused identifier to import the package given.
+         *
+         * @param orgName   Org name of the import.
+         * @param compNames Name parts of imported. (to be dot separated)
+         * @return The import prefix and the type for the import.
+         * @throws InvokerException If import resolution failed.
+         */
+        String createImport(String orgName, String... compNames) throws InvokerException;
     }
 }

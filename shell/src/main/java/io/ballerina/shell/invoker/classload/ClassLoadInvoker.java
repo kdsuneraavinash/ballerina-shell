@@ -93,7 +93,10 @@ public class ClassLoadInvoker extends Invoker {
                     .collect(Collectors.joining("."));
             String importStatement = String.format("import %s/%s;", orgName, quotedPackageName);
             String importPrefix = ClassLoadInvoker.this.processImport(importStatement);
-            Objects.requireNonNull(importPrefix, "Import prefix fetch failed.");
+            if (importPrefix == null) {
+                addDiagnostic(Diagnostic.error("Import prefix resolution failed."));
+                throw new InvokerException();
+            }
             return importPrefix;
         }
     }
@@ -251,7 +254,7 @@ public class ClassLoadInvoker extends Invoker {
             // If the variable is not a init var or a known global var, add it.
             String variableName = quotedIdentifier(scopeEntry.symbol.name.value);
             if (isValidNewVariableName(variableName, foundVariables)) {
-                BTypeStringGen stringGen = new BTypeStringGen(foundImports, new ClassLoadImportCreator());
+                BTypeStringGen stringGen = new BTypeStringGen(foundImports, this, new ClassLoadImportCreator());
                 scopeEntry.symbol.type.accept(stringGen);
                 String type = stringGen.getStringRepr();
                 foundVariables.put(variableName, type);

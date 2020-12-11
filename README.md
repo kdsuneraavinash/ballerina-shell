@@ -55,18 +55,16 @@ The project is implemented in two base modules.
   io:println(x_str.length());
   ```
 
-- **Var shouldn't be used with types that are not visible to the public** - When using var, be careful not to use it for
-  variable which will have a type that is not visible to the REPL. Since all var variables are desugared in the REPL to
-  the relevant type, these will not work. However, you can still evaluate their values or cast them to a type or use a
-  type which will contain the hidden type.
+- **Using var with types that are not visible to the public** - When using var, if a exported type that is not visible
+  to the REPL is used, REPL will try to use any/error combination that will not cause an error. A warning will be also
+  given.
 
   ```ballerina
-  // This will not work if return type(say abc:x) is private.
+  // If func() returns an error, this will give a warning and 
+  // the type would be any/error/any|error.
   var x = abc:func()
-  // Any of the following will work
-  abc:func()
-  abc:y x = <abc:y> abc:func()
-  any|error x = abc:func() 
+  // You can cast later
+  T x_t = <T> x
   ```
 
 - **Enum definition with explicit expression is not supported** - Enum declarations with explicit expressions are not
