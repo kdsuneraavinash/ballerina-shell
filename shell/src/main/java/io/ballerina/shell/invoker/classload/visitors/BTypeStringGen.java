@@ -16,14 +16,9 @@
  * under the License.
  */
 
-package io.ballerina.shell.invoker.classload;
+package io.ballerina.shell.invoker.classload.visitors;
 
-import io.ballerina.shell.Diagnostic;
-import io.ballerina.shell.DiagnosticReporter;
 import io.ballerina.shell.exceptions.InvokerException;
-import org.ballerinalang.model.elements.PackageID;
-import org.ballerinalang.model.types.TypeKind;
-import org.wso2.ballerinalang.compiler.semantics.model.TypeVisitor;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.Symbols;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BAnnotationType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BAnyType;
@@ -54,34 +49,27 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTypedescType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BXMLType;
-import org.wso2.ballerinalang.compiler.util.Names;
 import org.wso2.ballerinalang.util.Flags;
 
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Converts a type into its string format.
  * TODO: Improve this to pass all test cases.
  */
-public class BTypeStringGen implements TypeVisitor {
+public class BTypeStringGen extends AbstractTypeVisitor {
     protected static final Pattern IMPORT_TYPE_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
     protected static final String QUALIFIED_NAME_SEP = ":";
     private static final String QUOTE = "'";
     private final Set<String> foundImports;
-    private final DiagnosticReporter reporter;
     private final ImportCreator importCreator;
     private String stringRepr;
 
-    public BTypeStringGen(Set<String> foundImports, DiagnosticReporter reporter, ImportCreator importCreator) {
+    public BTypeStringGen(Set<String> foundImports, ImportCreator importCreator) {
         this.foundImports = foundImports;
-        this.reporter = reporter;
         this.importCreator = importCreator;
         this.stringRepr = "";
     }
@@ -130,12 +118,6 @@ public class BTypeStringGen implements TypeVisitor {
         // Add a ? at the end if nullable.
         // Also, if the type needs to be elevated, (because exported type not visible),
         // do so.
-        Optional<String> elevatedType = getElevatedType(bUnionType.getMemberTypes());
-        if (elevatedType.isPresent()) {
-            this.stringRepr = elevatedType.get();
-            return;
-        }
-
         Set<String> typeStrings = new HashSet<>();
         for (BType memberType : bUnionType.getMemberTypes()) {
             memberType.accept(this);
@@ -154,12 +136,6 @@ public class BTypeStringGen implements TypeVisitor {
         // And there are no types between [].
         // So we can convert to string, and replace first 'eType' part.
         // If the eType needs to be elevated, return it.
-        if (isNotVisible(bArrayType)) {
-            elevationWarning(List.of(bArrayType.eType), "any");
-            this.stringRepr = "any";
-            return;
-        }
-
         String original = bArrayType.toString();
         String originalETypeStr = bArrayType.eType.toString();
         bArrayType.eType.accept(this);
@@ -170,8 +146,6 @@ public class BTypeStringGen implements TypeVisitor {
     @Override
     public void visit(BTableType bTableType) {
         // Build table according to constraint and key.
-        // TODO: Check for bugs.
-
         if (bTableType.constraint == null) {
             this.stringRepr = withReadOnly(bTableType, "table");
             return;
@@ -194,115 +168,70 @@ public class BTypeStringGen implements TypeVisitor {
         this.stringRepr = withReadOnly(bTableType, stringRepr);
     }
 
-    private Optional<String> getElevatedType(Collection<BType> bTypes) {
-        // TODO: Write a visitor to get all the private types
-        List<BType> notVisibleTypes = bTypes.stream()
-                .filter(this::isNotVisible)
-                .collect(Collectors.toList());
-        if (notVisibleTypes.isEmpty()) {
-            return Optional.empty();
-        }
-
-        boolean isError = bTypes.stream().anyMatch(b -> b.getKind() == TypeKind.ERROR);
-        boolean isAny = bTypes.stream().anyMatch(b -> b.getKind() != TypeKind.ERROR);
-
-        String type;
-        if (isError && isAny) {
-            type = "(any|error)";
-        } else if (isError) {
-            type = "error";
-        } else {
-            type = "any";
-        }
-        elevationWarning(notVisibleTypes, type);
-        return Optional.of(type);
-    }
-
-    private void elevationWarning(Collection<BType> notVisibleTypes, String type) {
-        reporter.addDiagnostic(Diagnostic.warn("" +
-                "Export types " + notVisibleTypes + " are not visible for the REPL."));
-        reporter.addDiagnostic(Diagnostic.warn("" +
-                "Warning. Exported type not visible. Using '" + type + "' instead."));
-    }
-
-    private boolean isNotVisible(BType type) {
-        if (type.tsymbol.pkgID == PackageID.DEFAULT
-                || type.tsymbol.pkgID.equals(PackageID.ANNOTATIONS)
-                || type.tsymbol.pkgID.name == Names.DEFAULT_PACKAGE) {
-            return false;
-        }
-        return !Symbols.isPublic(type.tsymbol);
-    }
-
-    private String withReadOnly(BType bType, String withoutSuffix) {
-        if (Symbols.isFlagOn(bType.flags, Flags.READONLY)) {
-            return withoutSuffix + " & readonly";
-        }
-        return withoutSuffix;
-    }
-
-    public String getStringRepr() {
-        return stringRepr;
-    }
-
-    @Override
-    public void visit(BFiniteType bFiniteType) {
-        // TODO: Support enum association expression.
-        visit((BType) bFiniteType);
-    }
-
     @Override
     public void visit(BErrorType bErrorType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bErrorType);
     }
 
     @Override
     public void visit(BStreamType bStreamType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bStreamType);
     }
 
     @Override
     public void visit(BTypedescType bTypedescType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bTypedescType);
     }
 
     @Override
     public void visit(BTupleType bTupleType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bTupleType);
     }
 
     @Override
     public void visit(BIntersectionType bIntersectionType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bIntersectionType);
     }
 
     @Override
     public void visit(BXMLType bxmlType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bxmlType);
     }
 
     @Override
     public void visit(BRecordType bRecordType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bRecordType);
     }
 
     @Override
     public void visit(BObjectType bObjectType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bObjectType);
     }
 
     @Override
     public void visit(BFutureType bFutureType) {
-        // TODO: Implement complete logic
+        // TODO: Implement logic
         visit((BType) bFutureType);
+    }
+
+    @Override
+    public void visit(BStructureType bStructureType) {
+        // TODO: Implement logic
+        visit((BType) bStructureType);
+    }
+
+    @Override
+    public void visit(BInvokableType bInvokableType) {
+        // TODO: Implement logic
+        visit((BType) bInvokableType);
     }
 
     @Override
@@ -326,8 +255,8 @@ public class BTypeStringGen implements TypeVisitor {
     }
 
     @Override
-    public void visit(BInvokableType bInvokableType) {
-        visit((BType) bInvokableType);
+    public void visit(BFiniteType bFiniteType) {
+        visit((BType) bFiniteType);
     }
 
     @Override
@@ -366,13 +295,19 @@ public class BTypeStringGen implements TypeVisitor {
     }
 
     @Override
-    public void visit(BStructureType bStructureType) {
-        visit((BType) bStructureType);
-    }
-
-    @Override
     public void visit(BHandleType bHandleType) {
         visit((BType) bHandleType);
+    }
+
+    public String getStringRepr() {
+        return stringRepr;
+    }
+
+    private String withReadOnly(BType bType, String withoutSuffix) {
+        if (Symbols.isFlagOn(bType.flags, Flags.READONLY)) {
+            return withoutSuffix + " & readonly";
+        }
+        return withoutSuffix;
     }
 
     /**

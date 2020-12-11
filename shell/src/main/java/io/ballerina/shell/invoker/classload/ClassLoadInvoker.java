@@ -32,6 +32,8 @@ import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
+import io.ballerina.shell.invoker.classload.visitors.BTypeElevatorVisitor;
+import io.ballerina.shell.invoker.classload.visitors.BTypeStringGen;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
@@ -66,10 +68,6 @@ import java.util.stream.Collectors;
  * load them into the generated class effectively managing any side-effects.
  */
 public class ClassLoadInvoker extends Invoker {
-    private static final int MAX_VAR_STRING_LENGTH = 78;
-    private static final String VAR_TYPE_TEMPLATE_FILE = "template.type.ftl";
-    private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
-    private static final String TEMPLATE_FILE = "template.classload.ftl";
     // Main class and method names to invoke
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
@@ -79,55 +77,35 @@ public class ClassLoadInvoker extends Invoker {
             "'io", "import ballerina/io;",
             "'java", "import ballerina/java;");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id", "'$annotation_data");
+    private static final int MAX_VAR_STRING_LENGTH = 78;
+    private static final String VAR_TYPE_TEMPLATE_FILE = "template.type.ftl";
+    private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
+    private static final String TEMPLATE_FILE = "template.classload.ftl";
     // Punctuations
     private static final String QUOTE = "'";
-
-    /**
-     * A import creator to enable create imports required for variables.
-     */
-    protected class ClassLoadImportCreator implements BTypeStringGen.ImportCreator {
-        @Override
-        public String createImport(String orgName, String... compNames) throws InvokerException {
-            String quotedPackageName = Arrays.stream(compNames)
-                    .map(ClassLoadInvoker.this::quotedIdentifier)
-                    .collect(Collectors.joining("."));
-            String importStatement = String.format("import %s/%s;", orgName, quotedPackageName);
-            String importPrefix = ClassLoadInvoker.this.processImport(importStatement);
-            if (importPrefix == null) {
-                addDiagnostic(Diagnostic.error("Import prefix resolution failed."));
-                throw new InvokerException();
-            }
-            return importPrefix;
-        }
-    }
-
     /**
      * List of imports done. These are imported to the read generated code as necessary.
      * This is a map of import prefix to the import statement used.
      * Import prefix must be a quoted identifier.
      */
     protected final Map<String, String> imports;
-
     /**
      * List of module level declarations such as functions, classes, etc...
      * The snippets are saved as is.
      */
     protected final List<Snippet> moduleDclns;
-
     /**
      * List of global variables used in the code.
      * This is a map of variable name to its type.
      * The variable name must be a quoted identifier.
      */
     protected final Map<String, String> globalVars;
-
     /**
      * Imports that should be done regardless of usage in the current snippet.
      * These are possibly the imports that are done previously
      * in module level declarations or variable declarations.
      */
     protected final Set<String> mustImports;
-
     /**
      * Id of the current invoker context.
      */
@@ -254,10 +232,21 @@ public class ClassLoadInvoker extends Invoker {
             // If the variable is not a init var or a known global var, add it.
             String variableName = quotedIdentifier(scopeEntry.symbol.name.value);
             if (isValidNewVariableName(variableName, foundVariables)) {
-                BTypeStringGen stringGen = new BTypeStringGen(foundImports, this, new ClassLoadImportCreator());
-                scopeEntry.symbol.type.accept(stringGen);
-                String type = stringGen.getStringRepr();
-                foundVariables.put(variableName, type);
+                // First try to elevate type if required.
+                BTypeElevatorVisitor elevatorVisitor = new BTypeElevatorVisitor();
+                elevatorVisitor.accept(scopeEntry.symbol.type);
+                if (elevatorVisitor.isVisible()) {
+                    // If elevation is not needed, convert to string.
+                    BTypeStringGen stringGen = new BTypeStringGen(foundImports, new ClassLoadImportCreator());
+                    stringGen.accept(scopeEntry.symbol.type);
+                    foundVariables.put(variableName, stringGen.getStringRepr());
+                } else {
+                    String elevatedType = elevatorVisitor.getElevatedType().toString();
+                    addDiagnostic(Diagnostic.warn("" +
+                            "Export types " + elevatorVisitor.getInvisibleTypes() + " are not visible for the REPL.\n" +
+                            "Warning. Exported type not visible. Using '" + elevatedType + "' instead."));
+                    foundVariables.put(variableName, elevatedType);
+                }
             }
         }
     }
@@ -581,5 +570,24 @@ public class ClassLoadInvoker extends Invoker {
                     + "..." + value.substring(value.length() - subStrLength);
         }
         return value;
+    }
+
+    /**
+     * A import creator to enable create imports required for variables.
+     */
+    protected class ClassLoadImportCreator implements BTypeStringGen.ImportCreator {
+        @Override
+        public String createImport(String orgName, String... compNames) throws InvokerException {
+            String quotedPackageName = Arrays.stream(compNames)
+                    .map(ClassLoadInvoker.this::quotedIdentifier)
+                    .collect(Collectors.joining("."));
+            String importStatement = String.format("import %s/%s;", orgName, quotedPackageName);
+            String importPrefix = ClassLoadInvoker.this.processImport(importStatement);
+            if (importPrefix == null) {
+                addDiagnostic(Diagnostic.error("Import prefix resolution failed."));
+                throw new InvokerException();
+            }
+            return importPrefix;
+        }
     }
 }
