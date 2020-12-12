@@ -19,28 +19,15 @@
 package io.ballerina.shell.invoker.classload.visitors;
 
 import org.wso2.ballerinalang.compiler.semantics.model.TypeVisitor;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BAnnotationType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BAnyType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BAnydataType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BArrayType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BBuiltInRefType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BErrorType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BField;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BFiniteType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BFutureType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BHandleType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BIntersectionType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BInvokableType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BJSONType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BMapType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BNeverType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BNilType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BNoType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BPackageType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BParameterizedType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BRecordType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BServiceType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStreamType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStructureType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTableType;
@@ -59,13 +46,13 @@ import java.util.Set;
 /**
  * Visits all the types in a given type.
  * Will visit nested/parameterized/... types and perform given operations.
- * Will not visit the same node twice. Uses a vsited set to do so.
+ * Object types will not be visited twice.
  */
 public abstract class AbstractTypeVisitor implements TypeVisitor {
-    private final Set<BType> visitedTypes;
+    private final Set<BObjectType> visitedObjects;
 
     protected AbstractTypeVisitor() {
-        visitedTypes = new HashSet<>();
+        this.visitedObjects = new HashSet<>();
     }
 
     @Override
@@ -143,9 +130,6 @@ public abstract class AbstractTypeVisitor implements TypeVisitor {
     }
 
     @Override
-    public abstract void visit(BAnnotationType bAnnotationType);
-
-    @Override
     public void visit(BRecordType bRecordType) {
         accept(bRecordType.fields);
     }
@@ -160,45 +144,6 @@ public abstract class AbstractTypeVisitor implements TypeVisitor {
         accept(bFutureType.constraint);
     }
 
-    @Override
-    public abstract void visit(BBuiltInRefType bBuiltInRefType);
-
-    @Override
-    public abstract void visit(BAnyType bAnyType);
-
-    @Override
-    public abstract void visit(BAnydataType bAnydataType);
-
-    @Override
-    public abstract void visit(BFiniteType bFiniteType);
-
-    @Override
-    public abstract void visit(BJSONType bjsonType);
-
-    @Override
-    public abstract void visit(BParameterizedType bParameterizedType);
-
-    @Override
-    public abstract void visit(BNeverType bNeverType);
-
-    @Override
-    public abstract void visit(BNilType bNilType);
-
-    @Override
-    public abstract void visit(BNoType bNoType);
-
-    @Override
-    public abstract void visit(BPackageType bPackageType);
-
-    @Override
-    public abstract void visit(BServiceType bServiceType);
-
-    @Override
-    public abstract void visit(BHandleType bHandleType);
-
-    @Override
-    public abstract void visit(BType bType);
-
     protected void accept(Map<String, BField> fields) {
         fields.values().stream().map(BField::getType)
                 .forEach(this::accept);
@@ -211,14 +156,20 @@ public abstract class AbstractTypeVisitor implements TypeVisitor {
     /**
      * Accepts a node and calls correct visit method on it.
      * All the visits must happen via this method.
+     * {@code BObjectType} are expected to be visited again and again.
+     * Thus they will not be visited twice.
+     * However, any other type may be accepted more than one time.
      *
      * @param type Type to visit.
      */
     public void accept(BType type) {
-        if (!visitedTypes.contains(type)) {
-            visitedTypes.add(type);
-            Objects.requireNonNull(type, "Null type cannot be visited");
-            type.accept(this);
+        if (type instanceof BObjectType) {
+            if (visitedObjects.contains(type)) {
+                return;
+            }
+            visitedObjects.add((BObjectType) type);
         }
+        Objects.requireNonNull(type, "Null type cannot be visited");
+        type.accept(this);
     }
 }

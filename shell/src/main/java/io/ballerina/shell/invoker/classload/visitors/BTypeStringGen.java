@@ -19,6 +19,7 @@
 package io.ballerina.shell.invoker.classload.visitors;
 
 import io.ballerina.shell.exceptions.InvokerException;
+import org.ballerinalang.model.types.TypeKind;
 import org.wso2.ballerinalang.compiler.semantics.model.symbols.Symbols;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BAnnotationType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BAnyType;
@@ -49,67 +50,44 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTypedescType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BUnionType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BXMLType;
+import org.wso2.ballerinalang.compiler.util.TypeTags;
 import org.wso2.ballerinalang.util.Flags;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Converts a type into its string format.
- * TODO: Improve this to pass all test cases.
  */
-public class BTypeStringGen extends AbstractTypeVisitor {
+public class BTypeStringGen extends BTypeTransformer<String> {
     protected static final Pattern IMPORT_TYPE_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
     protected static final String QUALIFIED_NAME_SEP = ":";
     private static final String QUOTE = "'";
     private final Set<String> foundImports;
     private final ImportCreator importCreator;
-    private String stringRepr;
 
     public BTypeStringGen(Set<String> foundImports, ImportCreator importCreator) {
         this.foundImports = foundImports;
         this.importCreator = importCreator;
-        this.stringRepr = "";
     }
 
     @Override
     public void visit(BType bType) {
-        try {
-            Matcher importTypeMatcher = IMPORT_TYPE_PATTERN.matcher(bType.toString());
-            if (importTypeMatcher.matches()) {
-                // Then we need to infer the type and find the imports
-                // that are required for the inferred type.
-                String orgName = importTypeMatcher.group(1);
-                String[] compNames = importTypeMatcher.group(2).split("\\.");
-                String impType = importTypeMatcher.group(3);
-                if (!impType.startsWith(QUOTE)) {
-                    impType = QUOTE + impType;
-                }
-
-                // Import prefix is almost always the final comp name.
-                String importPrefix = importCreator.createImport(orgName, compNames);
-                String varType = importPrefix + QUALIFIED_NAME_SEP + impType;
-                this.foundImports.add(importPrefix);
-                this.stringRepr = varType;
-            } else {
-                this.stringRepr = bType.toString();
-            }
-        } catch (InvokerException e) {
-            // Should not fail.
-            throw new IllegalStateException(e);
-        }
+        String importedName = getImportedName(bType);
+        setState(Objects.requireNonNullElse(importedName, bType.toString()));
     }
 
     @Override
     public void visit(BMapType bMapType) {
         // String representation is map<CONSTRAINT>.
         // Add readonly flag if necessary.
-        bMapType.constraint.accept(this);
-        String stringRepr = getStringRepr();
+        String stringRepr = transform(bMapType.constraint);
         stringRepr = "map<" + stringRepr + ">";
-        this.stringRepr = withReadOnly(bMapType, stringRepr);
+        setState(withReadOnly(bMapType, stringRepr));
     }
 
     @Override
@@ -120,14 +98,13 @@ public class BTypeStringGen extends AbstractTypeVisitor {
         // do so.
         Set<String> typeStrings = new HashSet<>();
         for (BType memberType : bUnionType.getMemberTypes()) {
-            memberType.accept(this);
-            typeStrings.add(this.getStringRepr());
+            typeStrings.add(transform(memberType));
         }
         String stringRepr = "(" + String.join("|", typeStrings) + ")";
         if (bUnionType.isNullable()) {
             stringRepr = stringRepr + "?";
         }
-        this.stringRepr = stringRepr;
+        setState(stringRepr);
     }
 
     @Override
@@ -138,58 +115,123 @@ public class BTypeStringGen extends AbstractTypeVisitor {
         // If the eType needs to be elevated, return it.
         String original = bArrayType.toString();
         String originalETypeStr = bArrayType.eType.toString();
-        bArrayType.eType.accept(this);
-        String eTypeStr = getStringRepr();
-        this.stringRepr = eTypeStr + original.substring(originalETypeStr.length());
+        String eTypeStr = transform(bArrayType.eType);
+        setState(eTypeStr + original.substring(originalETypeStr.length()));
     }
 
     @Override
     public void visit(BTableType bTableType) {
         // Build table according to constraint and key.
         if (bTableType.constraint == null) {
-            this.stringRepr = withReadOnly(bTableType, "table");
+            setState(withReadOnly(bTableType, "table"));
             return;
         }
 
-        bTableType.constraint.accept(this);
-        String constraintRepr = getStringRepr();
-
+        String constraintRepr = transform(bTableType.constraint);
         String keyRepr = null;
         if (bTableType.fieldNameList != null) {
             keyRepr = String.join(", ", bTableType.fieldNameList);
         } else if (bTableType.keyTypeConstraint != null) {
-            bTableType.keyTypeConstraint.accept(this);
-            keyRepr = getStringRepr();
+            keyRepr = transform(bTableType.keyTypeConstraint);
         }
 
         String stringRepr = (keyRepr != null)
                 ? String.format("table<%s> key(%s)", constraintRepr, keyRepr)
                 : String.format("table<%s>", constraintRepr);
-        this.stringRepr = withReadOnly(bTableType, stringRepr);
+        setState(withReadOnly(bTableType, stringRepr));
     }
 
     @Override
     public void visit(BErrorType bErrorType) {
-        // TODO: Implement logic
-        visit((BType) bErrorType);
+        if (bErrorType.tsymbol != null && bErrorType.tsymbol.name != null
+                && !bErrorType.tsymbol.name.value.startsWith("$")) {
+            String stringRepr = String.valueOf(bErrorType.tsymbol);
+            String importedName = getImportedName(bErrorType);
+            setState(Objects.requireNonNullElse(importedName, stringRepr));
+        } else {
+            setState(String.format("error<%s>", transform(bErrorType.detailType)));
+        }
     }
 
     @Override
     public void visit(BStreamType bStreamType) {
-        // TODO: Implement logic
-        visit((BType) bStreamType);
+        String stringRepr = bStreamType.getKind().typeName();
+        String importedName = getImportedName(bStreamType);
+        stringRepr = Objects.requireNonNullElse(importedName, stringRepr);
+
+        if (bStreamType.constraint.tag != TypeTags.ANY) {
+            String constraintRepr = transform(bStreamType.constraint);
+            if (bStreamType.error != null) {
+                String errorRepr = transform(bStreamType.error);
+                stringRepr = String.format("%s<%s,%s>", stringRepr, constraintRepr, errorRepr);
+            } else {
+                stringRepr = String.format("%s<%s>", stringRepr, constraintRepr);
+            }
+        }
+        setState(stringRepr);
+    }
+
+    @Override
+    public void visit(BInvokableType bInvokableType) {
+        String retTypeWithParam = transform(bInvokableType.retType);
+        if (bInvokableType.retType.getKind() != TypeKind.NIL) {
+            retTypeWithParam = "(" + retTypeWithParam + ")";
+        }
+
+        String restParam = "";
+        if (bInvokableType.restType instanceof BArrayType) {
+            BType restEType = ((BArrayType) bInvokableType.restType).eType;
+            String restETypeRepr = transform(restEType);
+            if (!bInvokableType.paramTypes.isEmpty()) {
+                restParam = restParam + ", ";
+            }
+            restParam = restParam + restETypeRepr + "...";
+        }
+
+        String typeSignatureRepr = "";
+        if (!bInvokableType.paramTypes.isEmpty()) {
+            typeSignatureRepr = bInvokableType.paramTypes
+                    .stream().map(this::transform)
+                    .collect(Collectors.joining(","));
+        }
+        typeSignatureRepr = String.format("(%s%s) returns %s",
+                typeSignatureRepr, restParam, retTypeWithParam);
+
+        String stringRepr = Symbols.isFlagOn(bInvokableType.flags, Flags.ISOLATED)
+                ? "isolated function " + typeSignatureRepr
+                : "function " + typeSignatureRepr;
+        setState(stringRepr);
     }
 
     @Override
     public void visit(BTypedescType bTypedescType) {
-        // TODO: Implement logic
-        visit((BType) bTypedescType);
+        String stringRepr = bTypedescType.getKind().typeName();
+        String importedName = getImportedName(bTypedescType);
+        stringRepr = Objects.requireNonNullElse(importedName, stringRepr);
+
+        if (bTypedescType.constraint.tag != TypeTags.ANY) {
+            String constraintRepr = transform(bTypedescType.constraint);
+            stringRepr = String.format("%s<%s>", stringRepr, constraintRepr);
+        }
+        setState(stringRepr);
     }
 
     @Override
     public void visit(BTupleType bTupleType) {
-        // TODO: Implement logic
-        visit((BType) bTupleType);
+        String stringRepr = bTupleType.tupleTypes
+                .stream().map(this::transform)
+                .collect(Collectors.joining(","));
+        if (bTupleType.restType != null) {
+            String restRepr = transform(bTupleType.restType);
+            if (bTupleType.tupleTypes.isEmpty()) {
+                stringRepr = String.format("[%s]", restRepr);
+            } else {
+                stringRepr = String.format("[%s,%s...]", stringRepr, restRepr);
+            }
+        } else {
+            stringRepr = String.format("[%s]", stringRepr);
+        }
+        setState(withReadOnly(bTupleType, stringRepr));
     }
 
     @Override
@@ -224,14 +266,7 @@ public class BTypeStringGen extends AbstractTypeVisitor {
 
     @Override
     public void visit(BStructureType bStructureType) {
-        // TODO: Implement logic
         visit((BType) bStructureType);
-    }
-
-    @Override
-    public void visit(BInvokableType bInvokableType) {
-        // TODO: Implement logic
-        visit((BType) bInvokableType);
     }
 
     @Override
@@ -299,15 +334,41 @@ public class BTypeStringGen extends AbstractTypeVisitor {
         visit((BType) bHandleType);
     }
 
-    public String getStringRepr() {
-        return stringRepr;
-    }
-
     private String withReadOnly(BType bType, String withoutSuffix) {
         if (Symbols.isFlagOn(bType.flags, Flags.READONLY)) {
             return withoutSuffix + " & readonly";
         }
         return withoutSuffix;
+    }
+
+    private String getImportedName(BType bType) {
+        try {
+            Matcher importTypeMatcher = IMPORT_TYPE_PATTERN.matcher(bType.toString());
+            if (importTypeMatcher.matches()) {
+                // Then we need to infer the type and find the imports
+                // that are required for the inferred type.
+                String orgName = importTypeMatcher.group(1);
+                String[] compNames = importTypeMatcher.group(2).split("\\.");
+                String impType = importTypeMatcher.group(3);
+                if (!impType.startsWith(QUOTE)) {
+                    impType = QUOTE + impType;
+                }
+
+                // Import prefix is almost always the final comp name.
+                String importPrefix = importCreator.createImport(orgName, compNames);
+                foundImports.add(importPrefix);
+                return importPrefix + QUALIFIED_NAME_SEP + impType;
+            }
+            return null;
+        } catch (InvokerException e) {
+            // Should not fail.
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Override
+    public void resetState() {
+        setState("");
     }
 
     /**

@@ -34,6 +34,7 @@ import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.invoker.classload.visitors.BTypeElevatorVisitor;
 import io.ballerina.shell.invoker.classload.visitors.BTypeStringGen;
+import io.ballerina.shell.invoker.classload.visitors.BTypeTransformer;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
@@ -83,6 +84,12 @@ public class ClassLoadInvoker extends Invoker {
     private static final String TEMPLATE_FILE = "template.classload.ftl";
     // Punctuations
     private static final String QUOTE = "'";
+
+
+    /**
+     * The import creator to use in importing.
+     */
+    protected final ClassLoadImportCreator importCreator;
     /**
      * List of imports done. These are imported to the read generated code as necessary.
      * This is a map of import prefix to the import statement used.
@@ -117,6 +124,7 @@ public class ClassLoadInvoker extends Invoker {
      * It is expected that the runtime is added in the class path.
      */
     public ClassLoadInvoker() {
+        this.importCreator = new ClassLoadImportCreator();
         this.contextId = UUID.randomUUID().toString();
         this.imports = new HashMap<>();
         this.moduleDclns = new ArrayList<>();
@@ -237,9 +245,8 @@ public class ClassLoadInvoker extends Invoker {
                 elevatorVisitor.accept(scopeEntry.symbol.type);
                 if (elevatorVisitor.isVisible()) {
                     // If elevation is not needed, convert to string.
-                    BTypeStringGen stringGen = new BTypeStringGen(foundImports, new ClassLoadImportCreator());
-                    stringGen.accept(scopeEntry.symbol.type);
-                    foundVariables.put(variableName, stringGen.getStringRepr());
+                    BTypeTransformer<String> transformer = new BTypeStringGen(foundImports, importCreator);
+                    foundVariables.put(variableName, transformer.transform(scopeEntry.symbol.type));
                 } else {
                     String elevatedType = elevatorVisitor.getElevatedType().toString();
                     addDiagnostic(Diagnostic.warn("" +
