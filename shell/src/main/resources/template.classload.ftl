@@ -42,22 +42,20 @@ function run() returns @untainted any|error {
     </#if>
 }
 
-function importedTypeCheck() {
-    <#list saveVarDclns as varNameType>
-    ${varNameType.second} ${varNameType.first};
-    </#list>
-}
-
-public function main() returns error? {
+public function stmts() returns any|error {
     any|error ${exprVarName} = trap run();
-     if (${exprVarName} is error){
-        io:println("Exception occurred: ", ${exprVarName});
-        return ${exprVarName};
-    }
-
     ${lastVarDcln}
     memorize_var("${exprVarName}", ${exprVarName});
     <#list saveVarDclns as varNameType>
     memorize_var("${varNameType.first}", ${varNameType.first});
     </#list>
+    return ${exprVarName};
+}
+
+public function main() returns error? {
+    any|error ${exprVarName} = trap stmts();
+     if (${exprVarName} is error){
+        io:println("Exception occurred: ", ${exprVarName});
+        return ${exprVarName};
+    }
 }
