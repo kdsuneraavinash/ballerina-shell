@@ -54,14 +54,22 @@ import org.wso2.ballerinalang.compiler.util.TypeTags;
 import org.wso2.ballerinalang.util.Flags;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * Converts a type into its string format.
+ * Any imports that need to be done are also calculated.
+ * Eg: if the type was abc/z:TypeA then it will be converted as
+ * 'z:TypeA' and 'import abc/z' will be added as an import.
+ * We need to traverse all the sub-typed because any sub-type
+ * may need to be imported.
+ * TODO: Currently do not support exported sub-types in object/record.
+ * Eg: object {abc/c:P p;}. These situations are rare since most of the time,
+ * the object or record is exported outright instead of specifying sub-types.
  */
 public class BTypeStringGen extends BTypeTransformer<String> {
     protected static final Pattern IMPORT_TYPE_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
@@ -77,8 +85,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
 
     @Override
     public void visit(BType bType) {
-        String importedName = getImportedName(bType);
-        setState(Objects.requireNonNullElse(importedName, bType.toString()));
+        setState(getImportedName(bType, bType.toString()));
     }
 
     @Override
@@ -94,8 +101,6 @@ public class BTypeStringGen extends BTypeTransformer<String> {
     public void visit(BUnionType bUnionType) {
         // Simply add all sub types separated by |.
         // Add a ? at the end if nullable.
-        // Also, if the type needs to be elevated, (because exported type not visible),
-        // do so.
         Set<String> typeStrings = new HashSet<>();
         for (BType memberType : bUnionType.getMemberTypes()) {
             typeStrings.add(transform(memberType));
@@ -112,7 +117,6 @@ public class BTypeStringGen extends BTypeTransformer<String> {
         // BArrayType string is always in format 'eType[.....]'
         // And there are no types between [].
         // So we can convert to string, and replace first 'eType' part.
-        // If the eType needs to be elevated, return it.
         String original = bArrayType.toString();
         String originalETypeStr = bArrayType.eType.toString();
         String eTypeStr = transform(bArrayType.eType);
@@ -145,9 +149,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
     public void visit(BErrorType bErrorType) {
         if (bErrorType.tsymbol != null && bErrorType.tsymbol.name != null
                 && !bErrorType.tsymbol.name.value.startsWith("$")) {
-            String stringRepr = String.valueOf(bErrorType.tsymbol);
-            String importedName = getImportedName(bErrorType);
-            setState(Objects.requireNonNullElse(importedName, stringRepr));
+            setState(getImportedName(bErrorType, String.valueOf(bErrorType.tsymbol)));
         } else {
             setState(String.format("error<%s>", transform(bErrorType.detailType)));
         }
@@ -155,10 +157,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
 
     @Override
     public void visit(BStreamType bStreamType) {
-        String stringRepr = bStreamType.getKind().typeName();
-        String importedName = getImportedName(bStreamType);
-        stringRepr = Objects.requireNonNullElse(importedName, stringRepr);
-
+        String stringRepr = getImportedName(bStreamType, bStreamType.getKind().typeName());
         if (bStreamType.constraint.tag != TypeTags.ANY) {
             String constraintRepr = transform(bStreamType.constraint);
             if (bStreamType.error != null) {
@@ -205,10 +204,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
 
     @Override
     public void visit(BTypedescType bTypedescType) {
-        String stringRepr = bTypedescType.getKind().typeName();
-        String importedName = getImportedName(bTypedescType);
-        stringRepr = Objects.requireNonNullElse(importedName, stringRepr);
-
+        String stringRepr = getImportedName(bTypedescType, bTypedescType.getKind().typeName());
         if (bTypedescType.constraint.tag != TypeTags.ANY) {
             String constraintRepr = transform(bTypedescType.constraint);
             stringRepr = String.format("%s<%s>", stringRepr, constraintRepr);
@@ -236,32 +232,49 @@ public class BTypeStringGen extends BTypeTransformer<String> {
 
     @Override
     public void visit(BIntersectionType bIntersectionType) {
-        // TODO: Implement logic
-        visit((BType) bIntersectionType);
+        StringJoiner joiner = new StringJoiner(" & ", "(", ")");
+        bIntersectionType.getConstituentTypes().stream()
+                .map(type -> type.tag == TypeTags.NIL ? "()" : transform(type))
+                .forEach(joiner::add);
+        setState(joiner.toString());
     }
 
     @Override
     public void visit(BXMLType bxmlType) {
-        // TODO: Implement logic
-        visit((BType) bxmlType);
+        String stringRepr;
+        if (bxmlType.constraint != null
+                && !(bxmlType.constraint.tag == TypeTags.UNION
+                && bxmlType.constraint instanceof BUnionType
+                && ((BUnionType) bxmlType.constraint).getMemberTypes().size() == 4)
+        ) {
+            stringRepr = "xml<" + transform(bxmlType.constraint) + ">";
+        } else {
+            stringRepr = "xml";
+        }
+        setState(withReadOnly(bxmlType, stringRepr));
+    }
+
+    @Override
+    public void visit(BFutureType bFutureType) {
+        String stringRepr = bFutureType.getKind().typeName();
+        if (bFutureType.constraint.tag != TypeTags.NONE
+                && bFutureType.constraint.tag != TypeTags.SEMANTIC_ERROR
+                && bFutureType.constraint.tag != TypeTags.NIL) {
+            stringRepr = stringRepr + "<" + transform(bFutureType.constraint) + ">";
+        }
+        setState(stringRepr);
     }
 
     @Override
     public void visit(BRecordType bRecordType) {
-        // TODO: Implement logic
+        // TODO: Should implement stringify logic?
         visit((BType) bRecordType);
     }
 
     @Override
     public void visit(BObjectType bObjectType) {
-        // TODO: Implement logic
+        // TODO: Should implement stringify logic?
         visit((BType) bObjectType);
-    }
-
-    @Override
-    public void visit(BFutureType bFutureType) {
-        // TODO: Implement logic
-        visit((BType) bFutureType);
     }
 
     @Override
@@ -341,7 +354,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
         return withoutSuffix;
     }
 
-    private String getImportedName(BType bType) {
+    private String getImportedName(BType bType, String defaultName) {
         try {
             Matcher importTypeMatcher = IMPORT_TYPE_PATTERN.matcher(bType.toString());
             if (importTypeMatcher.matches()) {
@@ -359,7 +372,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
                 foundImports.add(importPrefix);
                 return importPrefix + QUALIFIED_NAME_SEP + impType;
             }
-            return null;
+            return defaultName;
         } catch (InvokerException e) {
             // Should not fail.
             throw new IllegalStateException(e);
