@@ -75,6 +75,17 @@ The project is implemented in two base modules.
   enum Language {EN="engish", TA="tamil", SI="sinhala"}
   ```
 
+- **Module level declarations of types should not be quoted** - Quoted identifiers must not be used for type
+  declarations. The declaration would work, but the quote would be ignored when defining something using the type,
+  which will corrupt the state completely.
+
+  ```ballerina
+  // Do not define even though an error will not be given in this stage
+  type 'Person_\{name\&Ȧɢέ\} record {| string 'first\ name; int 'Ȧɢέ; |}; 
+  // This will corrupt the state
+  Person_\{name\&Ȧɢέ\} person = {'first\ name: "Tom", 'Ȧɢέ:25}
+  ```
+
 ## Implementation
 
 For implementation details please refer [this](shell/README.md).

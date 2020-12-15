@@ -25,10 +25,10 @@ import org.testng.annotations.Test;
  * Test simple snippets.
  */
 public class FunctionEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String ANON_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.fn.anon.json";
-    private static final String EXPR_BODY_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.fn.expr.bodied.json";
-    private static final String ITERATION_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.fn.iteration.json";
-    private static final String POINTERS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.fn.pointers.json";
+    private static final String ANON_EVALUATOR_TESTCASE = "testcases/evaluator/function.anon.json";
+    private static final String EXPR_BODY_EVALUATOR_TESTCASE = "testcases/evaluator/function.expr.bodied.json";
+    private static final String ITERATION_EVALUATOR_TESTCASE = "testcases/evaluator/function.iteration.json";
+    private static final String POINTERS_EVALUATOR_TESTCASE = "testcases/evaluator/function.pointers.json";
 
     @Test
     public void testEvaluateAnonFn() throws BallerinaShellException {

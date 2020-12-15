@@ -1,0 +1,21 @@
+[
+  {
+    "description": "Imports math module.",
+    "code": "import ballerina/math;",
+    "stdout": null
+  },
+  {
+    "description": "Imports io module with prefix.",
+    "code": "import ballerina/io as console;",
+    "stdout": null
+  },
+  {
+    "description": "Use math module.",
+    "code": "float piValue = math:PI;"
+  },
+  {
+    "description": "Print value if PI.",
+    "code": "console:println(piValue);",
+    "stdout": "3.141592653589793\n"
+  }
+]

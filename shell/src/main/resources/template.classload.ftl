@@ -26,7 +26,7 @@ ${dcln}
 handle context_id = java:fromString("${contextId}");
 
 <#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("${varNameType.first}");
+${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("${varNameType.first?j_string}");
 </#list>
 
 function run() returns @untainted any|error {
@@ -45,9 +45,9 @@ function run() returns @untainted any|error {
 public function stmts() returns any|error {
     any|error ${exprVarName} = trap run();
     ${lastVarDcln}
-    memorize_var("${exprVarName}", ${exprVarName});
+    memorize_var("${exprVarName?j_string}", ${exprVarName});
     <#list saveVarDclns as varNameType>
-    memorize_var("${varNameType.first}", ${varNameType.first});
+    memorize_var("${varNameType.first?j_string}", ${varNameType.first});
     </#list>
     return ${exprVarName};
 }

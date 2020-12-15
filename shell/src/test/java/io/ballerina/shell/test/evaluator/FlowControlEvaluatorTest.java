@@ -25,11 +25,11 @@ import org.testng.annotations.Test;
  * Test simple snippets.
  */
 public class FlowControlEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String ELVIS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.flow.elvis.json";
-    private static final String IF_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.flow.if.json";
-    private static final String MATCH_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.flow.match.json";
-    private static final String WHILE_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.flow.while.json";
-    private static final String FOREACH_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.flow.foreach.json";
+    private static final String ELVIS_EVALUATOR_TESTCASE = "testcases/evaluator/flow.control.elvis.json";
+    private static final String IF_EVALUATOR_TESTCASE = "testcases/evaluator/flow.control.if.json";
+    private static final String MATCH_EVALUATOR_TESTCASE = "testcases/evaluator/flow.control.match.json";
+    private static final String WHILE_EVALUATOR_TESTCASE = "testcases/evaluator/flow.control.while.json";
+    private static final String FOREACH_EVALUATOR_TESTCASE = "testcases/evaluator/flow.control.foreach.json";
 
     @Test
     public void testEvaluateElvis() throws BallerinaShellException {

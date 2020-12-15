@@ -362,10 +362,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
                 // that are required for the inferred type.
                 String orgName = importTypeMatcher.group(1);
                 String[] compNames = importTypeMatcher.group(2).split("\\.");
-                String impType = importTypeMatcher.group(3);
-                if (!impType.startsWith(QUOTE)) {
-                    impType = QUOTE + impType;
-                }
+                String impType = quotedIdentifier(importTypeMatcher.group(3));
 
                 // Import prefix is almost always the final comp name.
                 String importPrefix = importCreator.createImport(orgName, compNames);
@@ -377,6 +374,13 @@ public class BTypeStringGen extends BTypeTransformer<String> {
             // Should not fail.
             throw new IllegalStateException(e);
         }
+    }
+
+    private String quotedIdentifier(String identifier) {
+        if (identifier.startsWith(QUOTE)) {
+            return identifier;
+        }
+        return QUOTE + identifier;
     }
 
     @Override

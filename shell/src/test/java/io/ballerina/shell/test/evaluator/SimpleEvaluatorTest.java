@@ -25,8 +25,8 @@ import org.testng.annotations.Test;
  * Test simple snippets.
  */
 public class SimpleEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String BASIC_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.basic.json";
-    private static final String LITERALS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.basic.json";
+    private static final String BASIC_EVALUATOR_TESTCASE = "testcases/evaluator/values.basic.json";
+    private static final String LITERALS_EVALUATOR_TESTCASE = "testcases/evaluator/values.basic.json";
 
     @Test
     public void testEvaluateBasic() throws BallerinaShellException {

@@ -34,14 +34,60 @@ import java.util.ArrayList;
 
 /**
  * Base class for evaluator tests.
+ * TODO: Add tests for Transactions, Record, Value/Type operations, Json/XML other,
+ * Binding patterns, Errors, Concurrency, Lock, Isolation, Java Interoperability, I/O, Common Libraries, Security.
  */
 public abstract class AbstractEvaluatorTest {
+    protected static String bracketed(Object input) {
+        return " [" + input + "] ";
+    }
+
+    protected void testEvaluate(String fileName) throws BallerinaShellException {
+        TestInvoker invoker = getInvoker();
+        Evaluator evaluator = new EvaluatorBuilder()
+                .treeParser(TestUtils.getTestTreeParser())
+                .invoker(invoker).build();
+        TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
+        for (TestCaseLine testCaseLine : testCase) {
+            try {
+                invoker.testCaseLine = testCaseLine;
+                String expr = evaluator.evaluate(testCaseLine.code);
+                Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.description);
+                Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.description);
+                Assert.assertNull(testCaseLine.error);
+            } catch (BallerinaShellException e) {
+                if (testCaseLine.error != null) {
+                    Assert.assertEquals(testCaseLine.error, e.getClass().getSimpleName());
+                    continue;
+                }
+
+                StringBuilder diagnosticsStr = new StringBuilder();
+                evaluator.diagnostics().stream()
+                        .filter(d -> d.getKind() == DiagnosticKind.ERROR)
+                        .map(s -> s + "\n")
+                        .forEach(diagnosticsStr::append);
+                Assert.fail(
+                        "Exception occurred in:" + bracketed(testCaseLine.description) +
+                                "err:" + bracketed(e.getMessage()) +
+                                "diagnostics:" + bracketed(diagnosticsStr));
+                throw e;
+            } finally {
+                evaluator.resetDiagnostics();
+            }
+        }
+    }
+
+    private TestInvoker getInvoker() {
+        return new TestInvoker();
+    }
+
     private static class TestCaseLine {
         String description;
         String code;
         String expr;
         String stdout = "";
         int exitCode = 0;
+        String error;
     }
 
     private static class TestCase extends ArrayList<TestCaseLine> {
@@ -66,42 +112,5 @@ public abstract class AbstractEvaluatorTest {
                 System.setOut(stdOut);
             }
         }
-    }
-
-    protected void testEvaluate(String fileName) throws BallerinaShellException {
-        TestInvoker invoker = getInvoker();
-        Evaluator evaluator = new EvaluatorBuilder()
-                .treeParser(TestUtils.getTestTreeParser())
-                .invoker(invoker).build();
-        TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
-        for (TestCaseLine testCaseLine : testCase) {
-            try {
-                invoker.testCaseLine = testCaseLine;
-                String expr = evaluator.evaluate(testCaseLine.code);
-                Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.description);
-                Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.description);
-            } catch (BallerinaShellException e) {
-                StringBuilder diagnosticsStr = new StringBuilder();
-                evaluator.diagnostics().stream()
-                        .filter(d -> d.getKind() == DiagnosticKind.ERROR)
-                        .map(s -> s + "\n")
-                        .forEach(diagnosticsStr::append);
-                Assert.fail(
-                        "Exception occurred in:" + bracketed(testCaseLine.description) +
-                                "err:" + bracketed(e.getMessage()) +
-                                "diagnostics:" + bracketed(diagnosticsStr));
-                throw e;
-            } finally {
-                evaluator.resetDiagnostics();
-            }
-        }
-    }
-
-    protected static String bracketed(Object input) {
-        return " [" + input + "] ";
-    }
-
-    private TestInvoker getInvoker() {
-        return new TestInvoker();
     }
 }

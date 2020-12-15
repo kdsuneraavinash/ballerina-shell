@@ -25,11 +25,11 @@ import org.testng.annotations.Test;
  * Test simple snippets.
  */
 public class BasicTypeEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String STRING_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.strings.json";
-    private static final String TUPLES_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.tuples.json";
-    private static final String ARRAYS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.arrays.json";
-    private static final String TABLE_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.table.json";
-    private static final String MAPS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.maps.json";
+    private static final String STRING_EVALUATOR_TESTCASE = "testcases/evaluator/values.strings.json";
+    private static final String TUPLES_EVALUATOR_TESTCASE = "testcases/evaluator/values.tuples.json";
+    private static final String ARRAYS_EVALUATOR_TESTCASE = "testcases/evaluator/values.arrays.json";
+    private static final String TABLE_EVALUATOR_TESTCASE = "testcases/evaluator/values.table.json";
+    private static final String MAPS_EVALUATOR_TESTCASE = "testcases/evaluator/values.maps.json";
 
     @Test
     public void testEvaluateString() throws BallerinaShellException {

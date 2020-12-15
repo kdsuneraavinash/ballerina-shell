@@ -25,9 +25,9 @@ import org.testng.annotations.Test;
  * Test simple snippets.
  */
 public class MiscEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String ENUM_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.enum.json";
-    private static final String RAW_TEMP_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.raw.template.json";
-    private static final String LET_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.let.json";
+    private static final String ENUM_EVALUATOR_TESTCASE = "testcases/evaluator/values.enum.json";
+    private static final String RAW_TEMP_EVALUATOR_TESTCASE = "testcases/evaluator/values.raw.template.json";
+    private static final String LET_EVALUATOR_TESTCASE = "testcases/evaluator/values.let.json";
 
     @Test
     public void testEvaluateEnum() throws BallerinaShellException {

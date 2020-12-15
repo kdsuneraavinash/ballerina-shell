@@ -25,14 +25,14 @@ import org.testng.annotations.Test;
  * Test simple snippets.
  */
 public class ObjectEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String CLASS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.class.json";
-    private static final String INIT_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.init.json";
-    private static final String METHODS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.methods.json";
-    private static final String ASSIGN_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.assign.json";
-    private static final String TYPE_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.type.json";
-    private static final String CONSTRUCTOR_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.constructor.json";
-    private static final String READONLY_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.readonly.json";
-    private static final String REF_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.object.ref.json";
+    private static final String CLASS_EVALUATOR_TESTCASE = "testcases/evaluator/object.class.json";
+    private static final String INIT_EVALUATOR_TESTCASE = "testcases/evaluator/object.init.json";
+    private static final String METHODS_EVALUATOR_TESTCASE = "testcases/evaluator/object.methods.json";
+    private static final String ASSIGN_EVALUATOR_TESTCASE = "testcases/evaluator/object.assign.json";
+    private static final String TYPE_EVALUATOR_TESTCASE = "testcases/evaluator/object.type.json";
+    private static final String CONSTRUCTOR_EVALUATOR_TESTCASE = "testcases/evaluator/object.constructor.json";
+    private static final String READONLY_EVALUATOR_TESTCASE = "testcases/evaluator/object.readonly.json";
+    private static final String REF_EVALUATOR_TESTCASE = "testcases/evaluator/object.ref.json";
 
     @Test
     public void testEvaluateClass() throws BallerinaShellException {
