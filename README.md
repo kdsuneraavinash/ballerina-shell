@@ -60,7 +60,7 @@ The project is implemented in two base modules.
   given.
 
   ```ballerina
-  // If func() returns an error, this will give a warning and 
+  // If func() returns a private type, this will give a warning and 
   // the type would be any/error/any|error.
   var x = abc:func()
   // You can cast later
@@ -76,13 +76,12 @@ The project is implemented in two base modules.
   ```
 
 - **Module level declarations of types should not be quoted** - Quoted identifiers must not be used for type
-  declarations. The declaration would work, but the quote would be ignored when defining something using the type,
-  which will corrupt the state completely.
+  declarations. The declaration would work, but the quote would be ignored when defining something using the type.
 
   ```ballerina
   // Do not define even though an error will not be given in this stage
   type 'Person_\{name\&Ȧɢέ\} record {| string 'first\ name; int 'Ȧɢέ; |}; 
-  // This will corrupt the state
+  // This will not work.
   Person_\{name\&Ȧɢέ\} person = {'first\ name: "Tom", 'Ȧɢέ:25}
   ```
 

@@ -30,6 +30,7 @@ ${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var(
 </#list>
 
 function run() returns @untainted any|error {
+    // Will run current statement/expression and return its result.
     <#if lastExpr.second>
     if (true) {
         ${lastExpr.first}
@@ -43,6 +44,8 @@ function run() returns @untainted any|error {
 }
 
 public function stmts() returns any|error {
+    // This will execute the statement and initialize and save var dcln.
+    // The variable is declared in local context to enable various expressions.
     any|error ${exprVarName} = trap run();
     ${lastVarDcln}
     memorize_var("${exprVarName?j_string}", ${exprVarName});
@@ -59,3 +62,16 @@ public function main() returns error? {
         return ${exprVarName};
     }
 }
+
+public function detect_errors_ahead() {
+    // This will detect errors that will occur in the next iteration.
+    // Essentially detecting errors ahead. Without this, state corruption is possible.
+    <#list saveVarDclns as varNameType>
+    var
+    ${varNameType.first}
+     = <
+    ${varNameType.second}
+    > recall_var("");
+    </#list>
+}
+
