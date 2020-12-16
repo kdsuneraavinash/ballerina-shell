@@ -53,6 +53,10 @@ public class StatementTrial extends DualTreeParserTrial {
         ModuleMemberDeclarationNode moduleDeclaration = moduleDclns.get(0);
         FunctionDefinitionNode mainFunction = (FunctionDefinitionNode) moduleDeclaration;
         FunctionBodyBlockNode mainFunctionBody = (FunctionBodyBlockNode) mainFunction.functionBody();
+
+        if (mainFunctionBody.namedWorkerDeclarator().isPresent()) {
+            return mainFunctionBody.namedWorkerDeclarator().get();
+        }
         assertIf(!mainFunctionBody.statements().isEmpty(), "expected at least one statement");
 
         StatementNode statementNode = mainFunctionBody.statements().get(0);

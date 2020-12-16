@@ -34,8 +34,9 @@ import java.util.ArrayList;
 
 /**
  * Base class for evaluator tests.
- * TODO: Add tests for Transactions, Record, Json/XML other, Errors, Concurrency, Lock, Isolation,
- * Java Interoperability, I/O, Common Libraries, Security.
+ * TODO: Add tests for Record, Json/XML other, Errors, Isolation, Java Interop, I/O, Common Libraries, Security.
+ * TODO: Find a way to test concurrency.
+ * TODO: Add db lib support and test Transactions
  */
 public abstract class AbstractEvaluatorTest {
     protected static String bracketed(Object input) {

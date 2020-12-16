@@ -18,6 +18,12 @@ ${varNameType.second} ${varNameType.first} = // value
 </#list>
 
 public function main() returns error? {
+    // Redefine to restrict user
+    <#list initVarDclns as varNameType>
+    ${varNameType.second} ${varNameType.first} = // value
+    <${varNameType.second}> recall_var("x");
+    </#list>
+
     ${lastVarDcln}
 
     io:println("Hello world");

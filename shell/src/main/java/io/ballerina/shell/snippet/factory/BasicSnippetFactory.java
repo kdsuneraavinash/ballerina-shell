@@ -43,6 +43,7 @@ import io.ballerina.compiler.syntax.tree.MatchStatementNode;
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleXMLNamespaceDeclarationNode;
+import io.ballerina.compiler.syntax.tree.NamedWorkerDeclarator;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeFactory;
 import io.ballerina.compiler.syntax.tree.NodeList;
@@ -177,6 +178,10 @@ public class BasicSnippetFactory extends SnippetFactory {
             } else if (subKind.isValid()) {
                 return new StatementSnippet(subKind, (StatementNode) node);
             }
+        } else if (node instanceof NamedWorkerDeclarator) {
+            addDiagnostic(Diagnostic.error("" +
+                    "Named worker declarators cannot be used in the REPL as top level statement.\n" +
+                    "Please use them in a suitable place such as in a function."));
         }
         return null;
     }

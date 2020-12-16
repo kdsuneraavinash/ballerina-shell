@@ -40,6 +40,7 @@ public class TrialTreeParserTest {
     private static final String IMPORT_TESTCASES = "testcases/treeparser.import.json";
     private static final String EXPRESSION_TESTCASES = "testcases/treeparser.expression.json";
     private static final String MODULE_DCLN_TESTCASES = "testcases/treeparser.moduledcln.json";
+    private static final String MISC_TESTCASES = "testcases/treeparser.misc.json";
 
     private static class TestCase {
         String name;
@@ -75,6 +76,11 @@ public class TrialTreeParserTest {
     @Test
     public void testExpressionParse() {
         testParse(EXPRESSION_TESTCASES, ExpressionNode.class);
+    }
+
+    @Test
+    public void testMiscParse() {
+        testParse(MISC_TESTCASES, Node.class);
     }
 
     private void testParse(String fileName, Class<?> parentClazz) {

@@ -53,6 +53,18 @@ The project is implemented in two base modules.
   'Person_\{name\&Ȧɢέ\} person = {'first\ name: "Tom", 'Ȧɢέ:25}
   ```
 
+- **Named worker declarations not supported** - Named worker declarations are not supported as statements. You can still
+  define them in other functions, but they cannot be used as a statement directly.
+
+  ```ballerina
+  // This will not work.
+  @strand { thread:"any" } worker w1 { }
+  // This will work.
+  function otherfn() {
+    @strand { thread:"any" } worker w1 { }
+  }
+  ```
+
 ### Notes
 
 - **The parser is imperfect** - Current parser is imperfect and is sometimes unable to detect the type of statement.
@@ -69,6 +81,9 @@ The project is implemented in two base modules.
 - **Using var with types that are not visible to the public** - When using var, if a exported type that is not visible
   to the REPL is used, REPL will try to use any/error combination that will not cause an error. A warning will be also
   given.
+
+- **Cyclic dependencies of module level types not possible** - Obviously, because a REPL is run line by line, you may
+  not use a type that would be defined later. As a result, cyclic dependencies nt possible in module level declarations.
 
 ## Implementation
 
