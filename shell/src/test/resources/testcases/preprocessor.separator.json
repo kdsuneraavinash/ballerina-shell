@@ -198,5 +198,12 @@
       "type Employee record {\n    readonly int id;\n    string name;\n    float salary;\n};",
       "type EmployeeTable table<Employee> key(id);"
     ]
+  },
+  {
+    "name": "Right shift operation",
+    "input": "a >>= 2",
+    "expected": [
+      "a >>= 2;"
+    ]
   }
 ]

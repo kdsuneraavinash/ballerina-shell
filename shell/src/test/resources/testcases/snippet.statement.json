@@ -15,6 +15,11 @@
     "accepted": true
   },
   {
+    "name": "Compound Assignment Statement II",
+    "input": "var1 >>= 3;",
+    "accepted": true
+  },
+  {
     "name": "Block Statement",
     "input": "{ int var1 =4; };",
     "accepted": true

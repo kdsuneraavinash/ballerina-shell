@@ -82,7 +82,7 @@ The project is implemented in two base modules.
   // Do not define even though an error will not be given in this stage
   type 'Person_\{name\&Ȧɢέ\} record {| string 'first\ name; int 'Ȧɢέ; |}; 
   // This will not work.
-  Person_\{name\&Ȧɢέ\} person = {'first\ name: "Tom", 'Ȧɢέ:25}
+  'Person_\{name\&Ȧɢέ\} person = {'first\ name: "Tom", 'Ȧɢέ:25}
   ```
 
 ## Implementation

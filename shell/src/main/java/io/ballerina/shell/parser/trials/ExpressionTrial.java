@@ -18,6 +18,7 @@
 
 package io.ballerina.shell.parser.trials;
 
+import io.ballerina.compiler.syntax.tree.ExpressionNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.ReturnStatementNode;
 import io.ballerina.shell.parser.TrialTreeParser;
@@ -32,6 +33,7 @@ public class ExpressionTrial extends StatementTrial {
 
     @Override
     public Node parse(String source) throws ParserTrialFailedException {
+        // TODO: [Bug in Parser] a >>= 4 gets accepted as a >> 4
         String statementCode = String.format("return %s", source);
         Node statement = super.parseSource(statementCode);
 
@@ -39,6 +41,10 @@ public class ExpressionTrial extends StatementTrial {
         assert statement instanceof ReturnStatementNode;
         ReturnStatementNode returnStatement = (ReturnStatementNode) statement;
         assertIf(returnStatement.expression().isPresent(), "expected an expression on return");
-        return returnStatement.expression().get();
+        ExpressionNode expressionNode = returnStatement.expression().get();
+        // TEMP FIX
+        assertIf(!source.contains(">>=") || expressionNode.toSourceCode().contains(">>="), "" +
+                "Compound statement is not an expression.");
+        return expressionNode;
     }
 }

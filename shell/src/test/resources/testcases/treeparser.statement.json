@@ -10,6 +10,11 @@
     "expected": "CompoundAssignmentStatementNode"
   },
   {
+    "name": "Compound Assignment Statement II",
+    "input": "var1 >>= 3;",
+    "expected": "CompoundAssignmentStatementNode"
+  },
+  {
     "name": "Block Statement",
     "input": "{ int var1 =4; };",
     "expected": "BlockStatementNode"

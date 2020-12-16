@@ -12,12 +12,12 @@ ${dcln}
 function recall_var(string name) returns any|error { return (); }
 function memorize_var(string name, any|error value) { }
 
-public function main() returns error? {
-    <#list initVarDclns as varNameType>
-    ${varNameType.second} ${varNameType.first} = // value
-    <${varNameType.second}> recall_var("x");
-    </#list>
+<#list initVarDclns as varNameType>
+${varNameType.second} ${varNameType.first} = // value
+<${varNameType.second}> recall_var("x");
+</#list>
 
+public function main() returns error? {
     ${lastVarDcln}
 
     io:println("Hello world");

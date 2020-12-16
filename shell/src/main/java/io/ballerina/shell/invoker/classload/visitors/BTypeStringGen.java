@@ -72,7 +72,8 @@ import java.util.stream.Collectors;
  * the object or record is exported outright instead of specifying sub-types.
  */
 public class BTypeStringGen extends BTypeTransformer<String> {
-    protected static final Pattern IMPORT_TYPE_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
+    protected static final Pattern IMP_WITH_VER_PATTERN = Pattern.compile("(.*)/(.*):[0-9.]*:(.*)");
+    protected static final Pattern IMP_WITHOUT_VER_PATTERN = Pattern.compile("(.*):(.*)");
     protected static final String QUALIFIED_NAME_SEP = ":";
     private static final String QUOTE = "'";
     private final Set<String> foundImports;
@@ -356,7 +357,7 @@ public class BTypeStringGen extends BTypeTransformer<String> {
 
     private String getImportedName(BType bType, String defaultName) {
         try {
-            Matcher importTypeMatcher = IMPORT_TYPE_PATTERN.matcher(bType.toString());
+            Matcher importTypeMatcher = IMP_WITH_VER_PATTERN.matcher(bType.toString());
             if (importTypeMatcher.matches()) {
                 // Then we need to infer the type and find the imports
                 // that are required for the inferred type.
@@ -368,6 +369,12 @@ public class BTypeStringGen extends BTypeTransformer<String> {
                 String importPrefix = importCreator.createImport(orgName, compNames);
                 foundImports.add(importPrefix);
                 return importPrefix + QUALIFIED_NAME_SEP + impType;
+            }
+            Matcher defMatcher = IMP_WITHOUT_VER_PATTERN.matcher(bType.toString());
+            if (defMatcher.matches()) {
+                String prefix = quotedIdentifier(defMatcher.group(1));
+                String type = defMatcher.group(2);
+                return prefix + QUALIFIED_NAME_SEP + type;
             }
             return defaultName;
         } catch (InvokerException e) {
