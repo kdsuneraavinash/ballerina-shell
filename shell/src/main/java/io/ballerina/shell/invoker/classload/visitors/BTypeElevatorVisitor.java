@@ -54,7 +54,6 @@ import org.wso2.ballerinalang.compiler.util.Names;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Visits all the nodes and informs whether the type needs
@@ -191,9 +190,8 @@ public class BTypeElevatorVisitor extends AbstractTypeVisitor {
 
     @Override
     public void visit(BUnionType bUnionType) {
-        // Union type does not have a simple and
-        // visibility only depends on its members.
         super.visit(bUnionType);
+        setVisibility(bUnionType);
     }
 
     @Override
@@ -253,9 +251,10 @@ public class BTypeElevatorVisitor extends AbstractTypeVisitor {
      * @param type Typ[e to visit.
      */
     private void setVisibility(BType type) {
-        Objects.requireNonNull(type, "Cannot check visibility of null type.");
-        Objects.requireNonNull(type.tsymbol, "Cannot check visibility of null symbol.");
-        Objects.requireNonNull(type.tsymbol.pkgID, "Cannot check visibility of null package id.");
+        if (type == null || type.tsymbol == null || type.tsymbol.pkgID == null) {
+            return;
+        }
+
         // Change the type according to the visibility.
         if (elevatedType != ElevatedType.ANY_ERROR) {
             if (type.getKind() == TypeKind.ERROR) {

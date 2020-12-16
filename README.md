@@ -24,12 +24,6 @@ The project is implemented in two base modules.
 
 ## Known Issues
 
-- **The parser is imperfect** - Current parser is imperfect and is sometimes unable to detect the type of statement.
-  Please file an issue if you come across any wrong categorization of a snippet. The parser is also relatively slow
-  compared to the compilation phase, acting as a bottle-neck. So a timeout is employed to stop invalid statement parsing
-  from taking too much time. However, this might cause issues in some old hardware where the execution might be slower
-  than expected (where even valid executions might exceed the timeout).
-
 - **Assignments to global variables in closures or class methods will not work** - Assignments done to global variables
   in closures will not be reflected after the execution. The changes will be visible only for the scope belonging to the
   snippet where the closure was defined.
@@ -39,32 +33,6 @@ The project is implemented in two base modules.
   var f = function () { x = 12; }
   f()
   x   // <- this should output 12 but will output 10 instead
-  ```
-
-- **Type guards for global variables do not work** - Since all the variables defined in REPL top level act as global
-  variables, type guards won't work. To remedy this you can explicitly cast the variable to the required type. However,
-  note that this is the expected behavior and not a bug. This will be fixed once the SDK supports global type guards.
-
-  ```ballerina
-  string|int x = "hello"
-  
-  // Following will not work
-  if (x is string) { io:println(x.length()); }
-  // Use following instead
-  string x_str = <string> x;
-  io:println(x_str.length());
-  ```
-
-- **Using var with types that are not visible to the public** - When using var, if a exported type that is not visible
-  to the REPL is used, REPL will try to use any/error combination that will not cause an error. A warning will be also
-  given.
-
-  ```ballerina
-  // If func() returns a private type, this will give a warning and 
-  // the type would be any/error/any|error.
-  var x = abc:func()
-  // You can cast later
-  T x_t = <T> x
   ```
 
 - **Enum definition with explicit expression is not supported** - Enum declarations with explicit expressions are not
@@ -84,6 +52,23 @@ The project is implemented in two base modules.
   // This will not work.
   'Person_\{name\&Ȧɢέ\} person = {'first\ name: "Tom", 'Ȧɢέ:25}
   ```
+
+### Notes
+
+- **The parser is imperfect** - Current parser is imperfect and is sometimes unable to detect the type of statement.
+  Please file an issue if you come across any wrong categorization of a snippet. The parser is also relatively slow
+  compared to the compilation phase, acting as a bottle-neck. So a timeout is employed to stop invalid statement parsing
+  from taking too much time. However, this might cause issues in some old hardware where the execution might be slower
+  than expected (where even valid executions might exceed the timeout).
+
+- **Type guards for global variables do not work** - Since all the variables defined in REPL top level act as global
+  variables, type guards won't work. To remedy this you can explicitly cast the variable to the required type. However,
+  note that this is the expected behavior and not a bug. This will be fixed once the language supports global type
+  guards.
+
+- **Using var with types that are not visible to the public** - When using var, if a exported type that is not visible
+  to the REPL is used, REPL will try to use any/error combination that will not cause an error. A warning will be also
+  given.
 
 ## Implementation
 

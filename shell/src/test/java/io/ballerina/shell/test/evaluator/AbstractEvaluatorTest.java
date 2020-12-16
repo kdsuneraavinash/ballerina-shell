@@ -34,8 +34,8 @@ import java.util.ArrayList;
 
 /**
  * Base class for evaluator tests.
- * TODO: Add tests for Transactions, Record, Value/Type operations, Json/XML other,
- * Binding patterns, Errors, Concurrency, Lock, Isolation, Java Interoperability, I/O, Common Libraries, Security.
+ * TODO: Add tests for Transactions, Record, Json/XML other, Errors, Concurrency, Lock, Isolation,
+ * Java Interoperability, I/O, Common Libraries, Security.
  */
 public abstract class AbstractEvaluatorTest {
     protected static String bracketed(Object input) {

@@ -24,11 +24,23 @@ import org.testng.annotations.Test;
 /**
  * Test simple snippets.
  */
-public class BehaviorTypeEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String STREAM_EVALUATOR_TESTCASE = "testcases/evaluator/streams.streams.json";
+public class PatternEvaluatorTest extends AbstractEvaluatorTest {
+    private static final String TUPLE_EVALUATOR_TESTCASE = "testcases/evaluator/pattern.tuple.json";
+    private static final String RECORD_EVALUATOR_TESTCASE = "testcases/evaluator/pattern.record.json";
+    private static final String ARRAY_EVALUATOR_TESTCASE = "testcases/evaluator/pattern.array.json";
 
     @Test
-    public void testEvaluateSteams() throws BallerinaShellException {
-        testEvaluate(STREAM_EVALUATOR_TESTCASE);
+    public void testEvaluateTuple() throws BallerinaShellException {
+        testEvaluate(TUPLE_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateRecord() throws BallerinaShellException {
+        testEvaluate(RECORD_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateArray() throws BallerinaShellException {
+        testEvaluate(ARRAY_EVALUATOR_TESTCASE);
     }
 }
