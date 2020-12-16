@@ -25,8 +25,12 @@ ${dcln}
 
 handle context_id = java:fromString("${contextId}");
 
-<#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = <${varNameType.second}> recall_var("${varNameType.first?j_string}");
+<#list varDclns as varDcln>
+<#if varDcln.new>
+(${varDcln.type})? ${varDcln.name} = (); // There is an issue with the name or type
+<#else>
+${varDcln.type} ${varDcln.name} = <${varDcln.type}> recall_var("${varDcln.name?j_string}");
+</#if>
 </#list>
 
 function run() returns @untainted any|error {
@@ -49,8 +53,8 @@ public function stmts() returns any|error {
     any|error ${exprVarName} = trap run();
     ${lastVarDcln}
     memorize_var("${exprVarName?j_string}", ${exprVarName});
-    <#list saveVarDclns as varNameType>
-    memorize_var("${varNameType.first?j_string}", ${varNameType.first});
+    <#list varDclns as varDcln>
+    memorize_var("${varDcln.name?j_string}", ${varDcln.name});
     </#list>
     return ${exprVarName};
 }
@@ -62,16 +66,3 @@ public function main() returns error? {
         return ${exprVarName};
     }
 }
-
-public function detect_errors_ahead() {
-    // This will detect errors that will occur in the next iteration.
-    // Essentially detecting errors ahead. Without this, state corruption is possible.
-    <#list saveVarDclns as varNameType>
-    var
-    ${varNameType.first}
-     = <
-    ${varNameType.second}
-    > recall_var("");
-    </#list>
-}
-

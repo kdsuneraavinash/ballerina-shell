@@ -12,16 +12,18 @@ ${dcln}
 function recall_var(string name) returns any|error { return (); }
 function memorize_var(string name, any|error value) { }
 
-<#list initVarDclns as varNameType>
-${varNameType.second} ${varNameType.first} = // value
-<${varNameType.second}> recall_var("x");
+<#list varDclns as varDcln>
+${varDcln.type} ${varDcln.name} = // value
+<${varDcln.type}> recall_var("x");
 </#list>
 
 public function main() returns error? {
     // Redefine to restrict user
-    <#list initVarDclns as varNameType>
-    ${varNameType.second} ${varNameType.first} = // value
-    <${varNameType.second}> recall_var("x");
+    <#list varDclns as varDcln>
+    <#if !varDcln.new>
+    ${varDcln.type} ${varDcln.name} = // value
+    <${varDcln.type}> recall_var("x");
+    </#if>
     </#list>
 
     ${lastVarDcln}

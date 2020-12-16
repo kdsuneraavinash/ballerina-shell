@@ -24,12 +24,19 @@ import org.testng.annotations.Test;
 /**
  * Test simple snippets.
  */
-public class ExternalImportEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String PREV_IMPORT_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.external.prev.json";
+public class RegressionEvaluatorTest extends AbstractEvaluatorTest {
+    private static final String PREV_IMPORT_EVALUATOR_TESTCASE = "testcases/evaluator/regression.external.prev.json";
+    private static final String FUNCTION_NAME_EVALUATOR_TESTCASE = "testcases/evaluator/regression.function.name.json";
 
     @Test
     public void testEvaluatePrevImport() throws BallerinaShellException {
         // Functions/var dclns with imports should cause the import in all later snippets.
         testEvaluate(PREV_IMPORT_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateFunctionName() throws BallerinaShellException {
+        // If a type is defined, the name cannot be used by a variable and vice versa.
+        testEvaluate(FUNCTION_NAME_EVALUATOR_TESTCASE);
     }
 }

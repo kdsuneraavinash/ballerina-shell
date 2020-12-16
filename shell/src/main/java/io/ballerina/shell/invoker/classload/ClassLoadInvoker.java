@@ -317,10 +317,8 @@ public class ClassLoadInvoker extends Invoker {
      */
     protected ClassLoadContext createVarTypeInferContext(VariableDeclarationSnippet newSnippet) {
         List<String> moduleDclnStrings = new ArrayList<>();
-        List<Pair<String, String>> initVarDclns = new ArrayList<>();
-        List<Pair<String, String>> saveVarDclns = new ArrayList<>();
-        globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
-        globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
+        List<ClassLoadContext.Variable> varDclns = new ArrayList<>();
+        globalVars.forEach((k, v) -> varDclns.add(ClassLoadContext.Variable.oldVar(k, v)));
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
 
         // Imports = snippet imports + module def imports
@@ -330,8 +328,7 @@ public class ClassLoadInvoker extends Invoker {
 
         String lastVarDcln = newSnippet.toString();
 
-        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings,
-                initVarDclns, saveVarDclns, lastVarDcln, null);
+        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, varDclns, lastVarDcln);
     }
 
     /**
@@ -341,8 +338,7 @@ public class ClassLoadInvoker extends Invoker {
      * @return Context with import checking code.
      */
     protected ClassLoadContext createImportCheckingContext(String importString) {
-        return new ClassLoadContext(this.contextId, List.of(importString), List.of(),
-                List.of(), List.of(), null, null);
+        return new ClassLoadContext(this.contextId, List.of(importString));
     }
 
     /**
@@ -375,12 +371,10 @@ public class ClassLoadInvoker extends Invoker {
         // All other var dclns are added to both.
         // Last expr is the last snippet if it was either a stmt or an expression.
 
-        List<Pair<String, String>> initVarDclns = new ArrayList<>();
-        List<Pair<String, String>> saveVarDclns = new ArrayList<>();
+        List<ClassLoadContext.Variable> varDclns = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>();
         moduleDclns.stream().map(Objects::toString).forEach(moduleDclnStrings::add);
-        globalVars.forEach((k, v) -> initVarDclns.add(new Pair<>(k, v)));
-        globalVars.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
+        globalVars.forEach((k, v) -> varDclns.add(ClassLoadContext.Variable.oldVar(k, v)));
 
         // Imports = snippet imports + var def imports + module def imports
         Set<String> importStrings = getUsedImportStrings(newSnippet);
@@ -393,7 +387,11 @@ public class ClassLoadInvoker extends Invoker {
             importStrings.add(newSnippet.toString());
         } else if (newSnippet.isVariableDeclaration()) {
             lastVarDcln = newSnippet.toString();
-            newVariables.forEach((k, v) -> saveVarDclns.add(new Pair<>(k, v)));
+            for (Map.Entry<String, String> entry : newVariables.entrySet()) {
+                ClassLoadContext.Variable variable =
+                        ClassLoadContext.Variable.newVar(entry.getKey(), entry.getValue());
+                varDclns.add(variable);
+            }
         } else if (newSnippet.isModuleMemberDeclaration()) {
             moduleDclnStrings.add(newSnippet.toString());
         } else if (newSnippet.isStatement()) {
@@ -402,8 +400,7 @@ public class ClassLoadInvoker extends Invoker {
             lastExpr = new Pair<>(newSnippet.toString(), false);
         }
 
-        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings,
-                initVarDclns, saveVarDclns, lastVarDcln, lastExpr);
+        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, varDclns, lastVarDcln, lastExpr);
     }
 
     /**

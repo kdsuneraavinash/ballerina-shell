@@ -31,44 +31,67 @@ import java.util.Objects;
  */
 public class ClassLoadContext {
     private static final Pair<String, Boolean> DEFAULT_RETURN_EXPR = new Pair<>("()", false);
-
     private final String contextId;
     private final Collection<String> imports;
     private final Collection<String> moduleDclns;
     private final String lastVarDcln;
-    private final Collection<Pair<String, String>> initVarDclns;
-    private final Collection<Pair<String, String>> saveVarDclns;
+    private final Collection<Variable> varDclns;
     private final Pair<String, Boolean> lastExpr;
 
     /**
      * Creates a context for class load invoker.
      * A simple data class which is bound to the template.
-     * Of {@code initVarDclns} and {@code saveVarDclns}, the first value
+     * Of {@code varDclns} and {@code saveVarDclns}, the first value
      * should be the type descriptor. Second value should be the variable name.
      *
-     * @param contextId    Id of the context to use in memory.
-     * @param imports      Import declarations.
-     * @param moduleDclns  Module level declaration.
-     * @param lastVarDcln  Last variable declaration if the last snippet was a var dcln.
-     *                     If not, this should be null.
-     * @param initVarDclns Variable declarations to initialize with values.
-     * @param saveVarDclns Variable declarations to save.
-     * @param lastExpr     Last expression if last value was a statement or an expression.
+     * @param contextId   Id of the context to use in memory.
+     * @param imports     Import declarations.
+     * @param moduleDclns Module level declaration.
+     * @param lastVarDcln Last variable declaration if the last snippet was a var dcln.
+     *                    If not, this should be null.
+     * @param varDclns    Variable declarations to initialize with values.
+     * @param lastExpr    Last expression if last value was a statement or an expression.
      */
     public ClassLoadContext(String contextId,
                             Collection<String> imports,
                             Collection<String> moduleDclns,
-                            Collection<Pair<String, String>> initVarDclns,
-                            Collection<Pair<String, String>> saveVarDclns,
+                            Collection<Variable> varDclns,
                             String lastVarDcln,
                             Pair<String, Boolean> lastExpr) {
         this.lastExpr = Objects.requireNonNullElse(lastExpr, DEFAULT_RETURN_EXPR);
         this.lastVarDcln = Objects.requireNonNullElse(lastVarDcln, "");
         this.contextId = Objects.requireNonNull(contextId);
         this.imports = Objects.requireNonNull(imports);
-        this.initVarDclns = Objects.requireNonNull(initVarDclns);
-        this.saveVarDclns = Objects.requireNonNull(saveVarDclns);
+        this.varDclns = Objects.requireNonNull(varDclns);
         this.moduleDclns = Objects.requireNonNull(moduleDclns);
+    }
+
+    /**
+     * Creates a context for class load invoker without new expression.
+     *
+     * @param contextId   Id of the context to use in memory.
+     * @param imports     Import declarations.
+     * @param moduleDclns Module level declaration.
+     * @param lastVarDcln Last variable declaration if the last snippet was a var dcln.
+     *                    If not, this should be null.
+     * @param varDclns    Variable declarations to initialize with values.
+     */
+    public ClassLoadContext(String contextId,
+                            Collection<String> imports,
+                            Collection<String> moduleDclns,
+                            Collection<Variable> varDclns,
+                            String lastVarDcln) {
+        this(contextId, imports, moduleDclns, varDclns, lastVarDcln, null);
+    }
+
+    /**
+     * Creates a context for class load invoker with only imports.
+     *
+     * @param contextId Id of the context to use in memory.
+     * @param imports   Import declarations.
+     */
+    public ClassLoadContext(String contextId, Collection<String> imports) {
+        this(contextId, imports, List.of(), List.of(), null);
     }
 
     /**
@@ -77,13 +100,7 @@ public class ClassLoadContext {
      * @param contextId Id of the context to use in memory.
      */
     public ClassLoadContext(String contextId) {
-        this.contextId = Objects.requireNonNull(contextId);
-        this.lastVarDcln = "";
-        this.lastExpr = DEFAULT_RETURN_EXPR;
-        this.imports = List.of();
-        this.initVarDclns = List.of();
-        this.saveVarDclns = List.of();
-        this.moduleDclns = List.of();
+        this(contextId, List.of(), List.of(), List.of(), null);
     }
 
     @TemplateAccessible
@@ -107,13 +124,8 @@ public class ClassLoadContext {
     }
 
     @TemplateAccessible
-    public Collection<Pair<String, String>> getInitVarDclns() {
-        return initVarDclns;
-    }
-
-    @TemplateAccessible
-    public Collection<Pair<String, String>> getSaveVarDclns() {
-        return saveVarDclns;
+    public Collection<Variable> getVarDclns() {
+        return varDclns;
     }
 
     @TemplateAccessible
@@ -129,5 +141,45 @@ public class ClassLoadContext {
     @TemplateAccessible
     public String getMemoryRef() {
         return ClassLoadMemory.class.getCanonicalName();
+    }
+
+    /**
+     * A class to denote a variable declaration.
+     * The {@code isNew} defines whether the variable was newly added.
+     * For old variables, there should be an entry in the static memory class.
+     */
+    public static class Variable {
+        private final String name;
+        private final String type;
+        private final boolean isNew;
+
+        private Variable(String name, String type, boolean isNew) {
+            this.name = name;
+            this.type = type;
+            this.isNew = isNew;
+        }
+
+        public static Variable newVar(String name, String type) {
+            return new Variable(name, type, true);
+        }
+
+        public static Variable oldVar(String name, String type) {
+            return new Variable(name, type, false);
+        }
+
+        @TemplateAccessible
+        public String getName() {
+            return name;
+        }
+
+        @TemplateAccessible
+        public String getType() {
+            return type;
+        }
+
+        @TemplateAccessible
+        public boolean isNew() {
+            return isNew;
+        }
     }
 }
