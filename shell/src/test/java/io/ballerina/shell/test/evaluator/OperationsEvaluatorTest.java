@@ -23,8 +23,6 @@ import org.testng.annotations.Test;
 
 /**
  * Test simple snippets.
- * TODO: Test https://ballerina.io/swan-lake/learn/by-example/immutable-values.html
- * TODO: Test https://ballerina.io/swan-lake/learn/by-example/type-conversion.html
  */
 public class OperationsEvaluatorTest extends AbstractEvaluatorTest {
     private static final String SHIFT_OPERATION_TESTCASE = "testcases/evaluator/operations.shift.json";
@@ -35,6 +33,8 @@ public class OperationsEvaluatorTest extends AbstractEvaluatorTest {
     private static final String CAST_OPERATION_TESTCASE = "testcases/evaluator/operations.cast.json";
     private static final String OPTIONAL_OPERATION_TESTCASE = "testcases/evaluator/operations.optional.json";
     private static final String CLONE_OPERATION_TESTCASE = "testcases/evaluator/operations.clone.json";
+    private static final String IMMUTABLE_OPERATION_TESTCASE = "testcases/evaluator/operations.immutable.json";
+    private static final String CONV_OPERATION_TESTCASE = "testcases/evaluator/operations.conv.json";
 
     @Test
     public void testEvaluateShift() throws BallerinaShellException {
@@ -74,5 +74,15 @@ public class OperationsEvaluatorTest extends AbstractEvaluatorTest {
     @Test
     public void testEvaluateClone() throws BallerinaShellException {
         testEvaluate(CLONE_OPERATION_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateImmutable() throws BallerinaShellException {
+        testEvaluate(IMMUTABLE_OPERATION_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateConvertTypes() throws BallerinaShellException {
+        testEvaluate(CONV_OPERATION_TESTCASE);
     }
 }

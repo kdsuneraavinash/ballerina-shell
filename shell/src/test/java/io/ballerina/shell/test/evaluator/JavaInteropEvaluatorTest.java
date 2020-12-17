@@ -23,8 +23,6 @@ import org.testng.annotations.Test;
 
 /**
  * Test simple snippets.
- * TODO: Test https://ballerina.io/swan-lake/learn/by-example/user-defined-error.html
- * TODO: Test https://ballerina.io/swan-lake/learn/by-example/error-handling-in-single-place.html
  */
 public class JavaInteropEvaluatorTest extends AbstractEvaluatorTest {
     private static final String JAVA_INTEROP_EVALUATOR_TESTCASE = "testcases/evaluator/java.interop.json";

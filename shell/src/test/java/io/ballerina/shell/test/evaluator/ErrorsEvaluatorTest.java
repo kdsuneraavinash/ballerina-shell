@@ -23,8 +23,6 @@ import org.testng.annotations.Test;
 
 /**
  * Test simple snippets.
- * TODO: Test https://ballerina.io/swan-lake/learn/by-example/user-defined-error.html
- * TODO: Test https://ballerina.io/swan-lake/learn/by-example/error-handling-in-single-place.html
  */
 public class ErrorsEvaluatorTest extends AbstractEvaluatorTest {
     private static final String HANDLING_EVALUATOR_TESTCASE = "testcases/evaluator/errors.handling.json";
@@ -33,6 +31,8 @@ public class ErrorsEvaluatorTest extends AbstractEvaluatorTest {
     private static final String PANIC_EVALUATOR_TESTCASE = "testcases/evaluator/errors.panic.json";
     private static final String CHECKPANIC_EVALUATOR_TESTCASE = "testcases/evaluator/errors.checkpanic.json";
     private static final String TRAP_EVALUATOR_TESTCASE = "testcases/evaluator/errors.trap.json";
+    private static final String USER_DEF_EVALUATOR_TESTCASE = "testcases/evaluator/errors.user.def.json";
+    private static final String SINGLE_PLACE_EVALUATOR_TESTCASE = "testcases/evaluator/errors.single.place.json";
 
     @Test
     public void testEvaluateErrorHandling() throws BallerinaShellException {
@@ -62,5 +62,16 @@ public class ErrorsEvaluatorTest extends AbstractEvaluatorTest {
     @Test
     public void testEvaluateTrap() throws BallerinaShellException {
         testEvaluate(TRAP_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateUserDef() throws BallerinaShellException {
+        testEvaluate(USER_DEF_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateSinglePlace() throws BallerinaShellException {
+        // TODO: Test transaction on fail clause
+        testEvaluate(SINGLE_PLACE_EVALUATOR_TESTCASE);
     }
 }
