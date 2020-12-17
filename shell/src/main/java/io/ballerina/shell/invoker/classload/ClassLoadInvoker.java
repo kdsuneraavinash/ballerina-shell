@@ -197,7 +197,6 @@ public class ClassLoadInvoker extends Invoker {
         // Save required data if execution was successful
         if (isSuccess) {
             this.mustImports.addAll(persistImports);
-            addDiagnostic(Diagnostic.debug("Adding the snippet to memory."));
             if (newSnippet.isVariableDeclaration()) {
                 newVariables.forEach(globalVars::put);
             } else if (newSnippet.isModuleMemberDeclaration()) {
@@ -475,7 +474,7 @@ public class ClassLoadInvoker extends Invoker {
     protected SingleFileProject getProject(String source) throws InvokerException {
         try {
             File mainBal = writeToFile(source);
-            addDiagnostic(Diagnostic.debug("Using main file: " + mainBal));
+            addDiagnostic(Diagnostic.debug("Using ballerina source file: " + mainBal));
             BuildOptions buildOptions = new BuildOptionsBuilder().offline(true).build();
             return SingleFileProject.load(mainBal.toPath(), buildOptions);
         } catch (IOException e) {

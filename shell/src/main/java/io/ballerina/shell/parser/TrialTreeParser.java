@@ -70,15 +70,11 @@ public class TrialTreeParser extends TreeParser {
                 return Objects.requireNonNull(trial.parse(source), "trial returned no nodes");
             } catch (ParserTrialFailedException e) {
                 errorMessage = e.getMessage();
-                addDiagnostic(Diagnostic.debug(String.format("Failed %s because %s",
-                        trial.getClass().getSimpleName(), errorMessage)));
             } catch (ParserRejectedException e) {
                 errorMessage = "Invalid statement: " + e.getMessage();
                 break;
             } catch (Exception e) {
                 errorMessage = "Invalid statement. Could not parse the expression: " + e.getMessage();
-                addDiagnostic(Diagnostic.debug(String.format("Unexpected Fail %s because %s",
-                        trial.getClass().getSimpleName(), errorMessage)));
             } catch (Error e) {
                 errorMessage = "Something severely went wrong: " + e.toString();
             }

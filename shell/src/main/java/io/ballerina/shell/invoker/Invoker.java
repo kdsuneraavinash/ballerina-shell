@@ -123,10 +123,7 @@ public abstract class Invoker extends DiagnosticReporter {
         cfg.setClassForTemplateLoading(getClass(), "/");
         cfg.setDefaultEncoding("UTF-8");
         try {
-            Template template = cfg.getTemplate(templateName);
-            String message = String.format("Using %s invoker on %s file.", getClass().getSimpleName(), templateName);
-            addDiagnostic(Diagnostic.debug(message));
-            return template;
+            return cfg.getTemplate(templateName);
         } catch (IOException e) {
             addDiagnostic(Diagnostic.error("Template file read failed: " + e.getMessage()));
             throw new InvokerException();
