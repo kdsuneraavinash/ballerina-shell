@@ -23,8 +23,8 @@ import org.testng.annotations.Test;
 
 /**
  * Test simple snippets.
- * TODO: Test https://ballerina.io/swan-lake/learn/by-example/immutable-values.html and
- * https://ballerina.io/swan-lake/learn/by-example/type-conversion.html
+ * TODO: Test https://ballerina.io/swan-lake/learn/by-example/immutable-values.html
+ * TODO: Test https://ballerina.io/swan-lake/learn/by-example/type-conversion.html
  */
 public class OperationsEvaluatorTest extends AbstractEvaluatorTest {
     private static final String SHIFT_OPERATION_TESTCASE = "testcases/evaluator/operations.shift.json";
