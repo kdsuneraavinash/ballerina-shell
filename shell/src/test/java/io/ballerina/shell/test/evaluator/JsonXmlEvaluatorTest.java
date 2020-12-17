@@ -27,7 +27,12 @@ import org.testng.annotations.Test;
 public class JsonXmlEvaluatorTest extends AbstractEvaluatorTest {
     private static final String JSON_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json.json";
     private static final String JSON_OBJECTS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json-objects.json";
-    private static final String XML_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.xml.json";
+    private static final String XML_EVALUATOR_TESTCASE = "testcases/evaluator/xml.basic.json";
+    private static final String LITERAL_EVALUATOR_TESTCASE = "testcases/evaluator/xml.literal.json";
+    private static final String ATTRIBUTE_EVALUATOR_TESTCASE = "testcases/evaluator/xml.attributes.json";
+    private static final String NAMESPACE_EVALUATOR_TESTCASE = "testcases/evaluator/xml.namespaces.json";
+    private static final String ACCESS_EVALUATOR_TESTCASE = "testcases/evaluator/xml.access.json";
+    private static final String FUNCTION_EVALUATOR_TESTCASE = "testcases/evaluator/xml.function.json";
 
     @Test
     public void testEvaluateJson() throws BallerinaShellException {
@@ -42,5 +47,30 @@ public class JsonXmlEvaluatorTest extends AbstractEvaluatorTest {
     @Test
     public void testEvaluateXml() throws BallerinaShellException {
         testEvaluate(XML_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateXmlLiteral() throws BallerinaShellException {
+        testEvaluate(LITERAL_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateXmlAttribute() throws BallerinaShellException {
+        testEvaluate(ATTRIBUTE_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateXmlNamespace() throws BallerinaShellException {
+        testEvaluate(NAMESPACE_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateXmlAccess() throws BallerinaShellException {
+        testEvaluate(ACCESS_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateXmlFunction() throws BallerinaShellException {
+        testEvaluate(FUNCTION_EVALUATOR_TESTCASE);
     }
 }

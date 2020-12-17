@@ -205,5 +205,12 @@
     "expected": [
       "a >>= 2;"
     ]
+  },
+  {
+    "name": "Regression Test I",
+    "input": "xml bookXML = xml `<book> <name>Sherlock Holmes</name> <author> <fname title=\"Sir\">Arthur</fname> <mname>Conan</mname> <lname>Doyle</lname> </author> <bar:year xmlns:bar=\"http://ballerina.com/a\">2019</bar:year> <!--Price: $10--> </book>`;",
+    "expected": [
+      "xml bookXML = xml `<book> <name>Sherlock Holmes</name> <author> <fname title=\"Sir\">Arthur</fname> <mname>Conan</mname> <lname>Doyle</lname> </author> <bar:year xmlns:bar=\"http://ballerina.com/a\">2019</bar:year> <!--Price: $10--> </book>`;"
+    ]
   }
 ]

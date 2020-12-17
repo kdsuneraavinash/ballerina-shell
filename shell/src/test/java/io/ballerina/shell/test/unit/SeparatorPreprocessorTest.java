@@ -35,16 +35,6 @@ import java.util.List;
 public class SeparatorPreprocessorTest {
     private static final String TESTCASES = "testcases/preprocessor.separator.json";
 
-    private static class TestCase {
-        String name;
-        String input;
-        List<String> expected;
-        boolean isException = false;
-    }
-
-    private static class TestCases extends ArrayList<TestCase> {
-    }
-
     @Test
     public void testProcess() {
         List<TestCase> testCases = TestUtils.loadTestCases(TESTCASES, TestCases.class);
@@ -58,5 +48,15 @@ public class SeparatorPreprocessorTest {
                 Assert.assertTrue(testCase.isException, testCase.name);
             }
         }
+    }
+
+    private static class TestCase {
+        String name;
+        String input;
+        List<String> expected;
+        boolean isException = false;
+    }
+
+    private static class TestCases extends ArrayList<TestCase> {
     }
 }

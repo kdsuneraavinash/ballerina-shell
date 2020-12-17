@@ -52,7 +52,8 @@ public class SeparatorPreprocessor extends Preprocessor {
 
         Stack<Character> brackets = new Stack<>();
 
-        boolean isInStringLiteral = false;
+        boolean isInBacktickLiteral = false;
+        boolean isInQuoteLiteral = false;
         boolean isInComment = false;
         for (int i = 0; i < input.length(); i++) {
             char character = input.charAt(i);
@@ -64,14 +65,14 @@ public class SeparatorPreprocessor extends Preprocessor {
             if (!isInComment) {
                 builder.append(character);
                 // Switch in and out of string literal.
-                if (character == BACK_TICK || character == DOUBLE_QUOTE) {
-                    if (!isEscaped(input, i)) {
-                        isInStringLiteral = !isInStringLiteral;
-                    }
+                if (character == DOUBLE_QUOTE && isNotEscaped(input, i)) {
+                    isInQuoteLiteral = !isInQuoteLiteral;
+                } else if (character == BACK_TICK && isNotEscaped(input, i)) {
+                    isInBacktickLiteral = !isInBacktickLiteral;
                 }
 
                 // If not in a string literal, process brackets.
-                if (!isInStringLiteral) {
+                if (!isInBacktickLiteral && !isInQuoteLiteral) {
                     if (isInComment = isCommentStart(input, i)) {
                         // First character of comment is already added
                         builder.deleteCharAt(builder.length() - 1);
@@ -148,14 +149,14 @@ public class SeparatorPreprocessor extends Preprocessor {
     }
 
     /**
-     * Whether the character at the given position was escaped or not.
+     * Whether the character at the given position was not escaped or not.
      *
      * @param input    Whole input string.
      * @param position Position of character to check.
      * @return Whether the character was escaped.
      */
-    private boolean isEscaped(String input, int position) {
-        return position > 0 && input.charAt(position - 1) == ESCAPE_CHAR;
+    private boolean isNotEscaped(String input, int position) {
+        return position <= 0 || input.charAt(position - 1) != ESCAPE_CHAR;
     }
 
     /**
