@@ -25,8 +25,11 @@ import org.testng.annotations.Test;
  * Test Json/Xml based snippets.
  */
 public class JsonXmlEvaluatorTest extends AbstractEvaluatorTest {
-    private static final String JSON_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json.json";
-    private static final String JSON_OBJECTS_EVALUATOR_TESTCASE = "testcases/evaluator/evaluator.json-objects.json";
+    private static final String JSON_EVALUATOR_TESTCASE = "testcases/evaluator/json.json.json";
+    private static final String JSON_OBJECTS_EVALUATOR_TESTCASE = "testcases/evaluator/json.objects.json";
+    private static final String JSON_ARRAYS_EVALUATOR_TESTCASE = "testcases/evaluator/json.arrays.json";
+    private static final String JSON_ACCESS_EVALUATOR_TESTCASE = "testcases/evaluator/json.access.json";
+    private static final String JSON_CONV_MAP_EVALUATOR_TESTCASE = "testcases/evaluator/json.convert.json";
     private static final String XML_EVALUATOR_TESTCASE = "testcases/evaluator/xml.basic.json";
     private static final String LITERAL_EVALUATOR_TESTCASE = "testcases/evaluator/xml.literal.json";
     private static final String ATTRIBUTE_EVALUATOR_TESTCASE = "testcases/evaluator/xml.attributes.json";
@@ -42,6 +45,21 @@ public class JsonXmlEvaluatorTest extends AbstractEvaluatorTest {
     @Test
     public void testEvaluateJsonObjects() throws BallerinaShellException {
         testEvaluate(JSON_OBJECTS_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateJsonArrays() throws BallerinaShellException {
+        testEvaluate(JSON_ARRAYS_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateJsonAccess() throws BallerinaShellException {
+        testEvaluate(JSON_ACCESS_EVALUATOR_TESTCASE);
+    }
+
+    @Test
+    public void testEvaluateJsonConvertMap() throws BallerinaShellException {
+        testEvaluate(JSON_CONV_MAP_EVALUATOR_TESTCASE);
     }
 
     @Test
