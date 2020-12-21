@@ -34,7 +34,6 @@ import java.util.ArrayList;
 
 /**
  * Base class for evaluator tests.
- * TODO: Add tests for Record, I/O.
  * TODO: Find a way to test concurrency.
  * TODO: Add db lib/http lib support and test Transactions
  */
