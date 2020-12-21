@@ -24,7 +24,7 @@ import io.ballerina.projects.BuildOptions;
 import io.ballerina.projects.BuildOptionsBuilder;
 import io.ballerina.projects.JBallerinaBackend;
 import io.ballerina.projects.JarResolver;
-import io.ballerina.projects.JdkVersion;
+import io.ballerina.projects.JvmTarget;
 import io.ballerina.projects.Module;
 import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.Project;
@@ -140,7 +140,7 @@ public class ClassLoadInvoker extends Invoker {
         // subsequent runs will be much more faster.
         ClassLoadContext emptyContext = new ClassLoadContext(contextId);
         SingleFileProject project = getProject(emptyContext, TEMPLATE_FILE);
-        JBallerinaBackend loadedBackend = JBallerinaBackend.from(compile(project), JdkVersion.JAVA_11);
+        JBallerinaBackend loadedBackend = JBallerinaBackend.from(compile(project), JvmTarget.JAVA_11);
         execute(project, loadedBackend);
     }
 
@@ -160,7 +160,7 @@ public class ClassLoadInvoker extends Invoker {
         // An alternative execute to directly execute a string source.
         SingleFileProject project = getProject(source);
         PackageCompilation compilation = compile(project);
-        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
+        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
         boolean isSuccess = execute(project, jBallerinaBackend);
         return new Pair<>(isSuccess, null);
     }
@@ -191,7 +191,7 @@ public class ClassLoadInvoker extends Invoker {
         ClassLoadContext context = createContext(newSnippet, newVariables);
         SingleFileProject project = getProject(context, TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
-        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JdkVersion.JAVA_11);
+        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
         boolean isSuccess = execute(project, jBallerinaBackend);
 
         // Save required data if execution was successful

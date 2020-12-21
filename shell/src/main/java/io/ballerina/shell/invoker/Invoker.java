@@ -24,7 +24,7 @@ import io.ballerina.projects.DiagnosticResult;
 import io.ballerina.projects.Document;
 import io.ballerina.projects.DocumentId;
 import io.ballerina.projects.JBallerinaBackend;
-import io.ballerina.projects.JdkVersion;
+import io.ballerina.projects.JvmTarget;
 import io.ballerina.projects.Module;
 import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.Project;
@@ -140,7 +140,7 @@ public abstract class Invoker extends DiagnosticReporter {
     protected PackageCompilation compile(Project project) throws InvokerException {
         try {
             PackageCompilation packageCompilation = project.currentPackage().getCompilation();
-            JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JdkVersion.JAVA_11);
+            JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JvmTarget.JAVA_11);
             DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
             Module module = project.currentPackage().getDefaultModule();
             for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
