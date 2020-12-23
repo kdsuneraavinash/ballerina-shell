@@ -101,12 +101,12 @@ java -jar -Dballerina.home=home -Djava.util.logging.manager="org.ballerinalang.l
 ```
 
 **To run with an installed ballerina distribution,** (This will enable stdlib imports)
-In the following script, `$BALLERINA_HOME` refers to the ballerina distribution directory. Ballerina shell is compatible
-with `ballerina-slp7` or higher.
+In the following script, `$BALLERINA_HOME` refers to the ballerina distribution directory. However, note that this
+should be run with a compatible ballerina distribution.
 
 ```bash
 java -jar -Djava.util.logging.manager="org.ballerinalang.logging.BLogManager" -Dballerina.home=$BALLERINA_HOME shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
-# eg: java -jar -Djava.util.logging.manager="org.ballerinalang.logging.BLogManager" -Dballerina.home=/usr/lib/ballerina/distributions/ballerina-slp7 shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
+# eg: java -jar -Djava.util.logging.manager="org.ballerinalang.logging.BLogManager" -Dballerina.home=/usr/lib/ballerina/distributions/ballerina-slp8 shell-cli/build/libs/shell-cli-1.0-SNAPSHOT.jar
 ```
 
 ## References

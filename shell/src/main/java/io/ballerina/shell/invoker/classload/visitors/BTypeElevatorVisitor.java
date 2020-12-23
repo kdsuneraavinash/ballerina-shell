@@ -41,8 +41,6 @@ import org.wso2.ballerinalang.compiler.semantics.model.types.BObjectType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BPackageType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BParameterizedType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BRecordType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BServiceType;
-import org.wso2.ballerinalang.compiler.semantics.model.types.BStreamType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BStructureType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTableType;
 import org.wso2.ballerinalang.compiler.semantics.model.types.BTupleType;
@@ -135,12 +133,6 @@ public class BTypeElevatorVisitor extends AbstractTypeVisitor {
     }
 
     @Override
-    public void visit(BStreamType bStreamType) {
-        super.visit(bStreamType);
-        setVisibility(bStreamType);
-    }
-
-    @Override
     public void visit(BTypedescType bTypedescType) {
         super.visit(bTypedescType);
         setVisibility(bTypedescType);
@@ -169,11 +161,6 @@ public class BTypeElevatorVisitor extends AbstractTypeVisitor {
     @Override
     public void visit(BPackageType bPackageType) {
         setVisibility(bPackageType);
-    }
-
-    @Override
-    public void visit(BServiceType bServiceType) {
-        setVisibility(bServiceType);
     }
 
     @Override
