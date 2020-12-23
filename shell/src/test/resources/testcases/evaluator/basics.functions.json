@@ -1,7 +1,7 @@
 [
   {
     "description": "Define function.",
-    "code": "function printValue(string value) { io:println(value); }"
+    "code": "function printValue(string value) { println(value); }"
   },
   {
     "description": "Define function with no return.",
@@ -9,7 +9,7 @@
   },
   {
     "description": "Define function with return and side-effect.",
-    "code": "function printAndReturnValue(string s) returns string { string t = \"Hello \".concat(s); io:println(t); return t; }"
+    "code": "function printAndReturnValue(string s) returns string { string t = \"Hello \".concat(s); println(t); return t; }"
   },
   {
     "description": "Use function.",

@@ -58,8 +58,13 @@ public class Evaluator extends DiagnosticReporter {
      * @throws BallerinaShellException If initialization failed.
      */
     public void initialize() throws BallerinaShellException {
-        invoker.initialize();
-        this.reset();
+        try {
+            invoker.initialize();
+            this.reset();
+        } catch (BallerinaShellException e) {
+            addAllDiagnostics(invoker.diagnostics());
+            throw e;
+        }
     }
 
     /**

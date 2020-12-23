@@ -5,17 +5,17 @@
   },
   {
     "description": "Basic if statement.",
-    "code": "if (a == 10) { io:println(\"a == 10\"); }",
+    "code": "if (a == 10) { println(\"a == 10\"); }",
     "stdout": "a == 10\n"
   },
   {
     "description": "Basic if-else scenario.",
-    "code": "if (a < b) { io:println(\"a < b\"); } else { io:println(\"a >= b\"); }",
+    "code": "if (a < b) { println(\"a < b\"); } else { println(\"a >= b\"); }",
     "stdout": "a >= b\n"
   },
   {
     "description": "Basic if-else-if scenario.",
-    "code": "if (b < 0) { io:println(\"b < 0\"); } else if (b > 0) { io:println(\"b > 0\"); } else { io:println(\"b == 0\"); }",
+    "code": "if (b < 0) { println(\"b < 0\"); } else if (b > 0) { println(\"b > 0\"); } else { println(\"b == 0\"); }",
     "stdout": "b == 0\n"
   }
 ]

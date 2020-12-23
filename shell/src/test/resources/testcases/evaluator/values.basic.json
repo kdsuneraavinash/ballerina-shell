@@ -31,12 +31,12 @@
   },
   {
     "description": "Range expression x...y format.",
-    "code": "foreach int i in 25 ... 28 { io:println(i); }",
+    "code": "foreach int i in 25 ... 28 { println(i); }",
     "stdout": "25\n26\n27\n28\n"
   },
   {
     "description": "Range expression x..<y format.",
-    "code": "foreach int i in 25 ..< 28 { io:println(i); }",
+    "code": "foreach int i in 25 ..< 28 { println(i); }",
     "stdout": "25\n26\n27\n"
   },
   {

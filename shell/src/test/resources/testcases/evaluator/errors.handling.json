@@ -15,7 +15,7 @@
   },
   {
     "description": "Cast result to an error.",
-    "code": "error err_res = <error> result; io:println(\"Error: \", err_res.message(), \", Account ID: \", err_res.detail()[\"accountID\"]);",
+    "code": "error err_res = <error> result; println(\"Error: \", err_res.message(), \", Account ID: \", err_res.detail()[\"accountID\"]);",
     "stdout": "Error: Invalid account ID, Account ID: -1\n"
   },
   {

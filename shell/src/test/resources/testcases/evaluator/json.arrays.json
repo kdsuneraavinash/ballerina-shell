@@ -30,7 +30,7 @@
   },
   {
     "description": "Loop over array.",
-    "code": "int i = 0; while (i < family.length()) { io:println(family[i].toJsonString()); i = i + 1; }",
+    "code": "int i = 0; while (i < family.length()) { println(family[i].toJsonString()); i = i + 1; }",
     "stdout": "{\"fname\":\"Peter\", \"lname\":\"Stallone\"}\n{\"fname\":\"Emma\", \"lname\":\"Stallone\"}\n{\"fname\":\"Alisha\", \"lname\":\"Stallone\"}\n{\"fname\":\"Paul\", \"lname\":\"Stallone\"}\n"
   }
 ]

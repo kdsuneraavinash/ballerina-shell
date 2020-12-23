@@ -2,7 +2,7 @@
   {
     "description": "Import object module.",
     "code": "import ballerina/lang.'object;",
-    "stdout": null
+    "isImport": true
   },
   {
     "description": "Helper record type.",
@@ -37,7 +37,7 @@
   },
   {
     "description": "Helper function to build a query.",
-    "code": "function buildQuery(Query qu) returns string {  return io:sprintf(\"%s%s%s%s%s\", qu.strings[0], qu.insertions[0], qu.strings[1], qu.insertions[1], qu.strings[2]); }"
+    "code": "function buildQuery(Query qu) returns string {  return sprintf(\"%s%s%s%s%s\", qu.strings[0], qu.insertions[0], qu.strings[1], qu.insertions[1], qu.strings[2]); }"
   },
   {
     "description": "Test building query 1.",

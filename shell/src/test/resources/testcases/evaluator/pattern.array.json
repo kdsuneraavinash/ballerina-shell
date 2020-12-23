@@ -9,7 +9,7 @@
   },
   {
     "description": "View values.",
-    "code": "io:println(\"Score 1: \", score1, \" Score 2: \", score2, \" Score 3: \", score3);",
+    "code": "println(\"Score 1: \", score1, \" Score 2: \", score2, \" Score 3: \", score3);",
     "stdout": "Score 1: 9.8 Score 2: 9.6 Score 3: 9.5\n"
   }
 ]

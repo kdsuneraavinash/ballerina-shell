@@ -36,6 +36,7 @@ public class BasicsEvaluatorTest extends AbstractEvaluatorTest {
 
     @Test
     public void testBasicsModules() throws BallerinaShellException {
+        // TODO: Improve after custom classpath support
         testEvaluate(BASICS_MODULES_TESTCASE);
     }
 

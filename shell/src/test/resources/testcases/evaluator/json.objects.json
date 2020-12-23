@@ -6,7 +6,7 @@
   },
   {
     "description": "Since a JSON object is a `map<json>`, this type test evaluates to true.",
-    "code": "io:println(\"j is map<json>: \", j is map<json>);",
+    "code": "println(\"j is map<json>: \", j is map<json>);",
     "stdout": "j is map<json>: true\n"
   },
   {

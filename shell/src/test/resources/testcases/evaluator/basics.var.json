@@ -14,7 +14,7 @@
   },
   {
     "description": "Print var variable.",
-    "code": "io:println(strVar);",
+    "code": "println(strVar);",
     "stdout": "Hello!\n"
   }
 ]

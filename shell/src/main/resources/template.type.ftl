@@ -1,6 +1,6 @@
 <#-- @ftlvariable name="" type="io.ballerina.shell.invoker.classload.ClassLoadContext" -->
-import ballerina/io as io;
 import ballerina/java as java;
+
 <#list imports as import>
     ${import}
 </#list>
@@ -9,12 +9,15 @@ import ballerina/java as java;
 ${dcln}
 </#list>
 
-function recall_var(string name) returns any|error { return (); }
-function memorize_var(string name, any|error value) { }
+function printerr(any|error value) { }
+function println(any|error... values) { }
+function recall_h(string name) returns any|error { }
+function memorize_h(string name, any|error value) { }
+function sprintf(string template, any|error... values) returns string { return ""; }
 
 <#list varDclns as varDcln>
 ${varDcln.type} ${varDcln.name} = // value
-<${varDcln.type}> recall_var("x");
+<${varDcln.type}> recall_h("x");
 </#list>
 
 public function main() returns error? {
@@ -22,12 +25,11 @@ public function main() returns error? {
     <#list varDclns as varDcln>
     <#if !varDcln.new>
     ${varDcln.type} ${varDcln.name} = // value
-    <${varDcln.type}> recall_var("x");
+    <${varDcln.type}> recall_h("x");
     </#if>
     </#list>
 
     ${lastVarDcln}
 
-    io:println("Hello world");
     _ = java:JavaClassNotFoundError;
 }

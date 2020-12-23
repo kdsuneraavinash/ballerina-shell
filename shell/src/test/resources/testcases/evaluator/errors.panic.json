@@ -5,7 +5,7 @@
   },
   {
     "description": "Define function.",
-    "code": "function readRecord(Record? value) { if (value is Record) { io:println(\"Record ID: \", value.id, \", value: \", value.name); } else { panic error(\"Record is nil\"); } }"
+    "code": "function readRecord(Record? value) { if (value is Record) { println(\"Record ID: \", value.id, \", value: \", value.name); } else { panic error(\"Record is nil\"); } }"
   },
   {
     "description": "Successful pass.",

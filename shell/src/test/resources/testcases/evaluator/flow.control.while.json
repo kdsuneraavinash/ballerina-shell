@@ -5,7 +5,7 @@
   },
   {
     "description": "Basic while loop.",
-    "code": "while (i < 3) { io:println(i); i = i + 1; }",
+    "code": "while (i < 3) { println(i); i = i + 1; }",
     "stdout": "0\n1\n2\n"
   }
 ]

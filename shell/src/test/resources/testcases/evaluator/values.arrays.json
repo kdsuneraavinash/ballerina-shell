@@ -2,7 +2,7 @@
   {
     "description": "Imports array module.",
     "code": "import ballerina/lang.array;",
-    "stdout": null
+    "isImport": true
   },
   {
     "description": "Creates an `int` array of length 0.",

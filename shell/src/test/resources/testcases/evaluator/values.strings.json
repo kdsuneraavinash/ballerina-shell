@@ -2,7 +2,7 @@
   {
     "description": "Imports string module.",
     "code": "import ballerina/lang.'string;",
-    "stdout": null
+    "isImport": true
   },
   {
     "description": "Declares string variable.",
@@ -82,7 +82,7 @@
   },
   {
     "description": "Format a string with given arguments.",
-    "code": "io:sprintf(\"%s scored %d for %s and has an average of %.2f.\", name, marks, subjects[0], average);",
+    "code": "sprintf(\"%s scored %d for %s and has an average of %.2f.\", name, marks, subjects[0], average);",
     "expr": "Sam scored 90 for English and has an average of 71.50."
   },
   {

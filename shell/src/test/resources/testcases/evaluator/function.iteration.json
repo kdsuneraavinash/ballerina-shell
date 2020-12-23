@@ -19,7 +19,7 @@
   },
   {
     "description": "For each should iterate over each item.",
-    "code": "numbers.forEach(function(int i) { io:println(i); });",
+    "code": "numbers.forEach(function(int i) { println(i); });",
     "stdout": "-5\n-3\n2\n7\n12\n"
   },
   {
@@ -37,7 +37,7 @@
   },
   {
     "description": "Functional iteration operators can be chained.",
-    "code": "examScores.entries().filter((entry) => entry[1] >= 60).map(  function ([string, int] entry) returns [string, string] { string grade; if entry[1] >= 90 {      grade = \"A\"; } else if entry[1] >= 80 {     grade = \"B\"; } else if entry[1] >= 70 {     grade = \"C\"; } else {     grade = \"D\"; } return [entry[0], grade];  }).forEach(function ([string, string] entry) { io:println(\"Student: \", entry[0], \" Grade: \", entry[1]);  });",
+    "code": "examScores.entries().filter((entry) => entry[1] >= 60).map(  function ([string, int] entry) returns [string, string] { string grade; if entry[1] >= 90 {      grade = \"A\"; } else if entry[1] >= 80 {     grade = \"B\"; } else if entry[1] >= 70 {     grade = \"C\"; } else {     grade = \"D\"; } return [entry[0], grade];  }).forEach(function ([string, string] entry) { println(\"Student: \", entry[0], \" Grade: \", entry[1]);  });",
     "stdout": "Student: Jack Grade: B\nStudent: Tom Grade: D\nStudent: Anne Grade: A\n"
   }
 ]

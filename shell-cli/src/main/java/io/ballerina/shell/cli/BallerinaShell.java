@@ -81,8 +81,11 @@ public class BallerinaShell {
         try {
             evaluator.initialize();
         } catch (BallerinaShellException e) {
-            throw new RuntimeException("Shell initialization failed.", e);
+            evaluator.diagnostics().forEach(this::outputDiagnostic);
+            terminal.println("\nShell Initialization Failed!!!");
+            return;
         }
+
         Instant end = Instant.now();
         // Output a warning if initialization took too long.
         if (Duration.between(start, end).getSeconds() > INIT_WARNING_THRESH_S) {

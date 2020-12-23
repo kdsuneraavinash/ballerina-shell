@@ -2,7 +2,7 @@
   {
     "description": "Imports xml module.",
     "code": "import ballerina/lang.'xml as xmllib;",
-    "stdout": null
+    "isImport": true
   },
   {
     "description": "Define namespace.",

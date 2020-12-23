@@ -75,9 +75,7 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String EXPR_VAR_NAME = "expr";
     protected static final String DOLLAR = "$";
     // Initial context data
-    protected static final Map<String, String> INIT_IMPORTS = Map.of(
-            "'io", "import ballerina/io;",
-            "'java", "import ballerina/java;");
+    protected static final Map<String, String> INIT_IMPORTS = Map.of("'java", "import ballerina/java;");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id");
     private static final int MAX_VAR_STRING_LENGTH = 78;
     private static final String VAR_TYPE_TEMPLATE_FILE = "template.type.ftl";

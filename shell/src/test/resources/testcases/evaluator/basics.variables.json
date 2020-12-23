@@ -13,7 +13,7 @@
   },
   {
     "description": "Print variable value.",
-    "code": "io:println(total);",
+    "code": "println(total);",
     "stdout": "99\n"
   },
   {

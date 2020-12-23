@@ -1,7 +1,7 @@
 [
   {
     "description": "Define function.",
-    "code": "function printSalaryDetails(int baseSalary, int annualIncrement = 20, float bonusRate = 0.02) { io:println(\"Base Salary: \", baseSalary, \" | Annual Increment: \", annualIncrement, \" | Bonus Rate: \", bonusRate); }"
+    "code": "function printSalaryDetails(int baseSalary, int annualIncrement = 20, float bonusRate = 0.02) { println(\"Base Salary: \", baseSalary, \" | Annual Increment: \", annualIncrement, \" | Bonus Rate: \", bonusRate); }"
   },
   {
     "description": "Use function with one param.",

@@ -21,7 +21,7 @@
   },
   {
     "description": "Get the value from the stream result.",
-    "code": "var oddNumberRv = <ResultValue> oddNumber; io:println(oddNumberRv.value)",
+    "code": "var oddNumberRv = <ResultValue> oddNumber; println(oddNumberRv.value)",
     "stdout": "3\n"
   },
   {

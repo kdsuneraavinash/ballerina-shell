@@ -18,6 +18,8 @@
 
 package io.ballerina.shell.invoker.classload;
 
+import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -68,5 +70,24 @@ public class ClassLoadMemory {
         if (memory.containsKey(contextId)) {
             memory.get(contextId).clear();
         }
+    }
+
+    // Outputting utility functions
+
+    @SuppressWarnings("unused")
+    public static void printerr(Object object) {
+        println("Exception occurred: ", object);
+    }
+
+    @SuppressWarnings("unused")
+    public static String sprintf(String string, Object... objects) {
+        return String.format(string, objects);
+    }
+
+    @SuppressWarnings("unused")
+    public static void println(Object... objects) {
+        PrintStream printStream = System.out;
+        Arrays.stream(objects).forEach(printStream::print);
+        printStream.println();
     }
 }
