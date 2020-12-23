@@ -36,12 +36,12 @@ import io.ballerina.shell.invoker.classload.visitors.BTypeElevatorVisitor;
 import io.ballerina.shell.invoker.classload.visitors.BTypeStringGen;
 import io.ballerina.shell.invoker.classload.visitors.BTypeTransformer;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.wso2.ballerinalang.compiler.semantics.model.Scope;
 import org.wso2.ballerinalang.compiler.tree.BLangFunction;
-import org.wso2.ballerinalang.compiler.tree.BLangImportPackage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -178,7 +178,8 @@ public class ClassLoadInvoker extends Invoker {
             VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
             processVariableDeclaration(varDcln, newVariables, persistImports);
         } else if (newSnippet.isImport()) {
-            String importPrefix = processImport(newSnippet.toString());
+            assert newSnippet instanceof ImportDeclarationSnippet;
+            String importPrefix = processImport((ImportDeclarationSnippet) newSnippet);
             return new Pair<>(importPrefix != null, Optional.empty());
         } else if (newSnippet.isModuleMemberDeclaration()) {
             newSnippet.usedImports().stream().map(this::quotedIdentifier)
@@ -273,35 +274,33 @@ public class ClassLoadInvoker extends Invoker {
      * It should not give 'module not found' error.
      * Only compilation is done to verify package resolution.
      *
-     * @param importString New import snippet string.
+     * @param importSnippet New import snippet string.
      * @return Whether import is a valid import.
      * @throws InvokerException If compilation failed.
      */
-    private String processImport(String importString) throws InvokerException {
+    private String processImport(ImportDeclarationSnippet importSnippet) throws InvokerException {
+        String importString = importSnippet.toString();
         ClassLoadContext importCheckingContext = createImportCheckingContext(importString);
         SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
         PackageCompilation compilation = project.currentPackage().getCompilation();
-        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic :
-                compilation.diagnosticResult().diagnostics()) {
-            if (diagnostic.diagnosticInfo().code()
-                    .equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
+
+        // Detect if import is valid.
+        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : compilation.diagnosticResult().diagnostics()) {
+            if (diagnostic.diagnosticInfo().code().equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
                 addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
                 return null;
             }
         }
-        // No imports are actually done. Not possible for a valid import.
-        if (compilation.defaultModuleBLangPackage().imports.isEmpty()) {
-            addDiagnostic(Diagnostic.error("Not a valid import statement."));
-            return null;
-        }
-        BLangImportPackage importPackage = compilation.defaultModuleBLangPackage().imports.get(0);
-        String importPrefix = quotedIdentifier(importPackage.alias.value);
+
+        String importPrefix = quotedIdentifier(importSnippet.getPrefix());
         if (INIT_IMPORTS.containsKey(importPrefix)) {
             addDiagnostic(Diagnostic.error("Import is already available by default."));
             return null;
         } else if (imports.containsKey(importPrefix)) {
-            return importPrefix;
+            addDiagnostic(Diagnostic.error("An import was done before with the same prefix."));
+            return null;
         }
+
         imports.put(importPrefix, importString);
         return importPrefix;
     }
@@ -579,16 +578,17 @@ public class ClassLoadInvoker extends Invoker {
      */
     protected class ClassLoadImportCreator implements BTypeStringGen.ImportCreator {
         @Override
-        public String createImport(String orgName, String... compNames) throws InvokerException {
+        public String createImport(String orgName, String... compNames) {
+            // TODO: Improve this logic to work with existing imports.
+            // If import done as 'import abc/pqr as xyz' and statement done that
+            // causes implicit import of 'import abc/xyz' and this will overwrite previous import.
             String quotedPackageName = Arrays.stream(compNames)
                     .map(ClassLoadInvoker.this::quotedIdentifier)
                     .collect(Collectors.joining("."));
+            String importPrefix = quotedIdentifier(compNames[compNames.length - 1]);
             String importStatement = String.format("import %s/%s;", orgName, quotedPackageName);
-            String importPrefix = ClassLoadInvoker.this.processImport(importStatement);
-            if (importPrefix == null) {
-                addDiagnostic(Diagnostic.error("Import prefix resolution failed."));
-                throw new InvokerException();
-            }
+            imports.put(importPrefix, importStatement);
+            addDiagnostic(Diagnostic.error("Import prefix resolution failed."));
             return importPrefix;
         }
     }

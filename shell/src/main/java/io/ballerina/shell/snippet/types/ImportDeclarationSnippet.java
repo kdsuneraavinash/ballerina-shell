@@ -29,4 +29,18 @@ public class ImportDeclarationSnippet extends Snippet {
     public ImportDeclarationSnippet(ImportDeclarationNode rootNode) {
         super(SnippetSubKind.IMPORT_DECLARATION, rootNode);
     }
+
+    /**
+     * Finds the import alias used for the import statement.
+     * Eg: alias of 'import abc/pqr' is 'pqr'
+     * This is prefix or the last module name.
+     *
+     * @return Alias of this import.
+     */
+    public String getPrefix() {
+        ImportDeclarationNode importNode = (ImportDeclarationNode) rootNode;
+        return importNode.prefix().isPresent()
+                ? importNode.prefix().get().prefix().text()
+                : importNode.moduleName().get(importNode.moduleName().size() - 1).text();
+    }
 }
