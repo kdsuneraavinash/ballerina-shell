@@ -31,5 +31,7 @@ public function main() returns error? {
 
     ${lastVarDcln}
 
+    // ${cursorName}
+
     _ = java:JavaClassNotFoundError;
 }

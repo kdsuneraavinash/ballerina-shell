@@ -20,28 +20,33 @@ package io.ballerina.shell.invoker.classload;
 
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import io.ballerina.compiler.api.symbols.Symbol;
+import io.ballerina.compiler.api.symbols.SymbolKind;
+import io.ballerina.compiler.api.symbols.VariableSymbol;
+import io.ballerina.compiler.syntax.tree.NodeVisitor;
+import io.ballerina.compiler.syntax.tree.Token;
 import io.ballerina.projects.BuildOptions;
 import io.ballerina.projects.BuildOptionsBuilder;
+import io.ballerina.projects.Document;
+import io.ballerina.projects.DocumentId;
 import io.ballerina.projects.JBallerinaBackend;
 import io.ballerina.projects.JarResolver;
 import io.ballerina.projects.JvmTarget;
 import io.ballerina.projects.Module;
+import io.ballerina.projects.ModuleId;
 import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.Project;
 import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
-import io.ballerina.shell.invoker.classload.visitors.BTypeElevatorVisitor;
 import io.ballerina.shell.invoker.classload.visitors.BTypeStringGen;
-import io.ballerina.shell.invoker.classload.visitors.BTypeTransformer;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
+import io.ballerina.tools.text.LinePosition;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
-import org.wso2.ballerinalang.compiler.semantics.model.Scope;
-import org.wso2.ballerinalang.compiler.tree.BLangFunction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -61,6 +66,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -73,22 +79,23 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
     protected static final String EXPR_VAR_NAME = "expr";
+    protected static final String CURSOR_NAME = "<<cursor>>";
     protected static final String DOLLAR = "$";
     // Initial context data
     protected static final Map<String, String> INIT_IMPORTS = Map.of("'java", "import ballerina/java;");
     protected static final Set<String> INIT_VAR_NAMES = Set.of("'context_id");
+    // Punctuations
     private static final int MAX_VAR_STRING_LENGTH = 78;
     private static final String VAR_TYPE_TEMPLATE_FILE = "template.type.ftl";
     private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
     private static final String TEMPLATE_FILE = "template.classload.ftl";
-    // Punctuations
     private static final String QUOTE = "'";
 
 
     /**
      * The import creator to use in importing.
      */
-    protected final ClassLoadImportCreator importCreator;
+    protected final TypeParser typeParser;
     /**
      * List of imports done. These are imported to the read generated code as necessary.
      * This is a map of import prefix to the import statement used.
@@ -123,7 +130,7 @@ public class ClassLoadInvoker extends Invoker {
      * It is expected that the runtime is added in the class path.
      */
     public ClassLoadInvoker() {
-        this.importCreator = new ClassLoadImportCreator();
+        this.typeParser = new TypeParser(this::processImport);
         this.contextId = UUID.randomUUID().toString();
         this.imports = new HashMap<>();
         this.moduleDclns = new ArrayList<>();
@@ -168,7 +175,7 @@ public class ClassLoadInvoker extends Invoker {
         // New variables defined in this iteration.
         Map<String, String> newVariables = new HashMap<>();
         // Imports that should be persisted to the next iteration.
-        Set<String> persistImports = new HashSet<>();
+        Set<String> persistImportPrefixes = new HashSet<>();
 
         // TODO: Fix the closure bug. Following will not work with isolated functions.
         // newSnippet.modify(new GlobalLoadModifier(globalVars));
@@ -176,14 +183,16 @@ public class ClassLoadInvoker extends Invoker {
         if (newSnippet.isVariableDeclaration()) {
             assert newSnippet instanceof VariableDeclarationSnippet;
             VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
-            processVariableDeclaration(varDcln, newVariables, persistImports);
+            processVariableDeclaration(varDcln, newVariables, persistImportPrefixes);
         } else if (newSnippet.isImport()) {
+            // Only 1 compilation to find import validity and exit.
+            // No execution is done.
             assert newSnippet instanceof ImportDeclarationSnippet;
             String importPrefix = processImport((ImportDeclarationSnippet) newSnippet);
             return new Pair<>(importPrefix != null, Optional.empty());
         } else if (newSnippet.isModuleMemberDeclaration()) {
             newSnippet.usedImports().stream().map(this::quotedIdentifier)
-                    .forEach(persistImports::add);
+                    .forEach(persistImportPrefixes::add);
         }
 
         // Compile and execute the real program.
@@ -195,7 +204,7 @@ public class ClassLoadInvoker extends Invoker {
 
         // Save required data if execution was successful
         if (isSuccess) {
-            this.mustImports.addAll(persistImports);
+            this.mustImports.addAll(persistImportPrefixes);
             if (newSnippet.isVariableDeclaration()) {
                 newVariables.forEach(globalVars::put);
             } else if (newSnippet.isModuleMemberDeclaration()) {
@@ -215,43 +224,50 @@ public class ClassLoadInvoker extends Invoker {
      * So we have to compile once and know the names and types of variables.
      * Only compilation is done.
      *
-     * @param newSnippet     New variable declaration snippet.
-     * @param foundVariables Map to add extracted data to.
-     * @param foundImports   Set to add imports that should be persisted.
+     * @param newSnippet             New variable declaration snippet.
+     * @param foundVariables         Map to add extracted data to.
+     * @param implicitImportPrefixes Set to add imports that should be persisted.
      * @throws InvokerException If type/name inferring failed.
      */
     private void processVariableDeclaration(VariableDeclarationSnippet newSnippet, Map<String, String> foundVariables,
-                                            Set<String> foundImports) throws InvokerException {
+                                            Set<String> implicitImportPrefixes) throws InvokerException {
         // No matter the approach, compile. This will confirm that syntax is valid.
         ClassLoadContext varTypeInferContext = createVarTypeInferContext(newSnippet);
         SingleFileProject project = getProject(varTypeInferContext, VAR_TYPE_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
 
-        // Infer types using the compilation.
-        // Get the main function reference
-        Optional<BLangFunction> mainFunction = compilation.defaultModuleBLangPackage().functions.stream()
-                .filter(f -> f.name.value.equals("main")).findFirst();
-        if (mainFunction.isEmpty()) {
-            addDiagnostic(Diagnostic.error("main function definition not found."));
-            throw new InvokerException();
-        }
-        for (Scope.ScopeEntry scopeEntry : mainFunction.get().body.scope.entries.values()) {
-            // If the variable is not a init var or a known global var, add it.
-            String variableName = quotedIdentifier(scopeEntry.symbol.name.value);
-            if (isValidNewVariableName(variableName, foundVariables)) {
-                // First try to elevate type if required.
-                BTypeElevatorVisitor elevatorVisitor = new BTypeElevatorVisitor();
-                elevatorVisitor.accept(scopeEntry.symbol.type);
-                if (elevatorVisitor.isVisible()) {
-                    // If elevation is not needed, convert to string.
-                    BTypeTransformer<String> transformer = new BTypeStringGen(foundImports, importCreator);
-                    foundVariables.put(variableName, transformer.transform(scopeEntry.symbol.type));
-                } else {
-                    String elevatedType = elevatorVisitor.getElevatedType().toString();
-                    addDiagnostic(Diagnostic.warn("" +
-                            "Export types " + elevatorVisitor.getInvisibleTypes() + " are not visible for the REPL.\n" +
-                            "Warning. Exported type not visible. Using '" + elevatedType + "' instead."));
-                    foundVariables.put(variableName, elevatedType);
+        // Get the document associated with project
+        Module module = project.currentPackage().getDefaultModule();
+        ModuleId moduleId = module.moduleId();
+        Optional<DocumentId> documentId = module.documentIds().stream().findFirst();
+        assert documentId.isPresent();
+        Document document = module.document(documentId.get());
+
+        // Find the position of cursor to find the symbols
+        AtomicReference<LinePosition> reference = new AtomicReference<>();
+        document.syntaxTree().rootNode().accept(new NodeVisitor() {
+            @Override
+            public void visit(Token token) {
+                token.leadingMinutiae().forEach((m) -> {
+                    if (m.text().contains(CURSOR_NAME)) {
+                        reference.set(m.lineRange().startLine());
+                    }
+                });
+            }
+        });
+
+        List<Symbol> symbols = compilation.getSemanticModel(moduleId)
+                .visibleSymbols(document.name(), reference.get());
+        for (Symbol symbol : symbols) {
+            if (symbol.kind() == SymbolKind.VARIABLE && symbol instanceof VariableSymbol) {
+                String variableName = quotedIdentifier(symbol.name());
+                VariableSymbol variableSymbol = (VariableSymbol) symbol;
+
+                // TODO: Find a better way to add imported types
+                if (isValidNewVariableName(variableName, foundVariables)) {
+                    String typeSignature = variableSymbol.typeDescriptor().signature();
+                    String type = typeParser.process(typeSignature, implicitImportPrefixes);
+                    foundVariables.put(variableName, type);
                 }
             }
         }
@@ -297,8 +313,10 @@ public class ClassLoadInvoker extends Invoker {
             addDiagnostic(Diagnostic.error("Import is already available by default."));
             return null;
         } else if (imports.containsKey(importPrefix)) {
-            addDiagnostic(Diagnostic.error("An import was done before with the same prefix."));
-            return null;
+            // TODO: Verify that this is the same import
+            // use addDiagnostic(Diagnostic.error("An import was done before with the same prefix."));
+            // return null;
+            return importPrefix;
         }
 
         imports.put(importPrefix, importString);
