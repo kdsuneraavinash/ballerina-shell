@@ -22,7 +22,6 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.shell.exceptions.SnippetException;
 import io.ballerina.shell.exceptions.TreeParserException;
 import io.ballerina.shell.parser.TreeParser;
-import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
@@ -43,15 +42,6 @@ public class BasicSnippetFactoryTest {
     private static final String MODULEDCLN_TESTCASES = "testcases/snippet.moduledcln.json";
     private static final String STATEMENT_TESTCASES = "testcases/snippet.statement.json";
     private static final String VARDCLN_TESTCASES = "testcases/snippet.vardcln.json";
-
-    private static class TestCase {
-        String name;
-        String input;
-        boolean accepted;
-    }
-
-    private static class TestCases extends ArrayList<TestCase> {
-    }
 
     @Test
     public void testCreateImportSnippet() {
@@ -79,8 +69,6 @@ public class BasicSnippetFactoryTest {
     }
 
     private void testProcess(String fileName, SnippetKind kind) {
-        // TODO: Improve this test to check for the sub kinds, errors and ignores
-        //  after implementing them in the Snippets.
         List<TestCase> testCases = TestUtils.loadTestCases(fileName, TestCases.class);
         TreeParser treeParser = TestUtils.getTestTreeParser();
         SnippetFactory snippetFactory = new BasicSnippetFactory();
@@ -97,5 +85,14 @@ public class BasicSnippetFactoryTest {
                 Assert.assertFalse(testCase.accepted, testCase.name);
             }
         }
+    }
+
+    private static class TestCase {
+        String name;
+        String input;
+        boolean accepted;
+    }
+
+    private static class TestCases extends ArrayList<TestCase> {
     }
 }

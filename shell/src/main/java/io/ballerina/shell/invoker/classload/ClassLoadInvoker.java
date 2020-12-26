@@ -228,7 +228,7 @@ public class ClassLoadInvoker extends Invoker {
         }
 
         // Compile and execute the real program.
-        ClassLoadContext context = createContext(newSnippet, newVariables);
+        ClassLoadContext context = createExecutionContext(newSnippet, newVariables);
         SingleFileProject project = getProject(context, TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
@@ -353,7 +353,7 @@ public class ClassLoadInvoker extends Invoker {
         // Add all required imports
         this.newImplicitImports.addAll(newSnippet.usedImports());
 
-        ClassLoadContext varTypeInferContext = createDclnNameInferContext(newSnippet);
+        ClassLoadContext varTypeInferContext = createModuleDclnNameInferContext(newSnippet);
         SingleFileProject project = getProject(varTypeInferContext, DECLARATION_TEMPLATE_FILE);
         Collection<Symbol> symbols = visibleUnknownSymbols(project);
 
@@ -411,7 +411,7 @@ public class ClassLoadInvoker extends Invoker {
      * @param newSnippet New snippet. Must be a module member dcln.
      * @return Context to infer dcln name.
      */
-    protected ClassLoadContext createDclnNameInferContext(ModuleMemberDeclarationSnippet newSnippet) {
+    protected ClassLoadContext createModuleDclnNameInferContext(ModuleMemberDeclarationSnippet newSnippet) {
         List<VariableContext> varDclns = globalVariableContexts();
         List<String> moduleDclnStrings = new ArrayList<>(moduleDclns.values());
         moduleDclnStrings.add(newSnippet.toString());
@@ -432,7 +432,7 @@ public class ClassLoadInvoker extends Invoker {
      * @param newVariables Newly defined variables. Must be set if snippet is a var dcln.
      * @return Created context.
      */
-    protected ClassLoadContext createContext(Snippet newSnippet, Map<String, String> newVariables) {
+    protected ClassLoadContext createExecutionContext(Snippet newSnippet, Map<String, String> newVariables) {
         // Variable declarations are handled differently.
         // If current snippet is a var dcln, it is added to saveVarDclns but not to initVarDclns.
         // All other var dclns are added to both.

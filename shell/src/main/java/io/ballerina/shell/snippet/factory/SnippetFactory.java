@@ -38,16 +38,8 @@ import java.util.List;
  */
 public abstract class SnippetFactory extends DiagnosticReporter {
     /**
-     * Snippet creation helper interface.
-     */
-    private interface SnippetCreator {
-        Snippet create(Node node) throws SnippetException;
-    }
-
-    /**
      * Creates a snippet from the given node.
      * This will throw and error if the resultant snippet is an erroneous snippet.
-     * TODO: Add error message throwing for invalid type of nodes.
      *
      * @param node Root node to create snippet from.
      * @return Snippet that contains the node.
@@ -120,4 +112,11 @@ public abstract class SnippetFactory extends DiagnosticReporter {
      * @return Snippet that contains the node.
      */
     public abstract Snippet createExpressionSnippet(Node node) throws SnippetException;
+
+    /**
+     * Snippet creation helper interface.
+     */
+    private interface SnippetCreator {
+        Snippet create(Node node) throws SnippetException;
+    }
 }
