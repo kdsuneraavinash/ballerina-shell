@@ -16,10 +16,10 @@
  * under the License.
  */
 
-package io.ballerina.shell.invoker.classload;
+package io.ballerina.shell.invoker.classload.context;
 
 import freemarker.ext.beans.TemplateAccessible;
-import io.ballerina.shell.invoker.utils.InvokerUtils;
+import io.ballerina.shell.utils.StringUtils;
 
 /**
  * A class to denote a variable declaration.
@@ -32,7 +32,7 @@ public class VariableContext {
     private final boolean isNew;
 
     private VariableContext(String name, String type, boolean isNew) {
-        this.name = InvokerUtils.quoted(name);
+        this.name = StringUtils.quoted(name);
         this.type = type;
         this.isNew = isNew;
     }

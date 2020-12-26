@@ -42,12 +42,14 @@ import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
-import io.ballerina.shell.invoker.utils.InvokerUtils;
+import io.ballerina.shell.invoker.classload.context.ClassLoadContext;
+import io.ballerina.shell.invoker.classload.context.VariableContext;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
+import io.ballerina.shell.utils.StringUtils;
 import io.ballerina.tools.text.LinePosition;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 
@@ -78,19 +80,18 @@ import java.util.stream.Collectors;
  * This invoker will save all the variable values in a static class and
  * load them into the generated class effectively managing any side-effects.
  */
-public class ClassLoadInvoker extends Invoker {
+public class ClassLoadInvoker extends Invoker implements ImportProcessor {
+    // Context related information
+    public static final String CONTEXT_EXPR_VAR_NAME = "expr";
+    public static final String CONTEXT_CURSOR_NAME = "<<cursor>>";
     // Main class and method names to invoke
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
-    protected static final String EXPR_VAR_NAME = "expr";
-    protected static final String CURSOR_NAME = "<<cursor>>";
     protected static final String DOLLAR = "$";
-    // Initial context data
-    protected static final Map<String, String> INITIAL_IMPORTS = Map.of("'java", "import ballerina/java;");
     // Punctuations
     private static final String DECLARATION_TEMPLATE_FILE = "template.declaration.ftl";
     private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
-    private static final String TEMPLATE_FILE = "template.classload.ftl";
+    private static final String EXECUTION_TEMPLATE_FILE = "template.execution.ftl";
 
     /**
      * Set of symbols that are known or seen at this point.
@@ -101,11 +102,10 @@ public class ClassLoadInvoker extends Invoker {
      */
     protected final TypeSignatureParser typeSignatureParser;
     /**
-     * List of imports done. These are imported to the read generated code as necessary.
-     * This is a map of import prefix to the import statement used.
-     * Import prefix must be a quoted identifier.
+     * List of imports done.
+     * These are imported to the read generated code as necessary.
      */
-    protected final Map<String, String> imports;
+    protected final HashedImports imports;
     /**
      * List of module level declarations such as functions, classes, etc...
      * The snippets are saved as is.
@@ -117,12 +117,6 @@ public class ClassLoadInvoker extends Invoker {
      * The variable name must be a quoted identifier.
      */
     protected final Map<String, String> globalVars;
-    /**
-     * Imports that should be done regardless of usage in the current snippet.
-     * These are possibly the imports that are done previously
-     * in module level declarations or variable declarations.
-     */
-    protected final Set<String> mustImportPrefixes;
     /**
      * Id of the current invoker context.
      */
@@ -152,14 +146,13 @@ public class ClassLoadInvoker extends Invoker {
     public ClassLoadInvoker() {
         this.initialized = new AtomicBoolean(false);
         this.contextId = UUID.randomUUID().toString();
-        this.imports = new HashMap<>();
         this.moduleDclns = new HashMap<>();
         this.globalVars = new HashMap<>();
-        this.mustImportPrefixes = new HashSet<>();
         this.newSymbols = new HashSet<>();
         this.newImplicitImports = new HashSet<>();
         this.knownSymbols = new HashSet<>();
-        this.typeSignatureParser = new TypeSignatureParser(this::processImport);
+        this.imports = new HashedImports();
+        this.typeSignatureParser = new TypeSignatureParser(this);
     }
 
     /**
@@ -172,7 +165,7 @@ public class ClassLoadInvoker extends Invoker {
      */
     @Override
     public void initialize() throws InvokerException {
-        ClassLoadContext emptyContext = new ClassLoadContext(contextId);
+        ClassLoadContext emptyContext = new ClassLoadContext(contextId, imports.getImplicitImports());
         SingleFileProject project = getProject(emptyContext, DECLARATION_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
         Collection<Symbol> symbols = visibleUnknownSymbols(project, compilation);
@@ -186,13 +179,12 @@ public class ClassLoadInvoker extends Invoker {
     public void reset() {
         // Clear everything in memory
         // data wrt the memory context is also removed.
-        this.imports.clear();
         this.moduleDclns.clear();
         this.globalVars.clear();
-        this.mustImportPrefixes.clear();
         ClassLoadMemory.forgetAll(contextId);
         this.knownSymbols.clear();
         this.initialized.set(false);
+        this.imports.reset();
     }
 
     @Override
@@ -229,7 +221,7 @@ public class ClassLoadInvoker extends Invoker {
 
         // Compile and execute the real program.
         ClassLoadContext context = createExecutionContext(newSnippet, newVariables);
-        SingleFileProject project = getProject(context, TEMPLATE_FILE);
+        SingleFileProject project = getProject(context, EXECUTION_TEMPLATE_FILE);
         PackageCompilation compilation = compile(project);
         JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
         boolean isSuccess = executeProject(project, jBallerinaBackend);
@@ -237,7 +229,7 @@ public class ClassLoadInvoker extends Invoker {
         // Save required data if execution was successful
         if (isSuccess) {
             this.knownSymbols.addAll(newSymbols);
-            this.mustImportPrefixes.addAll(newImplicitImports);
+            newImplicitImports.forEach(imports::storeImplicitPrefix);
             if (newSnippet.isVariableDeclaration()) {
                 newVariables.forEach(globalVars::put);
             } else if (newSnippet.isModuleMemberDeclaration()) {
@@ -247,20 +239,12 @@ public class ClassLoadInvoker extends Invoker {
         } else {
             addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
         }
-        Object result = ClassLoadMemory.recall(contextId, EXPR_VAR_NAME);
+        Object result = ClassLoadMemory.recall(contextId, CONTEXT_EXPR_VAR_NAME);
         return new Pair<>(isSuccess, Optional.ofNullable(result));
     }
 
-    /**
-     * This is an import. A test import is done to check for errors.
-     * It should not give 'module not found' error.
-     * Only compilation is done to verify package resolution.
-     *
-     * @param importSnippet New import snippet string.
-     * @return Whether import is a valid import.
-     * @throws InvokerException If compilation failed.
-     */
-    private String processImport(ImportDeclarationSnippet importSnippet) throws InvokerException {
+    @Override
+    public String processImport(ImportDeclarationSnippet importSnippet) throws InvokerException {
         String importString = importSnippet.toString();
         ClassLoadContext importCheckingContext = createImportInferContext(importString);
         SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
@@ -275,17 +259,14 @@ public class ClassLoadInvoker extends Invoker {
         }
 
         String importPrefix = importSnippet.getPrefix();
-        if (INITIAL_IMPORTS.containsKey(importPrefix)) {
-            addDiagnostic(Diagnostic.error("Import is already available by default."));
-            return null;
-        } else if (imports.containsKey(importPrefix)) {
+        if (imports.containsPrefix(importPrefix)) {
             // TODO: Verify that this is the same import
             // use addDiagnostic(Diagnostic.error("An import was done before with the same prefix."));
             // return null;
             return importPrefix;
         }
 
-        imports.put(importPrefix, importString);
+        imports.storeImport(importPrefix, importString);
         return importPrefix;
     }
 
@@ -397,9 +378,7 @@ public class ClassLoadInvoker extends Invoker {
 
         // Imports = snippet imports + module def imports
         Set<String> importStrings = getUsedImportStatements(newSnippet);
-        mustImportPrefixes.stream().map(imports::get)
-                .filter(Objects::nonNull).forEach(importStrings::add);
-
+        importStrings.addAll(imports.getImplicitImports());
         String lastVarDcln = newSnippet.toString();
 
         return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, varDclns, lastVarDcln);
@@ -418,8 +397,7 @@ public class ClassLoadInvoker extends Invoker {
 
         // Get all required imports
         Set<String> importStrings = getUsedImportStatements(newSnippet);
-        mustImportPrefixes.stream().map(imports::get)
-                .filter(Objects::nonNull).forEach(importStrings::add);
+        importStrings.addAll(imports.getImplicitImports());
 
         return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, varDclns, null);
     }
@@ -443,8 +421,7 @@ public class ClassLoadInvoker extends Invoker {
 
         // Imports = snippet imports + var def imports + module def imports
         Set<String> importStrings = getUsedImportStatements(newSnippet);
-        mustImportPrefixes.stream().map(imports::get)
-                .filter(Objects::nonNull).forEach(importStrings::add);
+        importStrings.addAll(imports.getImplicitImports());
 
         Pair<String, Boolean> lastExpr = null;
         String lastVarDcln = null;
@@ -593,7 +570,7 @@ public class ClassLoadInvoker extends Invoker {
             @Override
             public void visit(Token token) {
                 token.leadingMinutiae().forEach((m) -> {
-                    if (m.text().contains(CURSOR_NAME)) {
+                    if (m.text().contains(CONTEXT_CURSOR_NAME)) {
                         reference.set(m.lineRange().startLine());
                     }
                 });
@@ -616,7 +593,7 @@ public class ClassLoadInvoker extends Invoker {
     protected Set<String> getUsedImportStatements(Snippet snippet) {
         Set<String> importStrings = new HashSet<>();
         snippet.usedImports().stream()
-                .map(imports::get).filter(Objects::nonNull)
+                .map(imports::getImport).filter(Objects::nonNull)
                 .forEach(importStrings::add);
         // Process current snippet, module dclns and indirect imports
         return importStrings;
@@ -657,11 +634,10 @@ public class ClassLoadInvoker extends Invoker {
     @Override
     public String availableImports() {
         // Imports with prefixes
-        Map<String, String> importMapped = new HashMap<>(INITIAL_IMPORTS);
+        List<String> importStrings = new ArrayList<>();
         for (Map.Entry<String, String> entry : imports.entrySet()) {
-            importMapped.put(entry.getKey(), entry.getValue());
+            importStrings.add(String.format("(%s) %s", entry.getKey(), entry.getValue()));
         }
-        List<String> importStrings = new ArrayList<>(importMapped.values());
         return String.join("\n", importStrings);
     }
 
@@ -670,7 +646,7 @@ public class ClassLoadInvoker extends Invoker {
         // Available variables and values as string.
         List<String> varStrings = new ArrayList<>();
         for (Map.Entry<String, String> entry : globalVars.entrySet()) {
-            String value = InvokerUtils.shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
+            String value = StringUtils.shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
             String varString = String.format("(%s) %s %s = %s",
                     entry.getKey(), entry.getValue(), entry.getKey(), value);
             varStrings.add(varString);
@@ -684,7 +660,7 @@ public class ClassLoadInvoker extends Invoker {
         List<String> moduleDclnStrings = new ArrayList<>();
         for (Map.Entry<String, String> entry : moduleDclns.entrySet()) {
             String varString = String.format("(%s) %s", entry.getKey(),
-                    InvokerUtils.shortenedString(entry.getValue()));
+                    StringUtils.shortenedString(entry.getValue()));
             moduleDclnStrings.add(varString);
         }
         return String.join("\n", moduleDclnStrings);

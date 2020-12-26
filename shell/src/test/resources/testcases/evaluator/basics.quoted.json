@@ -57,12 +57,12 @@
   },
   {
     "description": "Define variable using type.",
-    "code": "Person person = {'first\\ name: \"Tom\", 'Ȧɢέ:25}; person.'Ȧɢέ",
+    "code": "Person person2 = {'first\\ name: \"Tom\", 'Ȧɢέ:25}; person2.'Ȧɢέ",
     "expr": "25"
   },
   {
     "description": "Member access of escaped name.",
-    "code": "person[\"first name\"]",
+    "code": "person2[\"first name\"]",
     "expr": "Tom"
   }
 ]

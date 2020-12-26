@@ -25,6 +25,7 @@ import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
+import io.ballerina.shell.utils.StringUtils;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
@@ -40,7 +41,6 @@ import java.util.stream.Collectors;
  * Parses a type to find exported types and add required implicit imports.
  */
 public class TypeSignatureParser {
-    public static final String QUOTE = "'";
     /**
      * The regular expression used to parse the exported type.
      * Parsing format: org name    /   module name                 : version   :   type name
@@ -97,9 +97,9 @@ public class TypeSignatureParser {
         String formattedType = matcher.replaceAll((result -> {
             try {
                 // Find required information to create import
-                String orgName = quotedIdentifier(result.group(1));
+                String orgName = StringUtils.quoted(result.group(1));
                 String moduleName = Arrays.stream(result.group(2)
-                        .split("\\.")).map(this::quotedIdentifier)
+                        .split("\\.")).map(StringUtils::quoted)
                         .collect(Collectors.joining("."));
                 String typeName = result.group(5);
 
@@ -128,25 +128,5 @@ public class TypeSignatureParser {
             throw new InvokerException();
         }
         return formattedType;
-    }
-
-    /**
-     * Creates an quoted identifier to use for variable names.
-     *
-     * @param rawIdentifier Identifier without quote.
-     * @return Quoted identifier.
-     */
-    private String quotedIdentifier(String rawIdentifier) {
-        if (String.valueOf(rawIdentifier).startsWith(QUOTE)) {
-            return rawIdentifier;
-        }
-        return QUOTE + rawIdentifier;
-    }
-
-    /**
-     * Signature of a function that processes an import and returns its prefix.
-     */
-    public interface ImportProcessor {
-        String processImport(ImportDeclarationSnippet importSnippet) throws InvokerException;
     }
 }

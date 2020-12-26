@@ -16,9 +16,11 @@
  * under the License.
  */
 
-package io.ballerina.shell.invoker.classload;
+package io.ballerina.shell.invoker.classload.context;
 
 import freemarker.ext.beans.TemplateAccessible;
+import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
+import io.ballerina.shell.invoker.classload.ClassLoadMemory;
 import io.ballerina.shell.utils.Pair;
 
 import java.util.Collection;
@@ -94,15 +96,6 @@ public class ClassLoadContext {
         this(contextId, imports, List.of(), List.of(), null);
     }
 
-    /**
-     * Creates an empty context for class load invoker.
-     *
-     * @param contextId Id of the context to use in memory.
-     */
-    public ClassLoadContext(String contextId) {
-        this(contextId, List.of(), List.of(), List.of(), null);
-    }
-
     @TemplateAccessible
     public Collection<String> getImports() {
         return imports;
@@ -135,12 +128,12 @@ public class ClassLoadContext {
 
     @TemplateAccessible
     public String getExprVarName() {
-        return ClassLoadInvoker.EXPR_VAR_NAME;
+        return ClassLoadInvoker.CONTEXT_EXPR_VAR_NAME;
     }
 
     @TemplateAccessible
     public String getCursorName() {
-        return ClassLoadInvoker.CURSOR_NAME;
+        return ClassLoadInvoker.CONTEXT_CURSOR_NAME;
     }
 
     @TemplateAccessible

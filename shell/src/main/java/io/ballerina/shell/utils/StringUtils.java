@@ -16,13 +16,13 @@
  * under the License.
  */
 
-package io.ballerina.shell.invoker.utils;
+package io.ballerina.shell.utils;
 
 /**
  * Utility functions required by invokers.
  * Static class.
  */
-public class InvokerUtils {
+public class StringUtils {
     private static final int MAX_VAR_STRING_LENGTH = 78;
     private static final String QUOTE = "'";
 
