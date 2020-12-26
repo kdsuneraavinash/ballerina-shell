@@ -18,15 +18,18 @@
 
 package io.ballerina.shell.invoker.classload;
 
+import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
+import io.ballerina.shell.utils.Pair;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
@@ -36,7 +39,7 @@ import java.util.stream.Collectors;
 /**
  * Parses a type to find exported types and add required implicit imports.
  */
-public class TypeParser {
+public class TypeSignatureParser {
     public static final String QUOTE = "'";
     /**
      * The regular expression used to parse the exported type.
@@ -60,7 +63,7 @@ public class TypeParser {
 
     private final ImportProcessor importProcessor;
 
-    public TypeParser(ImportProcessor importProcessor) {
+    public TypeSignatureParser(ImportProcessor importProcessor) {
         this.importProcessor = importProcessor;
     }
 
@@ -69,13 +72,15 @@ public class TypeParser {
      * Required implicit imports are added in this. Also empty <> are fixed.
      * TODO: Fix invisible type bug.
      *
-     * @param signature              Unformatted type signature.
-     * @param implicitImportPrefixes Set to add found imports.
-     * @return Formatted type.
+     * @param typeSymbol Type symbol to parse.
+     * @return Formatted type and a set of import prefixes required to include type.
      */
-    public String process(String signature, Set<String> implicitImportPrefixes) throws InvokerException {
-        String type = processExportedTypes(signature, implicitImportPrefixes);
-        return processTempSignatureIssues(type);
+    public Pair<String, Set<String>> process(TypeSymbol typeSymbol) throws InvokerException {
+        Set<String> implicitImportPrefixes = new HashSet<>();
+        String exportFormattedType = processExportedTypes(typeSymbol.signature(), implicitImportPrefixes);
+        String xmlNeverFormattedType = exportFormattedType.replace("xml<>", "xml<never>");
+        String anyDataFormattedType = xmlNeverFormattedType.replace("anydata...;", "");
+        return new Pair<>(anyDataFormattedType, implicitImportPrefixes);
     }
 
     /**
@@ -123,21 +128,6 @@ public class TypeParser {
             throw new InvokerException();
         }
         return formattedType;
-    }
-
-    /**
-     * Replaces several issues found in signature via temp hacks.
-     *
-     * @param type Type to format.
-     * @return Formatted type.
-     */
-    private String processTempSignatureIssues(String type) {
-        // TODO: Fix these issues in a better way.
-        // map<never> gets converted to map<> (?)
-        type = type.replace("<>", "<never>");
-        // record {} gets converted to record {anydata...}
-        type = type.replace("anydata...;", "");
-        return type;
     }
 
     /**

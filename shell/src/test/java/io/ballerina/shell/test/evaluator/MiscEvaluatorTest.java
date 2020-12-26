@@ -32,11 +32,7 @@ public class MiscEvaluatorTest extends AbstractEvaluatorTest {
     @Test
     public void testEvaluateEnum() throws BallerinaShellException {
         // TODO: Fix enum not supporting associated expressions
-        //  {
-        //     "description": "An enum member can explicitly specify an associated expression.",
-        //      "code": "enum Language {EN=\"english\", TA=\"tamil\", SI=\"sinhala\"}"
-        //  }
-        testEvaluate(ENUM_EVALUATOR_TESTCASE);
+        // testEvaluate(ENUM_EVALUATOR_TESTCASE);
     }
 
     @Test

@@ -30,6 +30,7 @@ import java.util.Objects;
  * of {@link ClassLoadInvoker} objects.
  */
 public class ClassLoadContext {
+    private static final String QUOTE = "'";
     private static final Pair<String, Boolean> DEFAULT_RETURN_EXPR = new Pair<>("()", false);
     private final String contextId;
     private final Collection<String> imports;
@@ -159,7 +160,7 @@ public class ClassLoadContext {
         private final boolean isNew;
 
         private Variable(String name, String type, boolean isNew) {
-            this.name = name;
+            this.name = name.startsWith(QUOTE) ? name : QUOTE + name;
             this.type = type;
             this.isNew = isNew;
         }
