@@ -118,6 +118,10 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
      */
     protected final Map<String, String> globalVars;
     /**
+     * Flag to keep track of whether the invoker is initialized.
+     */
+    protected final AtomicBoolean initialized;
+    /**
      * Id of the current invoker context.
      */
     protected final String contextId;
@@ -133,10 +137,6 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
      * Persisted at the end of iteration to `mustImportPrefixes`.
      */
     private final Set<String> newImplicitImports;
-    /**
-     * Flag to keep track of whether the invoker is initialized.
-     */
-    private final AtomicBoolean initialized;
 
     /**
      * Creates a class load invoker from the given ballerina home.
@@ -266,7 +266,7 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
             return importPrefix;
         }
 
-        imports.storeImport(importPrefix, importString);
+        imports.storeImport(importPrefix, importSnippet);
         return importPrefix;
     }
 
@@ -635,8 +635,8 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
     public String availableImports() {
         // Imports with prefixes
         List<String> importStrings = new ArrayList<>();
-        for (Map.Entry<String, String> entry : imports.entrySet()) {
-            importStrings.add(String.format("(%s) %s", entry.getKey(), entry.getValue()));
+        for (String prefix : imports.prefixes()) {
+            importStrings.add(String.format("(%s) %s", prefix, imports.getImport(prefix)));
         }
         return String.join("\n", importStrings);
     }

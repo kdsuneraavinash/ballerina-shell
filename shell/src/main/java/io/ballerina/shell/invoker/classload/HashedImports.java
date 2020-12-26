@@ -18,11 +18,11 @@
 
 package io.ballerina.shell.invoker.classload;
 
+import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -31,8 +31,8 @@ import java.util.Set;
  * The prefixes used will always be quoted identifiers.
  */
 public class HashedImports {
-    private static final String JAVA_IMPORT_PREFIX = "java";
-    private static final String JAVA_IMPORT_STMT = "import ballerina/java;";
+    private static final String JAVA_IMPORT_PREFIX = StringUtils.quoted("java");
+    private static final String JAVA_IMPORT_MODULE = "ballerina/java";
     /**
      * This is a map of import prefix to the import statement used.
      * Import prefix must be a quoted identifier.
@@ -49,8 +49,8 @@ public class HashedImports {
     public HashedImports() {
         this.imports = new HashMap<>();
         this.implicitImportPrefixes = new HashSet<>();
-        storeImport(JAVA_IMPORT_PREFIX, JAVA_IMPORT_STMT);
         storeImplicitPrefix(JAVA_IMPORT_PREFIX);
+        this.imports.put(JAVA_IMPORT_PREFIX, JAVA_IMPORT_MODULE);
     }
 
     /**
@@ -60,8 +60,8 @@ public class HashedImports {
     public void reset() {
         this.imports.clear();
         this.implicitImportPrefixes.clear();
-        storeImport(JAVA_IMPORT_PREFIX, JAVA_IMPORT_STMT);
         storeImplicitPrefix(JAVA_IMPORT_PREFIX);
+        this.imports.put(JAVA_IMPORT_PREFIX, JAVA_IMPORT_MODULE);
     }
 
     /**
@@ -71,7 +71,12 @@ public class HashedImports {
      * @return The import statement of the prefix.
      */
     public String getImport(String prefix) {
-        return this.imports.get(StringUtils.quoted(prefix));
+        prefix = StringUtils.quoted(prefix);
+        String moduleName = this.imports.get(prefix);
+        if (moduleName == null) {
+            return null;
+        }
+        return String.format("import %s as %s;", moduleName, prefix);
     }
 
     /**
@@ -87,11 +92,11 @@ public class HashedImports {
     /**
      * Add the prefix and import to the set of remembered imports.
      *
-     * @param prefix          Prefix to add.
-     * @param importStatement Import statement to add.
+     * @param prefix  Prefix to add.
+     * @param snippet Import snippet to add.
      */
-    public void storeImport(String prefix, String importStatement) {
-        this.imports.put(StringUtils.quoted(prefix), importStatement);
+    public void storeImport(String prefix, ImportDeclarationSnippet snippet) {
+        this.imports.put(StringUtils.quoted(prefix), snippet.getImportedModule());
     }
 
     /**
@@ -104,12 +109,12 @@ public class HashedImports {
     }
 
     /**
-     * All the prefix and import pairs. Prefixes will be quoted.
+     * All the prefixes that were added. Prefixes will be quoted.
      *
-     * @return Set of entry pairs.
+     * @return Set of prefixes.
      */
-    public Set<Map.Entry<String, String>> entrySet() {
-        return imports.entrySet();
+    public Set<String> prefixes() {
+        return this.imports.keySet();
     }
 
     /**

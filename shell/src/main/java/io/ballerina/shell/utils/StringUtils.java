@@ -29,14 +29,14 @@ public class StringUtils {
     /**
      * Creates an quoted identifier to use for variable names.
      *
-     * @param rawIdentifier Identifier without quote.
+     * @param identifier Identifier without quote.
      * @return Quoted identifier.
      */
-    public static String quoted(String rawIdentifier) {
-        if (String.valueOf(rawIdentifier).startsWith(QUOTE)) {
-            return rawIdentifier;
+    public static String quoted(String identifier) {
+        if (String.valueOf(identifier).startsWith(QUOTE)) {
+            return identifier;
         }
-        return QUOTE + rawIdentifier;
+        return QUOTE + identifier;
     }
 
     /**
