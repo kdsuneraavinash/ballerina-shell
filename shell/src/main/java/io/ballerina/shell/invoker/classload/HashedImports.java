@@ -18,6 +18,8 @@
 
 package io.ballerina.shell.invoker.classload;
 
+import io.ballerina.compiler.syntax.tree.NodeFactory;
+import io.ballerina.compiler.syntax.tree.SyntaxKind;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.utils.StringUtils;
 
@@ -31,13 +33,24 @@ import java.util.Set;
  * The prefixes used will always be quoted identifiers.
  */
 public class HashedImports {
-    private static final String JAVA_IMPORT_PREFIX = StringUtils.quoted("java");
-    private static final String JAVA_IMPORT_MODULE = "ballerina/java";
+
+    private static final ImportDeclarationSnippet JAVA_IMPORT = new ImportDeclarationSnippet(
+            NodeFactory.createImportDeclarationNode(
+                    NodeFactory.createToken(SyntaxKind.IMPORT_KEYWORD),
+                    NodeFactory.createImportOrgNameNode(NodeFactory.createIdentifierToken("ballerina"),
+                            NodeFactory.createToken(SyntaxKind.SLASH_TOKEN)),
+                    NodeFactory.createSeparatedNodeList(NodeFactory.createIdentifierToken("java")),
+                    null, NodeFactory.createToken(SyntaxKind.SEMICOLON_TOKEN)));
+
     /**
      * This is a map of import prefix to the import statement used.
      * Import prefix must be a quoted identifier.
      */
     private final HashMap<String, String> imports;
+    /**
+     * Reverse map to search the imported module.
+     */
+    private final HashMap<String, String> reverseImports;
     /**
      * Imports that should be done regardless of usage in the current snippet.
      * These are possibly the imports that are done previously
@@ -48,9 +61,10 @@ public class HashedImports {
 
     public HashedImports() {
         this.imports = new HashMap<>();
+        this.reverseImports = new HashMap<>();
         this.implicitImportPrefixes = new HashSet<>();
-        storeImplicitPrefix(JAVA_IMPORT_PREFIX);
-        this.imports.put(JAVA_IMPORT_PREFIX, JAVA_IMPORT_MODULE);
+        storeImport(JAVA_IMPORT);
+        storeImplicitPrefix(JAVA_IMPORT.getPrefix());
     }
 
     /**
@@ -59,9 +73,10 @@ public class HashedImports {
      */
     public void reset() {
         this.imports.clear();
+        this.reverseImports.clear();
         this.implicitImportPrefixes.clear();
-        storeImplicitPrefix(JAVA_IMPORT_PREFIX);
-        this.imports.put(JAVA_IMPORT_PREFIX, JAVA_IMPORT_MODULE);
+        storeImport(JAVA_IMPORT);
+        storeImplicitPrefix(JAVA_IMPORT.getPrefix());
     }
 
     /**
@@ -90,13 +105,49 @@ public class HashedImports {
     }
 
     /**
+     * Whether the module was imported before.
+     * If yes, then this import does not need to be checked again.
+     *
+     * @param moduleName Module name to check in 'orgName/module' format.
+     * @return If module was added.
+     */
+    public boolean moduleImported(String moduleName) {
+        return this.reverseImports.containsKey(moduleName);
+    }
+
+    /**
+     * Get the prefix this module name was imported as.
+     *
+     * @param moduleName Module name to check in 'orgName/module' format.
+     * @return Prefix of the import.
+     */
+    public String prefix(String moduleName) {
+        return this.reverseImports.get(moduleName);
+    }
+
+    /**
      * Add the prefix and import to the set of remembered imports.
      *
-     * @param prefix  Prefix to add.
      * @param snippet Import snippet to add.
+     * @return The prefix the import was added as.
      */
-    public void storeImport(String prefix, ImportDeclarationSnippet snippet) {
-        this.imports.put(StringUtils.quoted(prefix), snippet.getImportedModule());
+    public String storeImport(ImportDeclarationSnippet snippet) {
+        String quotedPrefix = StringUtils.quoted(snippet.getPrefix());
+        String importedModule = snippet.getImportedModule();
+        return storeImport(quotedPrefix, importedModule);
+    }
+
+    /**
+     * Add the prefix and import to the set of remembered imports.
+     *
+     * @param quotedPrefix Prefix of import.
+     * @param moduleName Module name to add.
+     * @return The prefix the import was added as.
+     */
+    public String storeImport(String quotedPrefix, String moduleName) {
+        this.imports.put(quotedPrefix, moduleName);
+        this.reverseImports.put(moduleName, quotedPrefix);
+        return quotedPrefix;
     }
 
     /**

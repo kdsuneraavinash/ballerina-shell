@@ -72,6 +72,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -92,6 +93,8 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
     private static final String DECLARATION_TEMPLATE_FILE = "template.declaration.ftl";
     private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
     private static final String EXECUTION_TEMPLATE_FILE = "template.execution.ftl";
+
+    private static final AtomicInteger importIndex = new AtomicInteger(0);
 
     /**
      * Set of symbols that are known or seen at this point.
@@ -244,30 +247,52 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
     }
 
     @Override
+    public String processImplicitImport(String moduleName, String defaultPrefix) throws InvokerException {
+        if (imports.moduleImported(moduleName)) {
+            // If this module is already imported, use a previous prefix.
+            return imports.prefix(moduleName);
+        }
+
+        // Try to find an available prefix
+        String quotedPrefix = StringUtils.quoted(defaultPrefix);
+        while (imports.containsPrefix(quotedPrefix)) {
+            quotedPrefix = StringUtils.quoted("prefix" + importIndex.incrementAndGet());
+        }
+
+        // Check if import is successful.
+        if (isImportStatementValid(String.format("import %s as %s;", moduleName, quotedPrefix))) {
+            return imports.storeImport(quotedPrefix, moduleName);
+        }
+        return null;
+    }
+
+    /**
+     * This is an import. A test import is done to check for errors.
+     * It should not give 'module not found' error.
+     * Only compilation is done to verify package resolution.
+     *
+     * @param importSnippet New import snippet string.
+     * @return Whether import is a valid import.
+     * @throws InvokerException If compilation failed.
+     */
     public String processImport(ImportDeclarationSnippet importSnippet) throws InvokerException {
-        String importString = importSnippet.toString();
-        ClassLoadContext importCheckingContext = createImportInferContext(importString);
-        SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
-        PackageCompilation compilation = project.currentPackage().getCompilation();
+        String moduleName = importSnippet.getImportedModule();
+        String quotedPrefix = StringUtils.quoted(importSnippet.getPrefix());
 
-        // Detect if import is valid.
-        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : compilation.diagnosticResult().diagnostics()) {
-            if (diagnostic.diagnosticInfo().code().equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
-                addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
-                return null;
-            }
+        if (imports.moduleImported(moduleName) && imports.prefix(moduleName).equals(quotedPrefix)) {
+            // Same module with same prefix. No need to check.
+            // TODO: If identifier validity can be checked, no need to even import the statement.
+            return quotedPrefix;
+        } else if (imports.containsPrefix(quotedPrefix)) {
+            // Prefix is already used. (Not for the same module - checked above)
+            addDiagnostic(Diagnostic.error("The import prefix was already used by another import."));
+            throw new InvokerException();
         }
 
-        String importPrefix = importSnippet.getPrefix();
-        if (imports.containsPrefix(importPrefix)) {
-            // TODO: Verify that this is the same import
-            // use addDiagnostic(Diagnostic.error("An import was done before with the same prefix."));
-            // return null;
-            return importPrefix;
+        if (isImportStatementValid(importSnippet.toString())) {
+            return imports.storeImport(importSnippet);
         }
-
-        imports.storeImport(importPrefix, importSnippet);
-        return importPrefix;
+        return null;
     }
 
     /**
@@ -535,6 +560,28 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
             addDiagnostic(Diagnostic.error("Access for the method failed: " + e.getMessage()));
             throw new InvokerException(e);
         }
+    }
+
+    /**
+     * Tries to import using the given statement.
+     *
+     * @param importStatement Import statement to use.
+     * @return Whether import is valid.
+     * @throws InvokerException If import file writing failed.
+     */
+    private boolean isImportStatementValid(String importStatement) throws InvokerException {
+        ClassLoadContext importCheckingContext = createImportInferContext(importStatement);
+        SingleFileProject project = getProject(importCheckingContext, IMPORT_TEMPLATE_FILE);
+        PackageCompilation compilation = project.currentPackage().getCompilation();
+
+        // Detect if import is valid.
+        for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : compilation.diagnosticResult().diagnostics()) {
+            if (diagnostic.diagnosticInfo().code().equals(DiagnosticErrorCode.MODULE_NOT_FOUND.diagnosticId())) {
+                addDiagnostic(Diagnostic.error("Import resolution failed. Module not found."));
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

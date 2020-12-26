@@ -19,20 +19,19 @@
 package io.ballerina.shell.invoker.classload;
 
 import io.ballerina.shell.exceptions.InvokerException;
-import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 
 /**
  * Signature of a function that processes an import and returns its prefix.
  */
 public interface ImportProcessor {
     /**
-     * This is an import. A test import is done to check for errors.
-     * It should not give 'module not found' error.
-     * Only compilation is done to verify package resolution.
+     * Tries to import using the default prefix, if not
+     * imports with a random name and returns it.
      *
-     * @param importSnippet New import snippet string.
-     * @return Whether import is a valid import.
+     * @param moduleName    Module to import.
+     * @param defaultPrefix Default prefix to use.
+     * @return The prefix for the import.
      * @throws InvokerException If compilation failed.
      */
-    String processImport(ImportDeclarationSnippet importSnippet) throws InvokerException;
+    String processImplicitImport(String moduleName, String defaultPrefix) throws InvokerException;
 }

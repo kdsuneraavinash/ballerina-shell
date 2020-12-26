@@ -54,7 +54,7 @@ public abstract class AbstractEvaluatorTest {
                 String expr = evaluator.evaluate(testCaseLine.code);
                 Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.description);
                 Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.description);
-                Assert.assertNull(testCaseLine.error);
+                Assert.assertNull(testCaseLine.error, testCaseLine.description);
             } catch (BallerinaShellException e) {
                 if (testCaseLine.error != null) {
                     Assert.assertEquals(testCaseLine.error, e.getClass().getSimpleName());

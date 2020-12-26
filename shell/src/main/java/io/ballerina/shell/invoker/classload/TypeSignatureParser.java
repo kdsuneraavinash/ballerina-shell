@@ -19,15 +19,9 @@
 package io.ballerina.shell.invoker.classload;
 
 import io.ballerina.compiler.api.symbols.TypeSymbol;
-import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
-import io.ballerina.compiler.syntax.tree.ModulePartNode;
-import io.ballerina.compiler.syntax.tree.SyntaxTree;
 import io.ballerina.shell.exceptions.InvokerException;
-import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.StringUtils;
-import io.ballerina.tools.text.TextDocument;
-import io.ballerina.tools.text.TextDocuments;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -98,10 +92,12 @@ public class TypeSignatureParser {
             try {
                 // Find required information to create import
                 String orgName = StringUtils.quoted(result.group(1));
-                String moduleName = Arrays.stream(result.group(2)
-                        .split("\\.")).map(StringUtils::quoted)
-                        .collect(Collectors.joining("."));
+                String[] rawModuleNames = result.group(2).split("\\.");
+                String defaultPrefix = StringUtils.quoted(result.group(4));
                 String typeName = result.group(5);
+
+                String moduleName = Arrays.stream(rawModuleNames)
+                        .map(StringUtils::quoted).collect(Collectors.joining("."));
 
                 // If org name is anonymous, this is a declared type.
                 if (orgName.equals("'$anon/")) {
@@ -109,13 +105,9 @@ public class TypeSignatureParser {
                 }
 
                 // Create import snippet and find prefix using processor
-                String importStatement = String.format("import %s%s;", orgName, moduleName);
-                TextDocument textDocument = TextDocuments.from(importStatement);
-                ModulePartNode modulePartNode = SyntaxTree.from(textDocument).rootNode();
-                ImportDeclarationNode importDeclarationNode = modulePartNode.imports().get(0);
-                ImportDeclarationSnippet snippet = new ImportDeclarationSnippet(importDeclarationNode);
-                // TODO: Handle edge cases of import prefix already used.
-                String importPrefix = importProcessor.processImport(snippet);
+                String fullModuleName = orgName + moduleName;
+                String importPrefix = importProcessor.processImplicitImport(fullModuleName, defaultPrefix);
+
                 implicitImportPrefixes.add(importPrefix);
                 return String.format("%s:%s", importPrefix, typeName);
             } catch (InvokerException e) {
