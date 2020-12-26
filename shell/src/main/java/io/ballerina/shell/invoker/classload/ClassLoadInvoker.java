@@ -195,55 +195,60 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
         if (!this.initialized.get()) {
             this.initialize();
         }
-
-        // New variables/dclns defined in this iteration.
-        Map<String, String> newVariables = new HashMap<>();
-        Pair<String, String> newModuleDcln = null;
-
         newSymbols.clear();
         newImplicitImports.clear();
 
         // TODO: Fix the closure bug. Following will not work with isolated functions.
         // newSnippet.modify(new GlobalLoadModifier(globalVars));
 
-        if (newSnippet.isVariableDeclaration()) {
-            assert newSnippet instanceof VariableDeclarationSnippet;
-            VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
-            newVariables.putAll(processVarDcln(varDcln));
-        } else if (newSnippet.isImport()) {
+        boolean isExecutionSuccessful = true;
+        Object executionResult = null;
+        if (newSnippet.isImport()) {
             // Only 1 compilation to find import validity and exit.
             // No execution is done.
             assert newSnippet instanceof ImportDeclarationSnippet;
             String importPrefix = processImport((ImportDeclarationSnippet) newSnippet);
-            return new Pair<>(importPrefix != null, Optional.empty());
+            isExecutionSuccessful = importPrefix != null;
         } else if (newSnippet.isModuleMemberDeclaration()) {
+            // Only 1 compilation to find dcln validity and exit.
+            // No execution is done.
             assert newSnippet instanceof ModuleMemberDeclarationSnippet;
             ModuleMemberDeclarationSnippet moduleDcln = (ModuleMemberDeclarationSnippet) newSnippet;
-            newModuleDcln = processModuleDcln(moduleDcln);
-        }
-
-        // Compile and execute the real program.
-        ClassLoadContext context = createExecutionContext(newSnippet, newVariables);
-        SingleFileProject project = getProject(context, EXECUTION_TEMPLATE_FILE);
-        PackageCompilation compilation = compile(project);
-        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
-        boolean isSuccess = executeProject(project, jBallerinaBackend);
-
-        // Save required data if execution was successful
-        if (isSuccess) {
+            Pair<String, String> newModuleDcln = processModuleDcln(moduleDcln);
             this.knownSymbols.addAll(newSymbols);
             newImplicitImports.forEach(imports::storeImplicitPrefix);
-            if (newSnippet.isVariableDeclaration()) {
-                newVariables.forEach(globalVars::put);
-            } else if (newSnippet.isModuleMemberDeclaration()) {
-                Objects.requireNonNull(newModuleDcln);
-                moduleDclns.put(newModuleDcln.getFirst(), newModuleDcln.getSecond());
-            }
+            moduleDclns.put(newModuleDcln.getFirst(), newModuleDcln.getSecond());
         } else {
-            addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
+            // New variables/dclns defined in this iteration.
+            Map<String, String> newVariables = new HashMap<>();
+
+            if (newSnippet.isVariableDeclaration()) {
+                assert newSnippet instanceof VariableDeclarationSnippet;
+                VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
+                newVariables.putAll(processVarDcln(varDcln));
+            }
+
+            // Compile and execute the real program.
+            ClassLoadContext context = createExecutionContext(newSnippet, newVariables);
+            SingleFileProject project = getProject(context, EXECUTION_TEMPLATE_FILE);
+            PackageCompilation compilation = compile(project);
+            JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
+            isExecutionSuccessful = executeProject(project, jBallerinaBackend);
+
+            // Save required data if execution was successful
+            if (isExecutionSuccessful) {
+                this.knownSymbols.addAll(newSymbols);
+                newImplicitImports.forEach(imports::storeImplicitPrefix);
+                if (newSnippet.isVariableDeclaration()) {
+                    newVariables.forEach(globalVars::put);
+                }
+            } else {
+                addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
+            }
+            executionResult = ClassLoadMemory.recall(contextId, CONTEXT_EXPR_VAR_NAME);
         }
-        Object result = ClassLoadMemory.recall(contextId, CONTEXT_EXPR_VAR_NAME);
-        return new Pair<>(isSuccess, Optional.ofNullable(result));
+
+        return new Pair<>(isExecutionSuccessful, Optional.ofNullable(executionResult));
     }
 
     @Override

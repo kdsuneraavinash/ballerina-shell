@@ -27,6 +27,8 @@ public enum SnippetSubKind {
     VARIABLE_DECLARATION(SnippetKind.VARIABLE_DECLARATION),
 
     // Module member declarations - none is executable
+    // TODO: Verify that listeners are not executable
+    // TODO: Support service declarations?
     FUNCTION_DEFINITION(SnippetKind.MODULE_MEMBER_DECLARATION),
     LISTENER_DECLARATION(SnippetKind.MODULE_MEMBER_DECLARATION),
     TYPE_DEFINITION(SnippetKind.MODULE_MEMBER_DECLARATION),
