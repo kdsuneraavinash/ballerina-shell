@@ -1,8 +1,7 @@
 [
   {
     "description": "Imports modules.",
-    "code": "import ballerina/lang.'decimal; import ballerina/lang.'float; import ballerina/lang.'int;",
-    "isImport": true
+    "code": "import ballerina/lang.'decimal; import ballerina/lang.'float; import ballerina/lang.'int;"
   },
   {
     "description": "Define Person.",

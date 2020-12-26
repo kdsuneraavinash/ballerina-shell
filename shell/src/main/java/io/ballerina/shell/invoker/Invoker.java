@@ -81,16 +81,6 @@ public abstract class Invoker extends DiagnosticReporter {
     public abstract Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException;
 
     /**
-     * Executes a source and returns the output lines.
-     * Will not change the state in the invoker directly.
-     * However the generated code may change the state.
-     *
-     * @param source Source to evaluate.
-     * @return Execution output result.
-     */
-    public abstract Pair<Boolean, Optional<Object>> execute(String source) throws InvokerException;
-
-    /**
      * Returns available imports in the module.
      *
      * @return Available imports as a string.

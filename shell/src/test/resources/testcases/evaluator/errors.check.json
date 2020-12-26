@@ -1,8 +1,7 @@
 [
   {
     "description": "Imports int module.",
-    "code": "import ballerina/lang.'int;",
-    "isImport": true
+    "code": "import ballerina/lang.'int;"
   },
   {
     "description": "Define parsing function.",

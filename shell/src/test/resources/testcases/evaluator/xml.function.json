@@ -1,8 +1,7 @@
 [
   {
     "description": "Imports xml module.",
-    "code": "import ballerina/lang.'xml as xmllib;",
-    "isImport": true
+    "code": "import ballerina/lang.'xml as xmllib;"
   },
   {
     "description": "Define XML elements.",

@@ -1,8 +1,7 @@
 [
   {
     "description": "Imports array module.",
-    "code": "import ballerina/lang.array;",
-    "isImport": true
+    "code": "import ballerina/lang.array;"
   },
   {
     "description": "Creates an `int` array of length 0.",

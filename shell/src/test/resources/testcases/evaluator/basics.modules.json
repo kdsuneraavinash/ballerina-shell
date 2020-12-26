@@ -1,13 +1,11 @@
 [
   {
     "description": "Imports module with dot.",
-    "code": "import ballerina/lang.'float;",
-    "isImport": true
+    "code": "import ballerina/lang.'float;"
   },
   {
     "description": "Imports module with prefix.",
-    "code": "import ballerina/lang.'int as intlib;",
-    "isImport": true
+    "code": "import ballerina/lang.'int as intlib;"
   },
   {
     "description": "Use imported prefixed module.",

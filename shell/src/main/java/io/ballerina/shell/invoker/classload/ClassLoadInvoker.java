@@ -69,6 +69,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -86,7 +87,6 @@ public class ClassLoadInvoker extends Invoker {
     protected static final String DOLLAR = "$";
     // Initial context data
     protected static final Map<String, String> INITIAL_IMPORTS = Map.of("'java", "import ballerina/java;");
-    protected static final Set<HashedSymbol> INITIALLY_KNOWN_SYMBOLS = HashedSymbol.defaults();
     // Punctuations
     private static final String DECLARATION_TEMPLATE_FILE = "template.declaration.ftl";
     private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
@@ -139,6 +139,10 @@ public class ClassLoadInvoker extends Invoker {
      * Persisted at the end of iteration to `mustImportPrefixes`.
      */
     private final Set<String> newImplicitImports;
+    /**
+     * Flag to keep track of whether the invoker is initialized.
+     */
+    private final AtomicBoolean initialized;
 
     /**
      * Creates a class load invoker from the given ballerina home.
@@ -146,6 +150,7 @@ public class ClassLoadInvoker extends Invoker {
      * It is expected that the runtime is added in the class path.
      */
     public ClassLoadInvoker() {
+        this.initialized = new AtomicBoolean(false);
         this.contextId = UUID.randomUUID().toString();
         this.imports = new HashMap<>();
         this.moduleDclns = new HashMap<>();
@@ -153,7 +158,7 @@ public class ClassLoadInvoker extends Invoker {
         this.mustImportPrefixes = new HashSet<>();
         this.newSymbols = new HashSet<>();
         this.newImplicitImports = new HashSet<>();
-        this.knownSymbols = new HashSet<>(INITIALLY_KNOWN_SYMBOLS);
+        this.knownSymbols = new HashSet<>();
         this.typeSignatureParser = new TypeSignatureParser(this::processImport);
     }
 
@@ -161,15 +166,20 @@ public class ClassLoadInvoker extends Invoker {
      * Creates an empty context and loads the project.
      * This will allow compiler to cache necessary data so that
      * subsequent runs will be much more faster.
+     * This must be called before calling execute.
      *
      * @throws InvokerException If initialization failed.
      */
     @Override
     public void initialize() throws InvokerException {
         ClassLoadContext emptyContext = new ClassLoadContext(contextId);
-        SingleFileProject project = getProject(emptyContext, TEMPLATE_FILE);
+        SingleFileProject project = getProject(emptyContext, DECLARATION_TEMPLATE_FILE);
+        PackageCompilation compilation = compile(project);
+        Collection<Symbol> symbols = visibleUnknownSymbols(project, compilation);
+        symbols.stream().map(HashedSymbol::new).forEach(knownSymbols::add);
         JBallerinaBackend loadedBackend = JBallerinaBackend.from(compile(project), JvmTarget.JAVA_11);
         executeProject(project, loadedBackend);
+        this.initialized.set(true);
     }
 
     @Override
@@ -182,21 +192,15 @@ public class ClassLoadInvoker extends Invoker {
         this.mustImportPrefixes.clear();
         ClassLoadMemory.forgetAll(contextId);
         this.knownSymbols.clear();
-        this.knownSymbols.addAll(INITIALLY_KNOWN_SYMBOLS);
-    }
-
-    @Override
-    public Pair<Boolean, Optional<Object>> execute(String source) throws InvokerException {
-        // An alternative execute to directly execute a string source.
-        SingleFileProject project = getProject(source);
-        PackageCompilation compilation = compile(project);
-        JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
-        boolean isSuccess = executeProject(project, jBallerinaBackend);
-        return new Pair<>(isSuccess, null);
+        this.initialized.set(false);
     }
 
     @Override
     public Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException {
+        if (!this.initialized.get()) {
+            this.initialize();
+        }
+
         // New variables/dclns defined in this iteration.
         Map<String, String> newVariables = new HashMap<>();
         Pair<String, String> newModuleDcln = null;
@@ -558,13 +562,24 @@ public class ClassLoadInvoker extends Invoker {
 
     /**
      * Gets the symbols that are visible to main method but are unknown (previously not seen).
+     * Compilation is also done.
      *
      * @param project Project to get symbols.
      * @return All the visible symbols.
      */
     protected Collection<Symbol> visibleUnknownSymbols(Project project) throws InvokerException {
         PackageCompilation compilation = compile(project);
+        return visibleUnknownSymbols(project, compilation);
+    }
 
+    /**
+     * Gets the symbols that are visible to main method but are unknown (previously not seen).
+     *
+     * @param project     Project to get symbols.
+     * @param compilation Compilation object.
+     * @return All the visible symbols.
+     */
+    protected Collection<Symbol> visibleUnknownSymbols(Project project, PackageCompilation compilation) {
         // Get the document associated with project
         Module module = project.currentPackage().getDefaultModule();
         ModuleId moduleId = module.moduleId();

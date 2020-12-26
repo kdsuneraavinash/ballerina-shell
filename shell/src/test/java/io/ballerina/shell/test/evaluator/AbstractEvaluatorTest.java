@@ -49,10 +49,6 @@ public abstract class AbstractEvaluatorTest {
                 .invoker(invoker).build();
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
         for (TestCaseLine testCaseLine : testCase) {
-            if (testCaseLine.isImport) {
-                testCaseLine.stdout = null;
-            }
-
             try {
                 invoker.testCaseLine = testCaseLine;
                 String expr = evaluator.evaluate(testCaseLine.code);
@@ -90,7 +86,6 @@ public abstract class AbstractEvaluatorTest {
         String code;
         String expr;
         String stdout = "";
-        boolean isImport = false;
         int exitCode = 0;
         String error;
     }

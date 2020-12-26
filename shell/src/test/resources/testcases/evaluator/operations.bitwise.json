@@ -1,8 +1,7 @@
 [
   {
     "description": "Import int module.",
-    "code": "import ballerina/lang.'int;",
-    "isImport": true
+    "code": "import ballerina/lang.'int;"
   },
   {
     "description": "Define variables.",
