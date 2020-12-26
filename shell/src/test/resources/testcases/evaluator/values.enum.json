@@ -8,8 +8,8 @@
     "code": "function concat(string str1, string str2) returns string {return str1 + \" and \" + str2; }"
   },
   {
-    "description": "An enum member can explicitly specify an associated expression.",
-    "code": "enum Language {EN=\"english\", TA=\"tamil\", SI=\"sinhala\"}"
+    "description": "An enum declaration.",
+    "code": "enum Language {EN, TA, SI}"
   },
   {
     "description": "An enum declaration can consist of a combination of members.",

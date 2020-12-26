@@ -42,6 +42,7 @@ import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
+import io.ballerina.shell.invoker.utils.InvokerUtils;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
@@ -87,7 +88,6 @@ public class ClassLoadInvoker extends Invoker {
     protected static final Map<String, String> INITIAL_IMPORTS = Map.of("'java", "import ballerina/java;");
     protected static final Set<HashedSymbol> INITIALLY_KNOWN_SYMBOLS = HashedSymbol.defaults();
     // Punctuations
-    private static final int MAX_VAR_STRING_LENGTH = 78;
     private static final String DECLARATION_TEMPLATE_FILE = "template.declaration.ftl";
     private static final String IMPORT_TEMPLATE_FILE = "template.import.ftl";
     private static final String TEMPLATE_FILE = "template.classload.ftl";
@@ -146,8 +146,6 @@ public class ClassLoadInvoker extends Invoker {
      * It is expected that the runtime is added in the class path.
      */
     public ClassLoadInvoker() {
-        this.knownSymbols = new HashSet<>(INITIALLY_KNOWN_SYMBOLS);
-        this.typeSignatureParser = new TypeSignatureParser(this::processImport);
         this.contextId = UUID.randomUUID().toString();
         this.imports = new HashMap<>();
         this.moduleDclns = new HashMap<>();
@@ -155,6 +153,8 @@ public class ClassLoadInvoker extends Invoker {
         this.mustImportPrefixes = new HashSet<>();
         this.newSymbols = new HashSet<>();
         this.newImplicitImports = new HashSet<>();
+        this.knownSymbols = new HashSet<>(INITIALLY_KNOWN_SYMBOLS);
+        this.typeSignatureParser = new TypeSignatureParser(this::processImport);
     }
 
     /**
@@ -176,12 +176,13 @@ public class ClassLoadInvoker extends Invoker {
     public void reset() {
         // Clear everything in memory
         // data wrt the memory context is also removed.
-        this.knownSymbols.clear();
         this.imports.clear();
         this.moduleDclns.clear();
         this.globalVars.clear();
         this.mustImportPrefixes.clear();
         ClassLoadMemory.forgetAll(contextId);
+        this.knownSymbols.clear();
+        this.knownSymbols.addAll(INITIALLY_KNOWN_SYMBOLS);
     }
 
     @Override
@@ -352,9 +353,18 @@ public class ClassLoadInvoker extends Invoker {
         SingleFileProject project = getProject(varTypeInferContext, DECLARATION_TEMPLATE_FILE);
         Collection<Symbol> symbols = visibleUnknownSymbols(project);
 
-        for (Symbol symbol : symbols) {
-            this.newSymbols.add(new HashedSymbol(symbol));
-            return new Pair<>(symbol.name(), newSnippet.toString());
+        Optional<String> enumName = newSnippet.enumName();
+        if (enumName.isPresent()) {
+            // Enum. Has to process as such. The code will be as is.
+            // Enums cannot be processed as normal because they are desugared in compilation.
+            // All new symbols are added as known.
+            symbols.stream().map(HashedSymbol::new).forEach(this.newSymbols::add);
+            return new Pair<>(enumName.get(), newSnippet.toString());
+        } else {
+            for (Symbol symbol : symbols) {
+                this.newSymbols.add(new HashedSymbol(symbol));
+                return new Pair<>(symbol.name(), newSnippet.toString());
+            }
         }
 
         addDiagnostic(Diagnostic.error("Invalid module level declaration: cannot be compiled."));
@@ -378,8 +388,7 @@ public class ClassLoadInvoker extends Invoker {
      * @return Context with type information inferring code.
      */
     protected ClassLoadContext createVarTypeInferContext(VariableDeclarationSnippet newSnippet) {
-        List<ClassLoadContext.Variable> varDclns = new ArrayList<>();
-        globalVars.forEach((k, v) -> varDclns.add(ClassLoadContext.Variable.oldVar(k, v)));
+        List<VariableContext> varDclns = globalVariableContexts();
         List<String> moduleDclnStrings = new ArrayList<>(moduleDclns.values());
 
         // Imports = snippet imports + module def imports
@@ -399,8 +408,7 @@ public class ClassLoadInvoker extends Invoker {
      * @return Context to infer dcln name.
      */
     protected ClassLoadContext createDclnNameInferContext(ModuleMemberDeclarationSnippet newSnippet) {
-        List<ClassLoadContext.Variable> varDclns = new ArrayList<>();
-        globalVars.forEach((k, v) -> varDclns.add(ClassLoadContext.Variable.oldVar(k, v)));
+        List<VariableContext> varDclns = globalVariableContexts();
         List<String> moduleDclnStrings = new ArrayList<>(moduleDclns.values());
         moduleDclnStrings.add(newSnippet.toString());
 
@@ -426,9 +434,8 @@ public class ClassLoadInvoker extends Invoker {
         // All other var dclns are added to both.
         // Last expr is the last snippet if it was either a stmt or an expression.
 
-        List<ClassLoadContext.Variable> varDclns = new ArrayList<>();
         List<String> moduleDclnStrings = new ArrayList<>(moduleDclns.values());
-        globalVars.forEach((k, v) -> varDclns.add(ClassLoadContext.Variable.oldVar(k, v)));
+        List<VariableContext> varDclns = globalVariableContexts();
 
         // Imports = snippet imports + var def imports + module def imports
         Set<String> importStrings = getUsedImportStatements(newSnippet);
@@ -442,8 +449,8 @@ public class ClassLoadInvoker extends Invoker {
         } else if (newSnippet.isVariableDeclaration()) {
             lastVarDcln = newSnippet.toString();
             for (Map.Entry<String, String> entry : newVariables.entrySet()) {
-                ClassLoadContext.Variable variable =
-                        ClassLoadContext.Variable.newVar(entry.getKey(), entry.getValue());
+                VariableContext variable =
+                        VariableContext.newVar(entry.getKey(), entry.getValue());
                 varDclns.add(variable);
             }
         } else if (newSnippet.isModuleMemberDeclaration()) {
@@ -455,6 +462,17 @@ public class ClassLoadInvoker extends Invoker {
         }
 
         return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, varDclns, lastVarDcln, lastExpr);
+    }
+
+    /**
+     * Global variables as required by contexts.
+     *
+     * @return Global variable declarations list.
+     */
+    private List<VariableContext> globalVariableContexts() {
+        List<VariableContext> varDclns = new ArrayList<>();
+        globalVars.forEach((k, v) -> varDclns.add(VariableContext.oldVar(k, v)));
+        return varDclns;
     }
 
     /**
@@ -637,7 +655,7 @@ public class ClassLoadInvoker extends Invoker {
         // Available variables and values as string.
         List<String> varStrings = new ArrayList<>();
         for (Map.Entry<String, String> entry : globalVars.entrySet()) {
-            String value = shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
+            String value = InvokerUtils.shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
             String varString = String.format("(%s) %s %s = %s",
                     entry.getKey(), entry.getValue(), entry.getKey(), value);
             varStrings.add(varString);
@@ -651,26 +669,9 @@ public class ClassLoadInvoker extends Invoker {
         List<String> moduleDclnStrings = new ArrayList<>();
         for (Map.Entry<String, String> entry : moduleDclns.entrySet()) {
             String varString = String.format("(%s) %s", entry.getKey(),
-                    shortenedString(entry.getValue()));
+                    InvokerUtils.shortenedString(entry.getValue()));
             moduleDclnStrings.add(varString);
         }
         return String.join("\n", moduleDclnStrings);
-    }
-
-    /**
-     * Short a string to a certain length.
-     *
-     * @param input Input string to shorten.
-     * @return Shortened string.
-     */
-    private String shortenedString(Object input) {
-        String value = String.valueOf(input);
-        value = value.replaceAll("\n", "");
-        if (value.length() > MAX_VAR_STRING_LENGTH) {
-            int subStrLength = MAX_VAR_STRING_LENGTH / 2;
-            return value.substring(0, subStrLength)
-                    + "..." + value.substring(value.length() - subStrLength);
-        }
-        return value;
     }
 }

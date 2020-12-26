@@ -30,13 +30,12 @@ import java.util.Objects;
  * of {@link ClassLoadInvoker} objects.
  */
 public class ClassLoadContext {
-    private static final String QUOTE = "'";
     private static final Pair<String, Boolean> DEFAULT_RETURN_EXPR = new Pair<>("()", false);
     private final String contextId;
     private final Collection<String> imports;
     private final Collection<String> moduleDclns;
     private final String lastVarDcln;
-    private final Collection<Variable> varDclns;
+    private final Collection<VariableContext> varDclns;
     private final Pair<String, Boolean> lastExpr;
 
     /**
@@ -56,7 +55,7 @@ public class ClassLoadContext {
     public ClassLoadContext(String contextId,
                             Collection<String> imports,
                             Collection<String> moduleDclns,
-                            Collection<Variable> varDclns,
+                            Collection<VariableContext> varDclns,
                             String lastVarDcln,
                             Pair<String, Boolean> lastExpr) {
         this.lastExpr = Objects.requireNonNullElse(lastExpr, DEFAULT_RETURN_EXPR);
@@ -75,12 +74,12 @@ public class ClassLoadContext {
      * @param moduleDclns Module level declaration.
      * @param lastVarDcln Last variable declaration if the last snippet was a var dcln.
      *                    If not, this should be null.
-     * @param varDclns    Variable declarations to initialize with values.
+     * @param varDclns    VariableContext declarations to initialize with values.
      */
     public ClassLoadContext(String contextId,
                             Collection<String> imports,
                             Collection<String> moduleDclns,
-                            Collection<Variable> varDclns,
+                            Collection<VariableContext> varDclns,
                             String lastVarDcln) {
         this(contextId, imports, moduleDclns, varDclns, lastVarDcln, null);
     }
@@ -125,7 +124,7 @@ public class ClassLoadContext {
     }
 
     @TemplateAccessible
-    public Collection<Variable> getVarDclns() {
+    public Collection<VariableContext> getVarDclns() {
         return varDclns;
     }
 
@@ -147,45 +146,5 @@ public class ClassLoadContext {
     @TemplateAccessible
     public String getMemoryRef() {
         return ClassLoadMemory.class.getCanonicalName();
-    }
-
-    /**
-     * A class to denote a variable declaration.
-     * The {@code isNew} defines whether the variable was newly added.
-     * For old variables, there should be an entry in the static memory class.
-     */
-    public static class Variable {
-        private final String name;
-        private final String type;
-        private final boolean isNew;
-
-        private Variable(String name, String type, boolean isNew) {
-            this.name = name.startsWith(QUOTE) ? name : QUOTE + name;
-            this.type = type;
-            this.isNew = isNew;
-        }
-
-        public static Variable newVar(String name, String type) {
-            return new Variable(name, type, true);
-        }
-
-        public static Variable oldVar(String name, String type) {
-            return new Variable(name, type, false);
-        }
-
-        @TemplateAccessible
-        public String getName() {
-            return name;
-        }
-
-        @TemplateAccessible
-        public String getType() {
-            return type;
-        }
-
-        @TemplateAccessible
-        public boolean isNew() {
-            return isNew;
-        }
     }
 }

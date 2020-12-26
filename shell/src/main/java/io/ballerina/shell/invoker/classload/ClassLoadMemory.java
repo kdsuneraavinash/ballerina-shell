@@ -18,6 +18,8 @@
 
 package io.ballerina.shell.invoker.classload;
 
+import io.ballerina.shell.invoker.utils.InvokerUtils;
+
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,7 +44,7 @@ public class ClassLoadMemory {
     @SuppressWarnings("unused")
     public static Object recall(String contextId, String name) {
         if (memory.containsKey(contextId)) {
-            return memory.get(contextId).getOrDefault(name.trim(), null);
+            return memory.get(contextId).getOrDefault(InvokerUtils.quoted(name.trim()), null);
         }
         return null;
     }
@@ -57,7 +59,7 @@ public class ClassLoadMemory {
     @SuppressWarnings("unused")
     public static void memorize(String contextId, String name, Object value) {
         HashMap<String, Object> contextMem = memory.getOrDefault(contextId, new HashMap<>());
-        contextMem.put(name.trim(), value);
+        contextMem.put(InvokerUtils.quoted(name.trim()), value);
         memory.put(contextId, contextMem);
     }
 
