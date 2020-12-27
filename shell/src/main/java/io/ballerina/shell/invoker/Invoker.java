@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -90,23 +91,23 @@ public abstract class Invoker extends DiagnosticReporter {
     /**
      * Returns available imports in the module.
      *
-     * @return Available imports as a string.
+     * @return Available imports as a list of string.
      */
-    public abstract String availableImports();
+    public abstract List<String> availableImports();
 
     /**
      * Returns available variables in the module.
      *
-     * @return Available variables as a string.
+     * @return Available variables as a list of string.
      */
-    public abstract String availableVariables();
+    public abstract List<String> availableVariables();
 
     /**
      * Returns available declarations in the module.
      *
-     * @return Available declarations as a string.
+     * @return Available declarations as a list of string.
      */
-    public abstract String availableModuleDeclarations();
+    public abstract List<String> availableModuleDeclarations();
 
     /**
      * Helper method that creates the template reference.

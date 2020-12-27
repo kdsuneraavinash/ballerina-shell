@@ -29,6 +29,7 @@ import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.timeit.TimeIt;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -117,23 +118,35 @@ public class Evaluator extends DiagnosticReporter {
         treeParser.resetDiagnostics();
         snippetFactory.resetDiagnostics();
         invoker.resetDiagnostics();
+        this.resetDiagnostics();
         invoker.reset();
     }
 
-    public String availableImports() {
+    public List<String> availableImports() {
         return invoker.availableImports();
     }
 
-    public String availableVariables() {
+    public List<String> availableVariables() {
         return invoker.availableVariables();
     }
 
-    public String availableModuleDeclarations() {
+    public List<String> availableModuleDeclarations() {
         return invoker.availableModuleDeclarations();
     }
 
-    @Override
-    public String toString() {
-        return invoker.toString();
+    public Preprocessor getPreprocessor() {
+        return preprocessor;
+    }
+
+    public TreeParser getTreeParser() {
+        return treeParser;
+    }
+
+    public SnippetFactory getSnippetFactory() {
+        return snippetFactory;
+    }
+
+    public Invoker getInvoker() {
+        return invoker;
     }
 }

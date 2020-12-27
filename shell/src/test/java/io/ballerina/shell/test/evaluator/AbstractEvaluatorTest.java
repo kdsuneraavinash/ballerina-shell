@@ -23,8 +23,8 @@ import io.ballerina.shell.EvaluatorBuilder;
 import io.ballerina.shell.exceptions.BallerinaShellException;
 import io.ballerina.shell.test.TestUtils;
 import io.ballerina.shell.test.evaluator.base.TestCase;
-import io.ballerina.shell.test.evaluator.base.TestSession;
 import io.ballerina.shell.test.evaluator.base.TestInvoker;
+import io.ballerina.shell.test.evaluator.base.TestSession;
 import org.testng.Assert;
 
 /**
@@ -45,6 +45,7 @@ public abstract class AbstractEvaluatorTest {
         Evaluator evaluator = new EvaluatorBuilder()
                 .treeParser(TestUtils.getTestTreeParser())
                 .invoker(invoker).build();
+        evaluator.initialize();
 
         TestSession testSession = TestUtils.loadTestCases(fileName, TestSession.class);
         for (TestCase testCase : testSession) {

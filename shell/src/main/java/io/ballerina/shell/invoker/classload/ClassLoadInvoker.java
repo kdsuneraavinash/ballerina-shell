@@ -684,30 +684,31 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
     // Available statements
 
     @Override
-    public String availableImports() {
+    public List<String> availableImports() {
         // Imports with prefixes
         List<String> importStrings = new ArrayList<>();
         for (String prefix : imports.prefixes()) {
             importStrings.add(String.format("(%s) %s", prefix, imports.getImport(prefix)));
         }
-        return String.join("\n", importStrings);
+        return importStrings;
     }
 
     @Override
-    public String availableVariables() {
+    public List<String> availableVariables() {
         // Available variables and values as string.
         List<String> varStrings = new ArrayList<>();
         for (Map.Entry<String, String> entry : globalVars.entrySet()) {
-            String value = StringUtils.shortenedString(ClassLoadMemory.recall(contextId, entry.getKey()));
+            Object obj = ClassLoadMemory.recall(contextId, entry.getKey());
+            String value = StringUtils.shortenedString(obj);
             String varString = String.format("(%s) %s %s = %s",
                     entry.getKey(), entry.getValue(), entry.getKey(), value);
             varStrings.add(varString);
         }
-        return String.join("\n", varStrings);
+        return varStrings;
     }
 
     @Override
-    public String availableModuleDeclarations() {
+    public List<String> availableModuleDeclarations() {
         // Module level dclns.
         List<String> moduleDclnStrings = new ArrayList<>();
         for (Map.Entry<String, String> entry : moduleDclns.entrySet()) {
@@ -715,6 +716,6 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
                     StringUtils.shortenedString(entry.getValue()));
             moduleDclnStrings.add(varString);
         }
-        return String.join("\n", moduleDclnStrings);
+        return moduleDclnStrings;
     }
 }

@@ -33,6 +33,10 @@ public class TestInvoker extends ClassLoadInvoker {
     private String output;
     private TestCase testCase;
 
+    public TestInvoker() {
+        this.testCase = new TestCase();
+    }
+
     @Override
     protected int invokeMethod(Method method) throws IllegalAccessException {
         PrintStream stdOut = System.out;

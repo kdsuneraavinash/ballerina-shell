@@ -25,7 +25,7 @@ import io.ballerina.shell.cli.handlers.CommandHandler;
 import io.ballerina.shell.cli.handlers.ExitCommand;
 import io.ballerina.shell.cli.handlers.HelpCommand;
 import io.ballerina.shell.cli.handlers.ResetStateCommand;
-import io.ballerina.shell.cli.handlers.StringInfoCommand;
+import io.ballerina.shell.cli.handlers.StringListCommand;
 import io.ballerina.shell.cli.handlers.ToggleDebugCommand;
 import io.ballerina.shell.cli.utils.FileUtils;
 import io.ballerina.shell.exceptions.BallerinaShellException;
@@ -41,7 +41,6 @@ import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_EXIT;
 import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_HELP;
 import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_IMPORTS;
 import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_RESET;
-import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_STATE;
 import static io.ballerina.shell.cli.PropertiesLoader.COMMAND_VARS;
 import static io.ballerina.shell.cli.PropertiesLoader.HEADER_FILE;
 import static io.ballerina.shell.cli.PropertiesLoader.REPL_PROMPT;
@@ -166,14 +165,12 @@ public class BallerinaShell {
         commandHandler.attach(PropertiesLoader.getProperty(COMMAND_HELP), new HelpCommand(this));
         commandHandler.attach(PropertiesLoader.getProperty(COMMAND_RESET), new ResetStateCommand(this));
         commandHandler.attach(PropertiesLoader.getProperty(COMMAND_DEBUG), new ToggleDebugCommand(this));
-        commandHandler.attach(PropertiesLoader.getProperty(COMMAND_STATE),
-                new StringInfoCommand(this, evaluator::toString));
         commandHandler.attach(PropertiesLoader.getProperty(COMMAND_VARS),
-                new StringInfoCommand(this, evaluator::availableVariables));
+                new StringListCommand(this, evaluator::availableVariables));
         commandHandler.attach(PropertiesLoader.getProperty(COMMAND_IMPORTS),
-                new StringInfoCommand(this, evaluator::availableImports));
+                new StringListCommand(this, evaluator::availableImports));
         commandHandler.attach(PropertiesLoader.getProperty(COMMAND_DCLNS),
-                new StringInfoCommand(this, evaluator::availableModuleDeclarations));
+                new StringListCommand(this, evaluator::availableModuleDeclarations));
         return commandHandler;
     }
 

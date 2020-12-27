@@ -41,7 +41,6 @@ public class PropertiesLoader {
     public static final String COMMAND_HELP = "commands.help";
     public static final String COMMAND_RESET = "commands.reset";
     public static final String COMMAND_DEBUG = "commands.debug";
-    public static final String COMMAND_STATE = "commands.state";
     public static final String COMMAND_VARS = "commands.vars";
     public static final String COMMAND_IMPORTS = "commands.imports";
     public static final String COMMAND_DCLNS = "commands.dclns";
