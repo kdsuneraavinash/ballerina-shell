@@ -1,8 +1,7 @@
 [
   {
     "description": "Imports string module.",
-    "code": "import ballerina/lang.'string;",
-    "isImport": true
+    "code": "import ballerina/lang.'string;"
   },
   {
     "description": "Declares string variable.",

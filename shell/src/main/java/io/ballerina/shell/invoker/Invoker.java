@@ -23,8 +23,6 @@ import freemarker.template.Template;
 import io.ballerina.projects.DiagnosticResult;
 import io.ballerina.projects.Document;
 import io.ballerina.projects.DocumentId;
-import io.ballerina.projects.JBallerinaBackend;
-import io.ballerina.projects.JvmTarget;
 import io.ballerina.projects.Module;
 import io.ballerina.projects.PackageCompilation;
 import io.ballerina.projects.Project;
@@ -52,6 +50,8 @@ import java.util.Optional;
  * Invoker and its context may be tightly coupled.
  */
 public abstract class Invoker extends DiagnosticReporter {
+    private static final boolean USE_TEMP_FILE = false;
+
     /**
      * Initializes the invoker. This can be used to load required files
      * and create caches. Calling this is not a requirement.
@@ -79,16 +79,6 @@ public abstract class Invoker extends DiagnosticReporter {
      * @return Execution output result.
      */
     public abstract Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException;
-
-    /**
-     * Executes a source and returns the output lines.
-     * Will not change the state in the invoker directly.
-     * However the generated code may change the state.
-     *
-     * @param source Source to evaluate.
-     * @return Execution output result.
-     */
-    public abstract Pair<Boolean, Optional<Object>> execute(String source) throws InvokerException;
 
     /**
      * Returns available imports in the module.
@@ -132,6 +122,7 @@ public abstract class Invoker extends DiagnosticReporter {
 
     /**
      * Helper method to compile a project and report any errors.
+     * No code generation is done.
      *
      * @param project Project to compile.
      * @return Compilation data.
@@ -139,10 +130,10 @@ public abstract class Invoker extends DiagnosticReporter {
      */
     protected PackageCompilation compile(Project project) throws InvokerException {
         try {
-            PackageCompilation packageCompilation = project.currentPackage().getCompilation();
-            JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(packageCompilation, JvmTarget.JAVA_11);
-            DiagnosticResult diagnosticResult = jBallerinaBackend.diagnosticResult();
             Module module = project.currentPackage().getDefaultModule();
+            PackageCompilation packageCompilation = project.currentPackage().getCompilation();
+            DiagnosticResult diagnosticResult = packageCompilation.diagnosticResult();
+
             for (io.ballerina.tools.diagnostics.Diagnostic diagnostic : diagnosticResult.diagnostics()) {
                 DiagnosticSeverity severity = diagnostic.diagnosticInfo().severity();
                 if (severity == DiagnosticSeverity.ERROR) {
@@ -153,10 +144,12 @@ public abstract class Invoker extends DiagnosticReporter {
                     addDiagnostic(Diagnostic.debug(diagnostic.message()));
                 }
             }
+
             if (diagnosticResult.hasErrors()) {
                 addDiagnostic(Diagnostic.error("Compilation aborted because of errors."));
                 throw new InvokerException();
             }
+
             return packageCompilation;
         } catch (InvokerException e) {
             throw e;
@@ -192,7 +185,9 @@ public abstract class Invoker extends DiagnosticReporter {
      * @throws IOException If writing was unsuccessful.
      */
     protected File writeToFile(String source) throws IOException {
-        File createdFile = File.createTempFile("main-", ".bal");
+        File createdFile = USE_TEMP_FILE
+                ? File.createTempFile("main-", ".bal")
+                : new File("main.bal");
         createdFile.deleteOnExit();
         try (FileWriter fileWriter = new FileWriter(createdFile, Charset.defaultCharset())) {
             fileWriter.write(source);

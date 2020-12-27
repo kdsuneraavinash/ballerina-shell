@@ -16,9 +16,11 @@
  * under the License.
  */
 
-package io.ballerina.shell.invoker.classload;
+package io.ballerina.shell.invoker.classload.context;
 
 import freemarker.ext.beans.TemplateAccessible;
+import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
+import io.ballerina.shell.invoker.classload.ClassLoadMemory;
 import io.ballerina.shell.utils.Pair;
 
 import java.util.Collection;
@@ -35,7 +37,7 @@ public class ClassLoadContext {
     private final Collection<String> imports;
     private final Collection<String> moduleDclns;
     private final String lastVarDcln;
-    private final Collection<Variable> varDclns;
+    private final Collection<VariableContext> varDclns;
     private final Pair<String, Boolean> lastExpr;
 
     /**
@@ -55,7 +57,7 @@ public class ClassLoadContext {
     public ClassLoadContext(String contextId,
                             Collection<String> imports,
                             Collection<String> moduleDclns,
-                            Collection<Variable> varDclns,
+                            Collection<VariableContext> varDclns,
                             String lastVarDcln,
                             Pair<String, Boolean> lastExpr) {
         this.lastExpr = Objects.requireNonNullElse(lastExpr, DEFAULT_RETURN_EXPR);
@@ -74,12 +76,12 @@ public class ClassLoadContext {
      * @param moduleDclns Module level declaration.
      * @param lastVarDcln Last variable declaration if the last snippet was a var dcln.
      *                    If not, this should be null.
-     * @param varDclns    Variable declarations to initialize with values.
+     * @param varDclns    VariableContext declarations to initialize with values.
      */
     public ClassLoadContext(String contextId,
                             Collection<String> imports,
                             Collection<String> moduleDclns,
-                            Collection<Variable> varDclns,
+                            Collection<VariableContext> varDclns,
                             String lastVarDcln) {
         this(contextId, imports, moduleDclns, varDclns, lastVarDcln, null);
     }
@@ -92,15 +94,6 @@ public class ClassLoadContext {
      */
     public ClassLoadContext(String contextId, Collection<String> imports) {
         this(contextId, imports, List.of(), List.of(), null);
-    }
-
-    /**
-     * Creates an empty context for class load invoker.
-     *
-     * @param contextId Id of the context to use in memory.
-     */
-    public ClassLoadContext(String contextId) {
-        this(contextId, List.of(), List.of(), List.of(), null);
     }
 
     @TemplateAccessible
@@ -124,7 +117,7 @@ public class ClassLoadContext {
     }
 
     @TemplateAccessible
-    public Collection<Variable> getVarDclns() {
+    public Collection<VariableContext> getVarDclns() {
         return varDclns;
     }
 
@@ -135,51 +128,16 @@ public class ClassLoadContext {
 
     @TemplateAccessible
     public String getExprVarName() {
-        return ClassLoadInvoker.EXPR_VAR_NAME;
+        return ClassLoadInvoker.CONTEXT_EXPR_VAR_NAME;
+    }
+
+    @TemplateAccessible
+    public String getCursorName() {
+        return ClassLoadInvoker.CONTEXT_CURSOR_NAME;
     }
 
     @TemplateAccessible
     public String getMemoryRef() {
         return ClassLoadMemory.class.getCanonicalName();
-    }
-
-    /**
-     * A class to denote a variable declaration.
-     * The {@code isNew} defines whether the variable was newly added.
-     * For old variables, there should be an entry in the static memory class.
-     */
-    public static class Variable {
-        private final String name;
-        private final String type;
-        private final boolean isNew;
-
-        private Variable(String name, String type, boolean isNew) {
-            this.name = name;
-            this.type = type;
-            this.isNew = isNew;
-        }
-
-        public static Variable newVar(String name, String type) {
-            return new Variable(name, type, true);
-        }
-
-        public static Variable oldVar(String name, String type) {
-            return new Variable(name, type, false);
-        }
-
-        @TemplateAccessible
-        public String getName() {
-            return name;
-        }
-
-        @TemplateAccessible
-        public String getType() {
-            return type;
-        }
-
-        @TemplateAccessible
-        public boolean isNew() {
-            return isNew;
-        }
     }
 }

@@ -60,7 +60,6 @@ public class Evaluator extends DiagnosticReporter {
     public void initialize() throws BallerinaShellException {
         try {
             invoker.initialize();
-            this.reset();
         } catch (BallerinaShellException e) {
             addAllDiagnostics(invoker.diagnostics());
             throw e;

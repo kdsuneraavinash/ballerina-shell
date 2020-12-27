@@ -18,9 +18,12 @@
 
 package io.ballerina.shell.snippet.types;
 
+import io.ballerina.compiler.syntax.tree.EnumDeclarationNode;
 import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
+
+import java.util.Optional;
 
 /**
  * Module level declarations. These are not active or runnable.
@@ -29,5 +32,17 @@ import io.ballerina.shell.snippet.SnippetSubKind;
 public class ModuleMemberDeclarationSnippet extends Snippet {
     public ModuleMemberDeclarationSnippet(SnippetSubKind subKind, ModuleMemberDeclarationNode rootNode) {
         super(subKind, rootNode);
+    }
+
+    /**
+     * Name of the enum used. Will be empty if this is not an enum.
+     *
+     * @return Enum identifier.
+     */
+    public Optional<String> enumName() {
+        if (rootNode instanceof EnumDeclarationNode) {
+            return Optional.of(((EnumDeclarationNode) rootNode).identifier().text());
+        }
+        return Optional.empty();
     }
 }

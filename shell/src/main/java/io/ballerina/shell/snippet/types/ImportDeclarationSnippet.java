@@ -18,9 +18,13 @@
 
 package io.ballerina.shell.snippet.types;
 
+import io.ballerina.compiler.syntax.tree.IdentifierToken;
 import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
+import io.ballerina.shell.utils.StringUtils;
+
+import java.util.stream.Collectors;
 
 /**
  * Snippet that represent a import statement.
@@ -42,5 +46,24 @@ public class ImportDeclarationSnippet extends Snippet {
         return importNode.prefix().isPresent()
                 ? importNode.prefix().get().prefix().text()
                 : importNode.moduleName().get(importNode.moduleName().size() - 1).text();
+    }
+
+    /**
+     * Finds the import expression or the imported module.
+     * This will follow `orgName/module1.module2` format.
+     *
+     * @return Imported module expression.
+     */
+    public String getImportedModule() {
+        ImportDeclarationNode importNode = (ImportDeclarationNode) rootNode;
+        String moduleName = importNode.moduleName().stream()
+                .map(IdentifierToken::text)
+                .map(StringUtils::quoted)
+                .collect(Collectors.joining("."));
+        if (importNode.orgName().isPresent()) {
+            String orgName = StringUtils.quoted(importNode.orgName().get().orgName().text());
+            return String.format("%s/%s", orgName, moduleName);
+        }
+        return moduleName;
     }
 }

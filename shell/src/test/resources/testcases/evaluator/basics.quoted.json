@@ -12,6 +12,11 @@
     "code": "type 'Person_\\{name\\&Ȧɢέ\\} record {| string 'first\\ name; int 'Ȧɢέ; |};"
   },
   {
+    "description": "Use quoted typedef.",
+    "code": "'Person_\\{name\\&Ȧɢέ\\} person = {'first\\ name: \"Tom\", 'Ȧɢέ:25}; person",
+    "expr": "{\"first name\":\"Tom\",\"Ȧɢέ\":25}"
+  },
+  {
     "description": "Define normal type def.",
     "code": "type Person record {| string 'first\\ name; int 'Ȧɢέ; |};"
   },
@@ -52,12 +57,12 @@
   },
   {
     "description": "Define variable using type.",
-    "code": "Person person = {'first\\ name: \"Tom\", 'Ȧɢέ:25}; person.'Ȧɢέ",
+    "code": "Person person2 = {'first\\ name: \"Tom\", 'Ȧɢέ:25}; person2.'Ȧɢέ",
     "expr": "25"
   },
   {
     "description": "Member access of escaped name.",
-    "code": "person[\"first name\"]",
+    "code": "person2[\"first name\"]",
     "expr": "Tom"
   }
 ]

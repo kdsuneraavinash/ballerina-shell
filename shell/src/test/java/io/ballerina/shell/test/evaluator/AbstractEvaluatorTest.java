@@ -49,16 +49,12 @@ public abstract class AbstractEvaluatorTest {
                 .invoker(invoker).build();
         TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
         for (TestCaseLine testCaseLine : testCase) {
-            if (testCaseLine.isImport) {
-                testCaseLine.stdout = null;
-            }
-
             try {
                 invoker.testCaseLine = testCaseLine;
                 String expr = evaluator.evaluate(testCaseLine.code);
                 Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.description);
                 Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.description);
-                Assert.assertNull(testCaseLine.error);
+                Assert.assertNull(testCaseLine.error, testCaseLine.description);
             } catch (BallerinaShellException e) {
                 if (testCaseLine.error != null) {
                     Assert.assertEquals(testCaseLine.error, e.getClass().getSimpleName());
@@ -90,7 +86,6 @@ public abstract class AbstractEvaluatorTest {
         String code;
         String expr;
         String stdout = "";
-        boolean isImport = false;
         int exitCode = 0;
         String error;
     }

@@ -25,7 +25,6 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.shell.exceptions.TreeParserException;
 import io.ballerina.shell.parser.TreeParser;
-import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.shell.test.TestUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -42,18 +41,8 @@ public class TrialTreeParserTest {
     private static final String MODULE_DCLN_TESTCASES = "testcases/treeparser.moduledcln.json";
     private static final String MISC_TESTCASES = "testcases/treeparser.misc.json";
 
-    private static class TestCase {
-        String name;
-        String input;
-        String expected;
-    }
-
-    private static class TestCases extends ArrayList<TestCase> {
-    }
-
     @Test
     public void testImportParse() {
-        // TODO: Add test cases with versions
         testParse(IMPORT_TESTCASES, ImportDeclarationNode.class);
     }
 
@@ -96,5 +85,14 @@ public class TrialTreeParserTest {
                 Assert.assertNull(testCase.expected, testCase.name + " error: " + e.getMessage());
             }
         }
+    }
+
+    private static class TestCase {
+        String name;
+        String input;
+        String expected;
+    }
+
+    private static class TestCases extends ArrayList<TestCase> {
     }
 }

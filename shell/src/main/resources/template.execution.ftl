@@ -1,6 +1,4 @@
-<#-- @ftlvariable name="" type="io.ballerina.shell.invoker.classload.ClassLoadContext" -->
-import ballerina/java as java;
-
+<#-- @ftlvariable name="" type="io.ballerina.shell.invoker.classload.context.ClassLoadContext" -->
 <#list imports as import>
 ${import}
 </#list>

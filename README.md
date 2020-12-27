@@ -35,34 +35,35 @@ The project is implemented in two base modules.
   x   // <- this should output 12 but will output 10 instead
   ```
 
-- **Enum definition with explicit expression is not supported** - Enum declarations with explicit expressions are not
-  supported. This is due to how the enum expressions are implemented using constants.
+- **Enum definition with explicit expression is not fully supported** - Enum declarations with explicit expressions are
+  not supported fully. Some functionalities may not work properly. Following is an example.
 
   ```ballerina
-  // This will not work
-  enum Language {EN="engish", TA="tamil", SI="sinhala"}
+  // This will not work due to type EN converting to english
+  enum Language {EN="english", TA="tamil", SI="sinhala"}
+  EN variable = "english"
   ```
 
-- **Module level declarations of types should not be quoted** - Quoted identifiers must not be used for type
-  declarations. The declaration would work, but the quote would be ignored when defining something using the type.
+### Related Issues
+
+- **Enum type signature should be the type symbol name** - If an enum is defined with expression values, enum elements'
+  type signature would be the expression. However, this should instead be the original enum name.
 
   ```ballerina
-  // Do not define even though an error will not be given in this stage
-  type 'Person_\{name\&Ȧɢέ\} record {| string 'first\ name; int 'Ȧɢέ; |}; 
-  // This will not work.
-  'Person_\{name\&Ȧɢέ\} person = {'first\ name: "Tom", 'Ȧɢέ:25}
+  enum Language {EN="english", TA="tamil", SI="sinhala"}
+  // Type signature of variable would be `english` but should instead be `EN`.
+  EN variable = "english" 
   ```
 
-- **Named worker declarations not supported** - Named worker declarations are not supported as statements. You can still
-  define them in other functions, but they cannot be used as a statement directly.
+- **Type signature of arrays with a fixed length should reflect the length** - Any array definition with a fixed length
+  should have the type signature that reflects the length. But this is not the case, as a result, array bindings are not
+  possible.
 
   ```ballerina
-  // This will not work.
-  @strand { thread:"any" } worker w1 { }
-  // This will work.
-  function otherfn() {
-    @strand { thread:"any" } worker w1 { }
-  }
+  int[3] variable = [1, 2, 3]
+  // Type signature of variable would be `int[]` but should instead be `int[3]`.
+  // As a result following is not possible.
+  [int, int, int] [a, b, c] = variable
   ```
 
 ### Notes
@@ -84,6 +85,9 @@ The project is implemented in two base modules.
 
 - **Cyclic dependencies of module level types not possible** - Obviously, because a REPL is run line by line, you may
   not use a type that would be defined later. As a result, cyclic dependencies nt possible in module level declarations.
+
+- **Named worker declarations not supported as shell statements** - Named worker declarations are not supported as
+  statements. You can still define them in other functions, but they cannot be used as a statement directly.
 
 ## Implementation
 

@@ -1,8 +1,7 @@
 [
   {
     "description": "Import object module.",
-    "code": "import ballerina/lang.'object;",
-    "isImport": true
+    "code": "import ballerina/lang.'object;"
   },
   {
     "description": "Helper record type.",

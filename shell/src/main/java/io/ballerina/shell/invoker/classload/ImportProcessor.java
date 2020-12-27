@@ -16,20 +16,22 @@
  * under the License.
  */
 
-package io.ballerina.shell.test.unit.invoker;
+package io.ballerina.shell.invoker.classload;
 
-import io.ballerina.shell.exceptions.BallerinaShellException;
-import org.testng.annotations.Test;
+import io.ballerina.shell.exceptions.InvokerException;
 
 /**
- * Tests a ballerina file execution.
+ * Signature of a function that processes an import and returns its prefix.
  */
-public class SimpleInvokerTest extends AbstractInvokerTest {
-    public static final String SIMPLE_HELLO_WORLD_BAL = "testcases/invoker/hello.world.bal";
-    public static final String SIMPLE_HELLO_WORLD_TXT = "testcases/invoker/hello.world.txt";
-
-    @Test
-    public void testEvaluateSimpleHelloWorld() throws BallerinaShellException {
-        testEvaluate(SIMPLE_HELLO_WORLD_BAL, SIMPLE_HELLO_WORLD_TXT);
-    }
+public interface ImportProcessor {
+    /**
+     * Tries to import using the default prefix, if not
+     * imports with a random name and returns it.
+     *
+     * @param moduleName    Module to import.
+     * @param defaultPrefix Default prefix to use.
+     * @return The prefix for the import.
+     * @throws InvokerException If compilation failed.
+     */
+    String processImplicitImport(String moduleName, String defaultPrefix) throws InvokerException;
 }
