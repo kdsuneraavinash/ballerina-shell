@@ -43,8 +43,10 @@ import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.invoker.Invoker;
 import io.ballerina.shell.invoker.classload.context.ClassLoadContext;
+import io.ballerina.shell.invoker.classload.context.StatementContext;
 import io.ballerina.shell.invoker.classload.context.VariableContext;
 import io.ballerina.shell.snippet.Snippet;
+import io.ballerina.shell.snippet.types.ExecutableSnippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
@@ -218,7 +220,7 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
             this.knownSymbols.addAll(newSymbols);
             newImplicitImports.forEach(imports::storeImplicitPrefix);
             moduleDclns.put(newModuleDcln.getFirst(), newModuleDcln.getSecond());
-        } else {
+        } else if (newSnippet instanceof ExecutableSnippet) {
             // New variables/dclns defined in this iteration.
             Map<String, String> newVariables = new HashMap<>();
 
@@ -229,7 +231,7 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
             }
 
             // Compile and execute the real program.
-            ClassLoadContext context = createExecutionContext(newSnippet, newVariables);
+            ClassLoadContext context = createExecutionContext((ExecutableSnippet) newSnippet, newVariables);
             SingleFileProject project = getProject(context, EXECUTION_TEMPLATE_FILE);
             PackageCompilation compilation = compile(project);
             JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
@@ -435,44 +437,28 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
     /**
      * Creates the context object to be passed to template.
      * The new snippets are not added here. Instead they are added to copies.
+     * Only executable snippets are processed.
      *
      * @param newSnippet   New snippet from user.
      * @param newVariables Newly defined variables. Must be set if snippet is a var dcln.
      * @return Created context.
      */
-    protected ClassLoadContext createExecutionContext(Snippet newSnippet, Map<String, String> newVariables) {
-        // Variable declarations are handled differently.
-        // If current snippet is a var dcln, it is added to saveVarDclns but not to initVarDclns.
-        // All other var dclns are added to both.
-        // Last expr is the last snippet if it was either a stmt or an expression.
-
-        List<String> moduleDclnStrings = new ArrayList<>(moduleDclns.values());
-        List<VariableContext> varDclns = globalVariableContexts();
-
-        // Imports = snippet imports + var def imports + module def imports
+    protected ClassLoadContext createExecutionContext(ExecutableSnippet newSnippet,
+                                                      Map<String, String> newVariables) {
+        List<VariableContext> variableDeclarations = globalVariableContexts();
         Set<String> importStrings = getUsedImportStatements(newSnippet);
         importStrings.addAll(imports.getImplicitImports());
 
-        Pair<String, Boolean> lastExpr = null;
-        String lastVarDcln = null;
-        if (newSnippet.isImport()) {
-            importStrings.add(newSnippet.toString());
-        } else if (newSnippet.isVariableDeclaration()) {
-            lastVarDcln = newSnippet.toString();
-            for (Map.Entry<String, String> entry : newVariables.entrySet()) {
-                VariableContext variable =
-                        VariableContext.newVar(entry.getKey(), entry.getValue());
-                varDclns.add(variable);
-            }
-        } else if (newSnippet.isModuleMemberDeclaration()) {
-            moduleDclnStrings.add(newSnippet.toString());
-        } else if (newSnippet.isStatement()) {
-            lastExpr = new Pair<>(newSnippet.toString(), true);
-        } else if (newSnippet.isExpression()) {
-            lastExpr = new Pair<>(newSnippet.toString(), false);
+        if (newSnippet.isVariableDeclaration()) {
+            newVariables.entrySet().stream().map(VariableContext::newVar)
+                    .forEach(variableDeclarations::add);
+            return new ClassLoadContext(this.contextId, importStrings, moduleDclns.values(),
+                    variableDeclarations, newSnippet.toString(), null);
+        } else {
+            StatementContext lastStatement = new StatementContext(newSnippet);
+            return new ClassLoadContext(this.contextId, importStrings, moduleDclns.values(),
+                    variableDeclarations, null, lastStatement);
         }
-
-        return new ClassLoadContext(this.contextId, importStrings, moduleDclnStrings, varDclns, lastVarDcln, lastExpr);
     }
 
     /**

@@ -19,14 +19,13 @@
 package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.StatementNode;
-import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * These are normal statements that should be evaluated from
  * top to bottom inside a function.
  */
-public class StatementSnippet extends Snippet {
+public class StatementSnippet extends ExecutableSnippet {
     public StatementSnippet(SnippetSubKind subKind, StatementNode rootNode) {
         super(subKind, rootNode);
     }

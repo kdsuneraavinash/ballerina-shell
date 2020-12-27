@@ -18,15 +18,17 @@
 
 package io.ballerina.shell.snippet.types;
 
-import io.ballerina.compiler.syntax.tree.ExpressionNode;
+import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
- * These are expressions that are executable. These do not have to contain semicolons.
- * If the expression is a Expression Statement, the semicolon will be stripped.
+ * Represents a snippet that is executable.
+ * Executable snippets changes the state (global vars) of the program when run.
+ * Imports and module dclns are not executable.
  */
-public class ExpressionSnippet extends ExecutableSnippet {
-    public ExpressionSnippet(ExpressionNode rootNode) {
-        super(SnippetSubKind.EXPRESSION, rootNode);
+public abstract class ExecutableSnippet extends Snippet {
+    protected ExecutableSnippet(SnippetSubKind subKind, Node rootNode) {
+        super(subKind, rootNode);
     }
 }

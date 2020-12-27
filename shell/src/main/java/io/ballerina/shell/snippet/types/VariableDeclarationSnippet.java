@@ -19,14 +19,13 @@
 package io.ballerina.shell.snippet.types;
 
 import io.ballerina.compiler.syntax.tree.ModuleVariableDeclarationNode;
-import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.SnippetSubKind;
 
 /**
  * These will be variable declarations.
  * Currently only module level variable declarations are accepted.
  */
-public class VariableDeclarationSnippet extends Snippet {
+public class VariableDeclarationSnippet extends ExecutableSnippet {
     public VariableDeclarationSnippet(ModuleVariableDeclarationNode rootNode) {
         super(SnippetSubKind.VARIABLE_DECLARATION, rootNode);
     }

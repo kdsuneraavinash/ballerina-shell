@@ -21,6 +21,8 @@ package io.ballerina.shell.invoker.classload.context;
 import freemarker.ext.beans.TemplateAccessible;
 import io.ballerina.shell.utils.StringUtils;
 
+import java.util.Map;
+
 /**
  * A class to denote a variable declaration.
  * The {@code isNew} defines whether the variable was newly added.
@@ -40,12 +42,11 @@ public class VariableContext {
     /**
      * Creates a new variable with the given type.
      *
-     * @param name Name of the variable.
-     * @param type Type string representation.
+     * @param variableEntry A map entry indicating the variable name and type.
      * @return Context for a new variable.
      */
-    public static VariableContext newVar(String name, String type) {
-        return new VariableContext(name, type, true);
+    public static VariableContext newVar(Map.Entry<String, String> variableEntry) {
+        return new VariableContext(variableEntry.getKey(), variableEntry.getValue(), true);
     }
 
     /**

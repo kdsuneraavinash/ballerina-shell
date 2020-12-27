@@ -53,14 +53,14 @@ ${varDcln.type} ${varDcln.name} = <${varDcln.type}> recall_h("${varDcln.name?j_s
 
 // Will run current statement/expression and return its result.
 function run() returns @untainted any|error {
-    <#if lastExpr.second>
+    <#if lastStmt.statement>
     if (true) {
-        ${lastExpr.first}
+        ${lastStmt.code}
     }
     return ();
     <#else>
     return trap (
-        ${lastExpr.first}
+        ${lastStmt.code}
     );
     </#if>
 }

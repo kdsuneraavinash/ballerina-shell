@@ -21,7 +21,6 @@ package io.ballerina.shell.invoker.classload.context;
 import freemarker.ext.beans.TemplateAccessible;
 import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
 import io.ballerina.shell.invoker.classload.ClassLoadMemory;
-import io.ballerina.shell.utils.Pair;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,13 +31,12 @@ import java.util.Objects;
  * of {@link ClassLoadInvoker} objects.
  */
 public class ClassLoadContext {
-    private static final Pair<String, Boolean> DEFAULT_RETURN_EXPR = new Pair<>("()", false);
     private final String contextId;
     private final Collection<String> imports;
     private final Collection<String> moduleDclns;
     private final String lastVarDcln;
     private final Collection<VariableContext> varDclns;
-    private final Pair<String, Boolean> lastExpr;
+    private final StatementContext lastStmt;
 
     /**
      * Creates a context for class load invoker.
@@ -52,15 +50,15 @@ public class ClassLoadContext {
      * @param lastVarDcln Last variable declaration if the last snippet was a var dcln.
      *                    If not, this should be null.
      * @param varDclns    Variable declarations to initialize with values.
-     * @param lastExpr    Last expression if last value was a statement or an expression.
+     * @param lastStmt    Last expression if last value was a statement or an expression.
      */
     public ClassLoadContext(String contextId,
                             Collection<String> imports,
                             Collection<String> moduleDclns,
                             Collection<VariableContext> varDclns,
                             String lastVarDcln,
-                            Pair<String, Boolean> lastExpr) {
-        this.lastExpr = Objects.requireNonNullElse(lastExpr, DEFAULT_RETURN_EXPR);
+                            StatementContext lastStmt) {
+        this.lastStmt = Objects.requireNonNullElse(lastStmt, new StatementContext());
         this.lastVarDcln = Objects.requireNonNullElse(lastVarDcln, "");
         this.contextId = Objects.requireNonNull(contextId);
         this.imports = Objects.requireNonNull(imports);
@@ -112,8 +110,8 @@ public class ClassLoadContext {
     }
 
     @TemplateAccessible
-    public Pair<String, Boolean> getLastExpr() {
-        return lastExpr;
+    public StatementContext getLastStmt() {
+        return lastStmt;
     }
 
     @TemplateAccessible
