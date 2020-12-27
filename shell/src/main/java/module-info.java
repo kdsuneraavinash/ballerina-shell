@@ -9,6 +9,7 @@ module io.ballerina.shell {
     exports io.ballerina.shell.invoker.classload;
     exports io.ballerina.shell.invoker.classload.context;
     exports io.ballerina.shell.parser;
+    exports io.ballerina.shell.parser.trials;
     exports io.ballerina.shell.preprocessor;
     exports io.ballerina.shell.snippet;
     exports io.ballerina.shell.snippet.factory;

@@ -18,70 +18,25 @@
 
 package io.ballerina.shell.parser;
 
-import io.ballerina.compiler.syntax.tree.Node;
-import io.ballerina.shell.Diagnostic;
-import io.ballerina.shell.exceptions.TreeParserException;
-import io.ballerina.shell.parser.trials.EmptyExpressionTrial;
-import io.ballerina.shell.parser.trials.ExpressionTrial;
-import io.ballerina.shell.parser.trials.GetErrorMessageTrial;
-import io.ballerina.shell.parser.trials.ImportDeclarationTrial;
-import io.ballerina.shell.parser.trials.ModuleMemberTrial;
-import io.ballerina.shell.parser.trials.ParserRejectedException;
-import io.ballerina.shell.parser.trials.ParserTrialFailedException;
-import io.ballerina.shell.parser.trials.RejectInvalidStmtTrial;
-import io.ballerina.shell.parser.trials.StatementTrial;
-import io.ballerina.shell.parser.trials.TreeParserTrial;
-
-import java.util.List;
-import java.util.Objects;
-
 /**
  * Parses the source code line using a trial based method.
  * The source code is placed in several places and is attempted to parse.
  * This continues until the correct type can be determined.
  */
-public class TrialTreeParser extends TreeParser {
-    private static final long DEFAULT_TIMEOUT_MS = 100;
-    private final List<TreeParserTrial> nodeParserTrials;
+public abstract class TrialTreeParser extends TreeParser {
+    protected static final long DEFAULT_TIMEOUT_MS = 100;
     private final long timeOutDurationMs;
 
     public TrialTreeParser(long timeOutDurationMs) {
         this.timeOutDurationMs = timeOutDurationMs;
-        this.nodeParserTrials = List.of(
-                new ImportDeclarationTrial(this),
-                new RejectInvalidStmtTrial(this),
-                new ModuleMemberTrial(this),
-                new ExpressionTrial(this),
-                new StatementTrial(this),
-                new EmptyExpressionTrial(this),
-                new GetErrorMessageTrial(this)
-        );
     }
 
-    public TrialTreeParser() {
-        this(DEFAULT_TIMEOUT_MS);
+    public static TrialTreeParser defaultParser() {
+        return defaultParser(DEFAULT_TIMEOUT_MS);
     }
 
-    @Override
-    public Node parse(String source) throws TreeParserException {
-        String errorMessage = "";
-        for (TreeParserTrial trial : nodeParserTrials) {
-            try {
-                return Objects.requireNonNull(trial.parse(source), "trial returned no nodes");
-            } catch (ParserTrialFailedException e) {
-                errorMessage = e.getMessage();
-            } catch (ParserRejectedException e) {
-                errorMessage = "Invalid statement: " + e.getMessage();
-                break;
-            } catch (Exception e) {
-                errorMessage = "Invalid statement. Could not parse the expression: " + e.getMessage();
-            } catch (Error e) {
-                errorMessage = "Something severely went wrong: " + e.toString();
-            }
-        }
-        addDiagnostic(Diagnostic.error(errorMessage));
-        addDiagnostic(Diagnostic.error("Parsing aborted because of errors."));
-        throw new TreeParserException();
+    public static TrialTreeParser defaultParser(long timeOutDurationMs) {
+        return new SerialTreeParser(timeOutDurationMs);
     }
 
     public long getTimeOutDurationMs() {

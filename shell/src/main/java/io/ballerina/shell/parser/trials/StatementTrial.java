@@ -27,6 +27,7 @@ import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.compiler.syntax.tree.SyntaxTree;
+import io.ballerina.compiler.syntax.tree.VariableDeclarationNode;
 import io.ballerina.shell.parser.TrialTreeParser;
 import io.ballerina.tools.text.TextDocument;
 import io.ballerina.tools.text.TextDocuments;
@@ -62,6 +63,10 @@ public class StatementTrial extends DualTreeParserTrial {
         StatementNode statementNode = mainFunctionBody.statements().get(0);
         if (statementNode instanceof ExpressionStatementNode) {
             return ((ExpressionStatementNode) statementNode).expression();
+        }
+        if (statementNode instanceof VariableDeclarationNode) {
+            assertIf(((VariableDeclarationNode) statementNode).initializer().isPresent(),
+                    "variable declarations must has an initializer expression");
         }
         return statementNode;
     }

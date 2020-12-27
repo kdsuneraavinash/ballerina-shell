@@ -141,7 +141,7 @@ public class HashedImports {
      * Add the prefix and import to the set of remembered imports.
      *
      * @param quotedPrefix Prefix of import.
-     * @param moduleName Module name to add.
+     * @param moduleName   Module name to add.
      * @return The prefix the import was added as.
      */
     public String storeImport(String quotedPrefix, String moduleName) {

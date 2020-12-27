@@ -68,6 +68,6 @@ public abstract class TestUtils {
      * @return Created tree parser.
      */
     public static TreeParser getTestTreeParser() {
-        return new TrialTreeParser(TEST_TREE_PARSER_TIMEOUT_MS);
+        return TrialTreeParser.defaultParser(TEST_TREE_PARSER_TIMEOUT_MS);
     }
 }

@@ -50,7 +50,14 @@ import java.util.Optional;
  * Invoker and its context may be tightly coupled.
  */
 public abstract class Invoker extends DiagnosticReporter {
-    private static final boolean USE_TEMP_FILE = false;
+    private static final boolean USE_TEMP_FILE = true;
+
+    /**
+     * File object that is used to create projects and write.
+     * Depending on USE_TEMP_FILE flag, this may be either a file in cwd
+     * or a temp file.
+     */
+    private File bufferFile;
 
     /**
      * Initializes the invoker. This can be used to load required files
@@ -185,13 +192,20 @@ public abstract class Invoker extends DiagnosticReporter {
      * @throws IOException If writing was unsuccessful.
      */
     protected File writeToFile(String source) throws IOException {
-        File createdFile = USE_TEMP_FILE
-                ? File.createTempFile("main-", ".bal")
-                : new File("main.bal");
-        createdFile.deleteOnExit();
+        File createdFile = getBufferFile();
         try (FileWriter fileWriter = new FileWriter(createdFile, Charset.defaultCharset())) {
             fileWriter.write(source);
         }
         return createdFile;
+    }
+
+    private File getBufferFile() throws IOException {
+        if (this.bufferFile == null) {
+            this.bufferFile = USE_TEMP_FILE
+                    ? File.createTempFile("main-", ".bal")
+                    : new File("main.bal");
+            this.bufferFile.deleteOnExit();
+        }
+        return this.bufferFile;
     }
 }
