@@ -18,19 +18,14 @@
 
 package io.ballerina.shell.test.evaluator;
 
-import io.ballerina.shell.DiagnosticKind;
 import io.ballerina.shell.Evaluator;
 import io.ballerina.shell.EvaluatorBuilder;
 import io.ballerina.shell.exceptions.BallerinaShellException;
-import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
 import io.ballerina.shell.test.TestUtils;
+import io.ballerina.shell.test.evaluator.base.TestCase;
+import io.ballerina.shell.test.evaluator.base.TestSession;
+import io.ballerina.shell.test.evaluator.base.TestInvoker;
 import org.testng.Assert;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.lang.reflect.Method;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
 
 /**
  * Base class for evaluator tests.
@@ -38,78 +33,36 @@ import java.util.ArrayList;
  * TODO: Add db lib/http lib support and test Transactions
  */
 public abstract class AbstractEvaluatorTest {
-    protected static String bracketed(Object input) {
-        return " [" + input + "] ";
-    }
-
+    /**
+     * Tests a json file containing test case session.
+     * This is a E2E test of the evaluator.
+     *
+     * @param fileName File containing test cases.
+     */
     protected void testEvaluate(String fileName) throws BallerinaShellException {
-        TestInvoker invoker = getInvoker();
+        // Create evaluator
+        TestInvoker invoker = new TestInvoker();
         Evaluator evaluator = new EvaluatorBuilder()
                 .treeParser(TestUtils.getTestTreeParser())
                 .invoker(invoker).build();
-        TestCase testCase = TestUtils.loadTestCases(fileName, TestCase.class);
-        for (TestCaseLine testCaseLine : testCase) {
+
+        TestSession testSession = TestUtils.loadTestCases(fileName, TestSession.class);
+        for (TestCase testCase : testSession) {
             try {
-                invoker.testCaseLine = testCaseLine;
-                String expr = evaluator.evaluate(testCaseLine.code);
-                Assert.assertEquals(invoker.output, testCaseLine.stdout, testCaseLine.description);
-                Assert.assertEquals(expr, testCaseLine.expr, testCaseLine.description);
-                Assert.assertNull(testCaseLine.error, testCaseLine.description);
+                invoker.setTestCaseStatement(testCase);
+                String expr = evaluator.evaluate(testCase.getCode());
+                Assert.assertEquals(invoker.getOutput(), testCase.getStdout(), testCase.getDescription());
+                Assert.assertEquals(expr, testCase.getExpr(), testCase.getDescription());
+                Assert.assertNull(testCase.getError(), testCase.getDescription());
             } catch (BallerinaShellException e) {
-                if (testCaseLine.error != null) {
-                    Assert.assertEquals(testCaseLine.error, e.getClass().getSimpleName());
+                if (testCase.getError() != null) {
+                    Assert.assertEquals(testCase.getError(), e.getClass().getSimpleName());
                     continue;
                 }
-
-                StringBuilder diagnosticsStr = new StringBuilder();
-                evaluator.diagnostics().stream()
-                        .filter(d -> d.getKind() == DiagnosticKind.ERROR)
-                        .map(s -> s + "\n")
-                        .forEach(diagnosticsStr::append);
-                Assert.fail(
-                        "Exception occurred in:" + bracketed(testCaseLine.description) +
-                                "err:" + bracketed(e.getMessage()) +
-                                "diagnostics:" + bracketed(diagnosticsStr));
-                throw e;
+                Assert.fail(String.format("Exception occurred in: %s, error: %s, with diagnostics: %s",
+                        testCase.getDescription(), e.getMessage(), evaluator.diagnostics()));
             } finally {
                 evaluator.resetDiagnostics();
-            }
-        }
-    }
-
-    private TestInvoker getInvoker() {
-        return new TestInvoker();
-    }
-
-    private static class TestCaseLine {
-        String description;
-        String code;
-        String expr;
-        String stdout = "";
-        int exitCode = 0;
-        String error;
-    }
-
-    private static class TestCase extends ArrayList<TestCaseLine> {
-    }
-
-    private static class TestInvoker extends ClassLoadInvoker {
-        private String output;
-        private TestCaseLine testCaseLine;
-
-        @Override
-        protected int invokeMethod(Method method) throws IllegalAccessException {
-            PrintStream stdOut = System.out;
-            ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
-            try {
-                System.setOut(new PrintStream(stdOutBaOs, true, Charset.defaultCharset()));
-                int exitCode = super.invokeMethod(method);
-                Assert.assertEquals(exitCode, testCaseLine.exitCode, testCaseLine.description);
-                return exitCode;
-            } finally {
-                this.output = stdOutBaOs.toString(Charset.defaultCharset());
-                this.output = this.output.replace("\r\n", "\n");
-                System.setOut(stdOut);
             }
         }
     }

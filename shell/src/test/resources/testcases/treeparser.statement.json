@@ -2,96 +2,134 @@
   {
     "name": "Assignment Statement",
     "input": "var1 = 3;",
-    "expected": "AssignmentStatementNode"
+    "expected": [
+      "AssignmentStatementNode"
+    ]
   },
   {
     "name": "Compound Assignment Statement",
     "input": "var1 += 3;",
-    "expected": "CompoundAssignmentStatementNode"
+    "expected": [
+      "CompoundAssignmentStatementNode"
+    ]
   },
   {
     "name": "Compound Assignment Statement II",
     "input": "var1 >>= 3;",
-    "expected": "CompoundAssignmentStatementNode"
+    "expected": [
+      "CompoundAssignmentStatementNode"
+    ]
   },
   {
     "name": "Block Statement",
     "input": "{ int var1 =4; };",
-    "expected": "BlockStatementNode"
+    "expected": [
+      "BlockStatementNode"
+    ]
   },
   {
     "name": "Break Statement",
     "input": "break;",
-    "expected": "BreakStatementNode"
+    "expected": [
+      "BreakStatementNode"
+    ]
   },
   {
     "name": "Fail Statement",
     "input": "fail x();",
-    "expected": "FailStatementNode"
+    "expected": [
+      "FailStatementNode"
+    ]
   },
   {
     "name": "Continue Statement",
     "input": "continue;",
-    "expected": "ContinueStatementNode"
+    "expected": [
+      "ContinueStatementNode"
+    ]
   },
   {
     "name": "If Else Statement",
     "input": "if (cond) { };",
-    "expected": "IfElseStatementNode"
+    "expected": [
+      "IfElseStatementNode"
+    ]
   },
   {
     "name": "While Statement",
     "input": "while (cond) { };",
-    "expected": "WhileStatementNode"
+    "expected": [
+      "WhileStatementNode"
+    ]
   },
   {
     "name": "Return Statement",
     "input": "return 10;",
-    "expected": "ReturnStatementNode"
+    "expected": [
+      "ReturnStatementNode"
+    ]
   },
   {
     "name": "Lock Statement",
     "input": "lock { amount += n; };",
-    "expected": "LockStatementNode"
+    "expected": [
+      "LockStatementNode"
+    ]
   },
   {
     "name": "Fork Statement",
     "input": "fork { worker abc returns int { } };",
-    "expected": "ForkStatementNode"
+    "expected": [
+      "ForkStatementNode"
+    ]
   },
   {
     "name": "For Each Statement",
     "input": "foreach var color in colors { };",
-    "expected": "ForEachStatementNode"
+    "expected": [
+      "ForEachStatementNode"
+    ]
   },
   {
     "name": "Transaction Statement",
     "input": "transaction { };",
-    "expected": "TransactionStatementNode"
+    "expected": [
+      "TransactionStatementNode"
+    ]
   },
   {
     "name": "Rollback Statement",
     "input": "rollback;",
-    "expected": "RollbackStatementNode"
+    "expected": [
+      "RollbackStatementNode"
+    ]
   },
   {
     "name": "Retry Statement",
     "input": "retry<Type> (args) { };",
-    "expected": "RetryStatementNode"
+    "expected": [
+      "RetryStatementNode"
+    ]
   },
   {
     "name": "Match Statement",
     "input": "match var1 { 0 => {} 1 => { } };",
-    "expected": "MatchStatementNode"
+    "expected": [
+      "MatchStatementNode"
+    ]
   },
   {
     "name": "Do Statement",
     "input": "do { };",
-    "expected": "DoStatementNode"
+    "expected": [
+      "DoStatementNode"
+    ]
   },
   {
     "name": "Panic Statement",
     "input": "panic error(\"Record is nil\");",
-    "expected": "PanicStatementNode"
+    "expected": [
+      "PanicStatementNode"
+    ]
   }
 ]

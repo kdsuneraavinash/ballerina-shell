@@ -27,10 +27,11 @@ import io.ballerina.shell.snippet.SnippetKind;
 import io.ballerina.shell.snippet.factory.BasicSnippetFactory;
 import io.ballerina.shell.snippet.factory.SnippetFactory;
 import io.ballerina.shell.test.TestUtils;
+import io.ballerina.shell.test.unit.base.TestCase;
+import io.ballerina.shell.test.unit.base.TestCases;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -74,25 +75,16 @@ public class BasicSnippetFactoryTest {
         SnippetFactory snippetFactory = new BasicSnippetFactory();
         for (TestCase testCase : testCases) {
             try {
-                Node node = treeParser.parse(testCase.input);
+                Node node = treeParser.parse(testCase.getInput());
                 Snippet snippet = snippetFactory.createSnippet(node);
-                Assert.assertNotNull(snippet, testCase.name);
-                Assert.assertTrue(testCase.accepted, testCase.name);
-                Assert.assertEquals(snippet.getKind(), kind, testCase.name);
+                Assert.assertNotNull(snippet, testCase.getName());
+                Assert.assertTrue(testCase.isAccepted(), testCase.getName());
+                Assert.assertEquals(snippet.getKind(), kind, testCase.getName());
             } catch (TreeParserException e) {
-                Assert.fail(testCase.name + " error: " + e);
+                Assert.fail(testCase.getName() + " error: " + e);
             } catch (SnippetException e) {
-                Assert.assertFalse(testCase.accepted, testCase.name);
+                Assert.assertFalse(testCase.isAccepted(), testCase.getName());
             }
         }
-    }
-
-    private static class TestCase {
-        String name;
-        String input;
-        boolean accepted;
-    }
-
-    private static class TestCases extends ArrayList<TestCase> {
     }
 }

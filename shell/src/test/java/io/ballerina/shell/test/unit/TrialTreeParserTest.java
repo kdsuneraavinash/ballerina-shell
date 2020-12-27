@@ -26,10 +26,12 @@ import io.ballerina.compiler.syntax.tree.StatementNode;
 import io.ballerina.shell.exceptions.TreeParserException;
 import io.ballerina.shell.parser.TreeParser;
 import io.ballerina.shell.test.TestUtils;
+import io.ballerina.shell.test.unit.base.TestCase;
+import io.ballerina.shell.test.unit.base.TestCases;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test tree parser use cases.
@@ -77,22 +79,13 @@ public class TrialTreeParserTest {
         TreeParser treeParser = TestUtils.getTestTreeParser();
         for (TestCase testCase : testCases) {
             try {
-                Node node = treeParser.parse(testCase.input);
+                Node node = treeParser.parse(testCase.getInput());
                 String actual = node.getClass().getSimpleName();
-                Assert.assertEquals(actual, testCase.expected, testCase.name);
-                Assert.assertTrue(parentClazz.isInstance(node), testCase.name + " not expected instance");
+                Assert.assertEquals(List.of(actual), testCase.getExpected(), testCase.getName());
+                Assert.assertTrue(parentClazz.isInstance(node), testCase.getName() + " not expected instance");
             } catch (TreeParserException e) {
-                Assert.assertNull(testCase.expected, testCase.name + " error: " + e.getMessage());
+                Assert.assertNull(testCase.getExpected(), testCase.getName() + " error: " + e.getMessage());
             }
         }
-    }
-
-    private static class TestCase {
-        String name;
-        String input;
-        String expected;
-    }
-
-    private static class TestCases extends ArrayList<TestCase> {
     }
 }

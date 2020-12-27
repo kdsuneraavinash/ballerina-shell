@@ -22,10 +22,11 @@ import io.ballerina.shell.exceptions.PreprocessorException;
 import io.ballerina.shell.preprocessor.Preprocessor;
 import io.ballerina.shell.preprocessor.SeparatorPreprocessor;
 import io.ballerina.shell.test.TestUtils;
+import io.ballerina.shell.test.unit.base.TestCase;
+import io.ballerina.shell.test.unit.base.TestCases;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -41,22 +42,12 @@ public class SeparatorPreprocessorTest {
         Preprocessor preprocessor = new SeparatorPreprocessor();
         for (TestCase testCase : testCases) {
             try {
-                Collection<String> actual = preprocessor.process(testCase.input);
-                Assert.assertEquals(actual, testCase.expected, testCase.name);
-                Assert.assertFalse(testCase.isException, testCase.name);
+                Collection<String> actual = preprocessor.process(testCase.getInput());
+                Assert.assertEquals(actual, testCase.getExpected(), testCase.getName());
+                Assert.assertTrue(testCase.isAccepted(), testCase.getName());
             } catch (PreprocessorException e) {
-                Assert.assertTrue(testCase.isException, testCase.name);
+                Assert.assertFalse(testCase.isAccepted(), testCase.getName());
             }
         }
-    }
-
-    private static class TestCase {
-        String name;
-        String input;
-        List<String> expected;
-        boolean isException = false;
-    }
-
-    private static class TestCases extends ArrayList<TestCase> {
     }
 }
