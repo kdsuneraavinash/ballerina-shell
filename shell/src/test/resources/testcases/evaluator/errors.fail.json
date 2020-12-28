@@ -16,7 +16,7 @@
     "description": "View error message.",
     "code": "negResult",
     "stdout": "Exception occurred: error(\"InvalidAccountID\",accountID=-1)\n",
-    "exitCode": 1
+    "error": "InvokerException"
   },
   {
     "description": "Get result which is an error.",
@@ -26,6 +26,6 @@
     "description": "View error message.",
     "code": "invalidResult",
     "stdout": "Exception occurred: error(\"AccountNotFound\",accountID=200)\n",
-    "exitCode": 1
+    "error": "InvokerException"
   }
 ]

@@ -30,7 +30,6 @@ import io.ballerina.shell.Diagnostic;
 import io.ballerina.shell.DiagnosticReporter;
 import io.ballerina.shell.exceptions.InvokerException;
 import io.ballerina.shell.snippet.Snippet;
-import io.ballerina.shell.utils.Pair;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
 
 import java.io.File;
@@ -86,7 +85,7 @@ public abstract class Invoker extends DiagnosticReporter {
      * @param newSnippet New snippet to execute.
      * @return Execution output result.
      */
-    public abstract Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException;
+    public abstract Optional<Object> execute(Snippet newSnippet) throws InvokerException;
 
     /**
      * Returns available imports in the module.
@@ -124,7 +123,7 @@ public abstract class Invoker extends DiagnosticReporter {
             return cfg.getTemplate(templateName);
         } catch (IOException e) {
             addDiagnostic(Diagnostic.error("Template file read failed: " + e.getMessage()));
-            throw new InvokerException();
+            throw new InvokerException(e);
         }
     }
 
@@ -162,7 +161,7 @@ public abstract class Invoker extends DiagnosticReporter {
         } catch (InvokerException e) {
             throw e;
         } catch (Exception e) {
-            addDiagnostic(Diagnostic.error("Something went wrong: " + e.getMessage()));
+            addDiagnostic(Diagnostic.error("Something went wrong: " + e));
             throw new InvokerException(e);
         } catch (Error e) {
             addDiagnostic(Diagnostic.error("Something severely went wrong: " + e));

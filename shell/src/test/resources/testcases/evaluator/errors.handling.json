@@ -26,6 +26,6 @@
     "description": "View error cause.",
     "code": "displayError.cause();",
     "stdout": "Exception occurred: error(\"Invalid account ID\",accountID=-1)\n",
-    "exitCode": 1
+    "error": "InvokerException"
   }
 ]

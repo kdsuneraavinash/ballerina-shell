@@ -50,14 +50,16 @@ public abstract class AbstractEvaluatorTest {
         TestSession testSession = TestUtils.loadTestCases(fileName, TestSession.class);
         for (TestCase testCase : testSession) {
             try {
-                invoker.setTestCaseStatement(testCase);
                 String expr = evaluator.evaluate(testCase.getCode());
                 Assert.assertEquals(invoker.getOutput(), testCase.getStdout(), testCase.getDescription());
                 Assert.assertEquals(expr, testCase.getExpr(), testCase.getDescription());
                 Assert.assertNull(testCase.getError(), testCase.getDescription());
+                Assert.assertFalse(evaluator.hasErrors(), testCase.getDescription());
             } catch (BallerinaShellException e) {
+                Assert.assertTrue(evaluator.hasErrors(), testCase.getDescription());
+                String errorClass = e.getClass().getSimpleName();
                 if (testCase.getError() != null) {
-                    Assert.assertEquals(testCase.getError(), e.getClass().getSimpleName());
+                    Assert.assertEquals(testCase.getError(), errorClass, testCase.getDescription());
                     continue;
                 }
                 Assert.fail(String.format("Exception occurred in: %s, error: %s, with diagnostics: %s",

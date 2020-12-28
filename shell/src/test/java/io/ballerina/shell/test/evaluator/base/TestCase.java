@@ -26,7 +26,6 @@ public class TestCase {
     private String code;
     private String expr;
     private String stdout = "";
-    private int exitCode = 0;
     private String error;
 
     public String getDescription() {
@@ -59,14 +58,6 @@ public class TestCase {
 
     public void setStdout(String stdout) {
         this.stdout = stdout;
-    }
-
-    public int getExitCode() {
-        return exitCode;
-    }
-
-    public void setExitCode(int exitCode) {
-        this.exitCode = exitCode;
     }
 
     public String getError() {

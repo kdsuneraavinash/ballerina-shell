@@ -22,11 +22,14 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.ballerina.compiler.api.symbols.FunctionSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
-import io.ballerina.compiler.api.symbols.SymbolKind;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.api.symbols.VariableSymbol;
-import io.ballerina.compiler.syntax.tree.NodeVisitor;
-import io.ballerina.compiler.syntax.tree.Token;
+import io.ballerina.compiler.syntax.tree.FunctionBodyBlockNode;
+import io.ballerina.compiler.syntax.tree.FunctionBodyNode;
+import io.ballerina.compiler.syntax.tree.FunctionDefinitionNode;
+import io.ballerina.compiler.syntax.tree.ModuleMemberDeclarationNode;
+import io.ballerina.compiler.syntax.tree.ModulePartNode;
+import io.ballerina.compiler.syntax.tree.NodeList;
 import io.ballerina.projects.BuildOptions;
 import io.ballerina.projects.BuildOptionsBuilder;
 import io.ballerina.projects.Document;
@@ -50,7 +53,6 @@ import io.ballerina.shell.snippet.types.ExecutableSnippet;
 import io.ballerina.shell.snippet.types.ImportDeclarationSnippet;
 import io.ballerina.shell.snippet.types.ModuleMemberDeclarationSnippet;
 import io.ballerina.shell.snippet.types.VariableDeclarationSnippet;
-import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.StringUtils;
 import io.ballerina.tools.text.LinePosition;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
@@ -75,7 +77,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -86,7 +87,6 @@ import java.util.stream.Collectors;
 public class ClassLoadInvoker extends Invoker implements ImportProcessor {
     // Context related information
     public static final String CONTEXT_EXPR_VAR_NAME = "expr";
-    public static final String CONTEXT_CURSOR_NAME = "<<cursor>>";
     // Main class and method names to invoke
     protected static final String MODULE_INIT_CLASS_NAME = "$_init";
     protected static final String MODULE_MAIN_METHOD_NAME = "main";
@@ -102,10 +102,6 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
      * Set of symbols that are known or seen at this point.
      */
     protected final Set<HashedSymbol> knownSymbols;
-    /**
-     * The import creator to use in importing.
-     */
-    protected final TypeSignatureParser typeSignatureParser;
     /**
      * List of imports done.
      * These are imported to the read generated code as necessary.
@@ -157,7 +153,6 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
         this.newImplicitImports = new HashSet<>();
         this.knownSymbols = new HashSet<>();
         this.imports = new HashedImports();
-        this.typeSignatureParser = new TypeSignatureParser(this);
     }
 
     /**
@@ -193,64 +188,72 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
     }
 
     @Override
-    public Pair<Boolean, Optional<Object>> execute(Snippet newSnippet) throws InvokerException {
+    public Optional<Object> execute(Snippet newSnippet) throws InvokerException {
         if (!this.initialized.get()) {
-            this.initialize();
+            throw new IllegalStateException("Invoker execution not initialized.");
         }
+
         newSymbols.clear();
         newImplicitImports.clear();
 
         // TODO: Fix the closure bug. Following will not work with isolated functions.
         // newSnippet.modify(new GlobalLoadModifier(globalVars));
 
-        boolean isExecutionSuccessful = true;
-        Object executionResult = null;
-        if (newSnippet.isImport()) {
-            // Only 1 compilation to find import validity and exit.
-            // No execution is done.
-            assert newSnippet instanceof ImportDeclarationSnippet;
-            String importPrefix = processImport((ImportDeclarationSnippet) newSnippet);
-            isExecutionSuccessful = importPrefix != null;
-        } else if (newSnippet.isModuleMemberDeclaration()) {
-            // Only 1 compilation to find dcln validity and exit.
-            // No execution is done.
-            assert newSnippet instanceof ModuleMemberDeclarationSnippet;
-            ModuleMemberDeclarationSnippet moduleDcln = (ModuleMemberDeclarationSnippet) newSnippet;
-            Pair<String, String> newModuleDcln = processModuleDcln(moduleDcln);
-            this.knownSymbols.addAll(newSymbols);
-            newImplicitImports.forEach(imports::storeImplicitPrefix);
-            moduleDclns.put(newModuleDcln.getFirst(), newModuleDcln.getSecond());
-        } else if (newSnippet instanceof ExecutableSnippet) {
-            // New variables/dclns defined in this iteration.
-            Map<String, String> newVariables = new HashMap<>();
+        switch (newSnippet.getKind()) {
+            case IMPORT_DECLARATION:
+                // Only compilation to find import validity and exit.
+                assert newSnippet instanceof ImportDeclarationSnippet;
+                ImportDeclarationSnippet importDcln = (ImportDeclarationSnippet) newSnippet;
+                String importPrefix = processImport(importDcln);
+                Objects.requireNonNull(importPrefix, "Import prefix identification failed.");
+                return Optional.empty();
 
-            if (newSnippet.isVariableDeclaration()) {
-                assert newSnippet instanceof VariableDeclarationSnippet;
-                VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
-                newVariables.putAll(processVarDcln(varDcln));
-            }
+            case MODULE_MEMBER_DECLARATION:
+                // Only compilation to find dcln validity and exit.
+                assert newSnippet instanceof ModuleMemberDeclarationSnippet;
+                ModuleMemberDeclarationSnippet moduleDcln = (ModuleMemberDeclarationSnippet) newSnippet;
+                Map.Entry<String, String> newModuleDcln = processModuleDcln(moduleDcln);
+                this.knownSymbols.addAll(this.newSymbols);
+                this.newImplicitImports.forEach(imports::storeImplicitPrefix);
+                this.moduleDclns.put(newModuleDcln.getKey(), newModuleDcln.getValue());
+                return Optional.empty();
 
-            // Compile and execute the real program.
-            ClassLoadContext context = createExecutionContext((ExecutableSnippet) newSnippet, newVariables);
-            SingleFileProject project = getProject(context, EXECUTION_TEMPLATE_FILE);
-            PackageCompilation compilation = compile(project);
-            JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
-            isExecutionSuccessful = executeProject(project, jBallerinaBackend);
+            case VARIABLE_DECLARATION:
+            case STATEMENT:
+            case EXPRESSION:
+                assert newSnippet instanceof ExecutableSnippet;
+                Map<String, String> newVariables = new HashMap<>();
+                if (newSnippet.isVariableDeclaration()) {
+                    assert newSnippet instanceof VariableDeclarationSnippet;
+                    VariableDeclarationSnippet varDcln = (VariableDeclarationSnippet) newSnippet;
+                    newVariables.putAll(processVarDcln(varDcln));
+                }
 
-            // Save required data if execution was successful
-            if (isExecutionSuccessful) {
+                // Compile and execute the real program.
+                ClassLoadContext context = createExecutionContext((ExecutableSnippet) newSnippet, newVariables);
+                SingleFileProject project = getProject(context, EXECUTION_TEMPLATE_FILE);
+                PackageCompilation compilation = compile(project);
+                JBallerinaBackend jBallerinaBackend = JBallerinaBackend.from(compilation, JvmTarget.JAVA_11);
+                boolean isExecutionSuccessful = executeProject(project, jBallerinaBackend);
+
+                if (!isExecutionSuccessful) {
+                    addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
+                    throw new InvokerException();
+                }
+
+                // Save required data if execution was successful
+                Object executionResult = ClassLoadMemory.recall(contextId, CONTEXT_EXPR_VAR_NAME);
                 this.knownSymbols.addAll(newSymbols);
-                newImplicitImports.forEach(imports::storeImplicitPrefix);
+                this.newImplicitImports.forEach(imports::storeImplicitPrefix);
                 if (newSnippet.isVariableDeclaration()) {
                     newVariables.forEach(globalVars::put);
                 }
-            } else {
-                addDiagnostic(Diagnostic.error("Unhandled Runtime Error."));
-            }
-            executionResult = ClassLoadMemory.recall(contextId, CONTEXT_EXPR_VAR_NAME);
-        }
+                return Optional.ofNullable(executionResult);
 
-        return new Pair<>(isExecutionSuccessful, Optional.ofNullable(executionResult));
+            default:
+                addDiagnostic(Diagnostic.error("Unexpected snippet type."));
+                throw new UnsupportedOperationException();
+        }
     }
 
     @Override
@@ -280,7 +283,7 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
      *
      * @param importSnippet New import snippet string.
      * @return Whether import is a valid import.
-     * @throws InvokerException If compilation failed.
+     * @throws InvokerException If importing failed.
      */
     public String processImport(ImportDeclarationSnippet importSnippet) throws InvokerException {
         String moduleName = importSnippet.getImportedModule();
@@ -299,7 +302,7 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
         if (isImportStatementValid(importSnippet.toString())) {
             return imports.storeImport(importSnippet);
         }
-        return null;
+        throw new InvokerException();
     }
 
     /**
@@ -322,31 +325,26 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
         Map<String, String> foundVariables = new HashMap<>();
         for (Symbol symbol : symbols) {
             HashedSymbol hashedSymbol = new HashedSymbol(symbol);
+            String variableName = symbol.name();
+
+            boolean ignoreSymbol = knownSymbols.contains(hashedSymbol)
+                    || foundVariables.containsKey(variableName)
+                    || variableName.contains(DOLLAR);
+            boolean acceptableSymbol = symbol instanceof VariableSymbol
+                    || symbol instanceof FunctionSymbol;
 
             // Identify variable type
-            TypeSymbol typeSymbol;
-            if (symbol.kind() == SymbolKind.VARIABLE) {
-                assert symbol instanceof VariableSymbol;
-                typeSymbol = ((VariableSymbol) symbol).typeDescriptor();
-            } else if (symbol.kind() == SymbolKind.FUNCTION) {
-                assert symbol instanceof FunctionSymbol;
-                typeSymbol = ((FunctionSymbol) symbol).typeDescriptor();
-            } else {
-                continue;
-            }
+            if (!ignoreSymbol && acceptableSymbol) {
+                TypeSymbol typeSymbol = (symbol instanceof VariableSymbol)
+                        ? ((VariableSymbol) symbol).typeDescriptor()
+                        : ((FunctionSymbol) symbol).typeDescriptor();
 
-            // Add variable type
-            String variableName = symbol.name();
-            if (knownSymbols.contains(hashedSymbol)
-                    || foundVariables.containsKey(variableName)
-                    || variableName.contains(DOLLAR)) {
-                continue;
+                TypeSignatureParser typeSignatureParser = new TypeSignatureParser(this);
+                typeSignatureParser.process(typeSymbol);
+                foundVariables.put(symbol.name(), typeSignatureParser.getExportedType());
+                this.newImplicitImports.addAll(typeSignatureParser.getImplicitImportPrefixes());
+                this.newSymbols.add(hashedSymbol);
             }
-
-            Pair<String, Set<String>> parsedData = typeSignatureParser.process(typeSymbol);
-            foundVariables.put(symbol.name(), parsedData.getFirst());
-            this.newImplicitImports.addAll(parsedData.getSecond());
-            this.newSymbols.add(hashedSymbol);
         }
 
         return foundVariables;
@@ -362,7 +360,8 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
      * @return The newly found type name and its declaration.
      * @throws InvokerException If module dcln is invalid.
      */
-    private Pair<String, String> processModuleDcln(ModuleMemberDeclarationSnippet newSnippet) throws InvokerException {
+    private Map.Entry<String, String> processModuleDcln(ModuleMemberDeclarationSnippet newSnippet)
+            throws InvokerException {
         // Add all required imports
         this.newImplicitImports.addAll(newSnippet.usedImports());
 
@@ -376,11 +375,11 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
             // Enums cannot be processed as normal because they are desugared in compilation.
             // All new symbols are added as known.
             symbols.stream().map(HashedSymbol::new).forEach(this.newSymbols::add);
-            return new Pair<>(enumName.get(), newSnippet.toString());
+            return Map.entry(enumName.get(), newSnippet.toString());
         } else {
             for (Symbol symbol : symbols) {
                 this.newSymbols.add(new HashedSymbol(symbol));
-                return new Pair<>(symbol.name(), newSnippet.toString());
+                return Map.entry(symbol.name(), newSnippet.toString());
             }
         }
 
@@ -603,21 +602,17 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
         Document document = module.document(documentId.get());
 
         // Find the position of cursor to find the symbols
-        AtomicReference<LinePosition> reference = new AtomicReference<>();
-        document.syntaxTree().rootNode().accept(new NodeVisitor() {
-            @Override
-            public void visit(Token token) {
-                token.leadingMinutiae().forEach((m) -> {
-                    if (m.text().contains(CONTEXT_CURSOR_NAME)) {
-                        reference.set(m.lineRange().startLine());
-                    }
-                });
-            }
-        });
+        // Get the position of the main function, line start of the close brace (after anything in main body)
+        ModulePartNode modulePartNode = document.syntaxTree().rootNode();
+        NodeList<ModuleMemberDeclarationNode> declarationNodes = modulePartNode.members();
+        ModuleMemberDeclarationNode declarationSnippet = declarationNodes.get(declarationNodes.size() - 1);
+        assert declarationSnippet instanceof FunctionDefinitionNode;
+        FunctionBodyNode bodyNode = ((FunctionDefinitionNode) declarationSnippet).functionBody();
+        assert bodyNode instanceof FunctionBodyBlockNode;
+        LinePosition cursorPos = ((FunctionBodyBlockNode) bodyNode).closeBraceToken().lineRange().startLine();
 
         return compilation.getSemanticModel(moduleId)
-                .visibleSymbols(document.name(), reference.get())
-                .stream()
+                .visibleSymbols(document.name(), cursorPos).stream()
                 .filter((s) -> !knownSymbols.contains(new HashedSymbol(s)))
                 .collect(Collectors.toList());
     }

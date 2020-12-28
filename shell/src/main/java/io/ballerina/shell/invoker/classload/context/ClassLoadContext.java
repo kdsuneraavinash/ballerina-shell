@@ -130,11 +130,6 @@ public class ClassLoadContext {
     }
 
     @TemplateAccessible
-    public String getCursorName() {
-        return ClassLoadInvoker.CONTEXT_CURSOR_NAME;
-    }
-
-    @TemplateAccessible
     public String getMemoryRef() {
         return ClassLoadMemory.class.getCanonicalName();
     }

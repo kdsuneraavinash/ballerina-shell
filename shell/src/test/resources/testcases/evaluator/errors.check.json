@@ -20,7 +20,7 @@
     "description": "Pass values to function II.",
     "code": "parse(\"invalid\");",
     "stdout": "Exception occurred: error(\"{ballerina/lang.int}NumberParsingError\",message=\"'string' value 'invalid' cannot be converted to 'int'\")\n",
-    "exitCode": 1
+    "error": "InvokerException"
   },
   {
     "description": "Pass values to function III.",
@@ -31,6 +31,6 @@
     "description": "Pass values to function IV.",
     "code": "scale(\"Invalid\");",
     "stdout": "Exception occurred: error(\"{ballerina/lang.int}NumberParsingError\",message=\"'string' value 'Invalid' cannot be converted to 'int'\")\n",
-    "exitCode": 1
+    "error": "InvokerException"
   }
 ]

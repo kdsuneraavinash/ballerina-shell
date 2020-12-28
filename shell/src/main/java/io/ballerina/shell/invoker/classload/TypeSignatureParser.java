@@ -20,14 +20,14 @@ package io.ballerina.shell.invoker.classload;
 
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.shell.exceptions.InvokerException;
-import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.StringUtils;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Matcher;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -57,68 +57,68 @@ public class TypeSignatureParser {
 
     private final ImportProcessor importProcessor;
 
+    private final AtomicReference<String> exportedType;
+    private final Set<String> implicitImportPrefixes;
+
     public TypeSignatureParser(ImportProcessor importProcessor) {
+        this.exportedType = new AtomicReference<>("any|error");
+        this.implicitImportPrefixes = new HashSet<>();
         this.importProcessor = importProcessor;
     }
 
     /**
      * Formats the type signature so that it can be used as a typedef.
      * Required implicit imports are added in this. Also empty <> are fixed.
-     * TODO: Fix invisible type bug.
      *
      * @param typeSymbol Type symbol to parse.
-     * @return Formatted type and a set of import prefixes required to include type.
      */
-    public Pair<String, Set<String>> process(TypeSymbol typeSymbol) throws InvokerException {
-        Set<String> implicitImportPrefixes = new HashSet<>();
-        String exportFormattedType = processExportedTypes(typeSymbol.signature(), implicitImportPrefixes);
+    public void process(TypeSymbol typeSymbol) {
+        String exportFormattedType = EXPORTED_NAME.matcher(typeSymbol.signature())
+                .replaceAll((this::processExportedType));
         String xmlNeverFormattedType = exportFormattedType.replace("xml<>", "xml<never>");
         String anyDataFormattedType = xmlNeverFormattedType.replace("anydata...;", "");
-        return new Pair<>(anyDataFormattedType, implicitImportPrefixes);
+        this.exportedType.set(anyDataFormattedType);
     }
 
     /**
      * Formats the type signature so that it can be used as a typedef. For example, int will be formatted to int.
      * ballerina/abc:1.0:pqr will be converted to 'imp1:pqr and an import added as import ballerina/abc.pqr as 'imp1.
      *
-     * @param signature              Unformatted type signature.
-     * @param implicitImportPrefixes Set to add found imports.
-     * @return Formatted type.
+     * @param matchResult Match result of a type in format.
      */
-    public String processExportedTypes(String signature, Set<String> implicitImportPrefixes) throws InvokerException {
-        Matcher matcher = EXPORTED_NAME.matcher(signature);
-        AtomicBoolean isError = new AtomicBoolean(false);
-        String formattedType = matcher.replaceAll((result -> {
-            try {
-                // Find required information to create import
-                String orgName = StringUtils.quoted(result.group(1));
-                String[] rawModuleNames = result.group(2).split("\\.");
-                String defaultPrefix = StringUtils.quoted(result.group(4));
-                String typeName = result.group(5);
+    private String processExportedType(MatchResult matchResult) {
+        // Find required information to create import
+        String orgName = StringUtils.quoted(matchResult.group(1));
+        String[] rawModuleNames = matchResult.group(2).split("\\.");
+        String defaultPrefix = StringUtils.quoted(matchResult.group(4));
+        // TODO: Check if type name is visible
+        String typeName = matchResult.group(5);
 
-                String moduleName = Arrays.stream(rawModuleNames)
-                        .map(StringUtils::quoted).collect(Collectors.joining("."));
+        String moduleName = Arrays.stream(rawModuleNames)
+                .map(StringUtils::quoted)
+                .collect(Collectors.joining("."));
 
-                // If org name is anonymous, this is a declared type.
-                if (orgName.equals("'$anon/")) {
-                    return typeName;
-                }
-
-                // Create import snippet and find prefix using processor
-                String fullModuleName = orgName + moduleName;
-                String importPrefix = importProcessor.processImplicitImport(fullModuleName, defaultPrefix);
-
-                implicitImportPrefixes.add(importPrefix);
-                return String.format("%s:%s", importPrefix, typeName);
-            } catch (InvokerException e) {
-                isError.set(true);
-                return result.group(0);
-            }
-        }));
-
-        if (isError.get()) {
-            throw new InvokerException();
+        // If org name is anonymous, this is a declared type.
+        if (orgName.equals("'$anon/")) {
+            return typeName;
         }
-        return formattedType;
+
+        // Create import snippet and find prefix using processor
+        String fullModuleName = orgName + moduleName;
+        try {
+            String importPrefix = importProcessor.processImplicitImport(fullModuleName, defaultPrefix);
+            implicitImportPrefixes.add(importPrefix);
+            return String.format("%s:%s", importPrefix, typeName);
+        } catch (InvokerException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getExportedType() {
+        return exportedType.get();
+    }
+
+    public Collection<String> getImplicitImportPrefixes() {
+        return implicitImportPrefixes;
     }
 }

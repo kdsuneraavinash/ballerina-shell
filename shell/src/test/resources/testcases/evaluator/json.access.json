@@ -16,7 +16,7 @@
   {
     "description": "Field access of non-existing field.",
     "code": "j1.age.year",
-    "exitCode": 1,
+    "error": "InvokerException",
     "stdout": "Exception occurred: error(\"{ballerina/lang.map}KeyNotFound\",message=\"Key 'age' not found in JSON mapping\")\n"
   },
   {

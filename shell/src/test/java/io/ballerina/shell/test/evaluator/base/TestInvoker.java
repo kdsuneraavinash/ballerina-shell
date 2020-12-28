@@ -19,7 +19,6 @@
 package io.ballerina.shell.test.evaluator.base;
 
 import io.ballerina.shell.invoker.classload.ClassLoadInvoker;
-import org.testng.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -31,11 +30,6 @@ import java.nio.charset.Charset;
  */
 public class TestInvoker extends ClassLoadInvoker {
     private String output;
-    private TestCase testCase;
-
-    public TestInvoker() {
-        this.testCase = new TestCase();
-    }
 
     @Override
     protected int invokeMethod(Method method) throws IllegalAccessException {
@@ -43,18 +37,12 @@ public class TestInvoker extends ClassLoadInvoker {
         ByteArrayOutputStream stdOutBaOs = new ByteArrayOutputStream();
         try {
             System.setOut(new PrintStream(stdOutBaOs, true, Charset.defaultCharset()));
-            int exitCode = super.invokeMethod(method);
-            Assert.assertEquals(exitCode, testCase.getExitCode(), testCase.getDescription());
-            return exitCode;
+            return super.invokeMethod(method);
         } finally {
             this.output = stdOutBaOs.toString(Charset.defaultCharset());
             this.output = this.output.replace("\r\n", "\n");
             System.setOut(stdOut);
         }
-    }
-
-    public void setTestCaseStatement(TestCase testCase) {
-        this.testCase = testCase;
     }
 
     public String getOutput() {

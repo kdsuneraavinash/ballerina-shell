@@ -25,7 +25,6 @@ import io.ballerina.shell.parser.TreeParser;
 import io.ballerina.shell.preprocessor.Preprocessor;
 import io.ballerina.shell.snippet.Snippet;
 import io.ballerina.shell.snippet.factory.SnippetFactory;
-import io.ballerina.shell.utils.Pair;
 import io.ballerina.shell.utils.timeit.TimeIt;
 
 import java.util.Collection;
@@ -82,22 +81,18 @@ public class Evaluator extends DiagnosticReporter {
      * @return String output from the evaluator. This will be the last output.
      */
     public String evaluate(String source) throws BallerinaShellException {
-        String result = null;
+        String response = null;
         try {
             Collection<String> statements = TimeIt.timeIt(preprocessor, () -> preprocessor.process(source));
             for (String statement : statements) {
                 Node rootNode = TimeIt.timeIt(treeParser, () -> treeParser.parse(statement));
                 Snippet snippet = TimeIt.timeIt(snippetFactory, () -> snippetFactory.createSnippet(rootNode));
-                Pair<Boolean, Optional<Object>> invokerOut = TimeIt.timeIt(invoker, () -> invoker.execute(snippet));
-                if (invokerOut.getFirst()) {
-                    if (invokerOut.getSecond().isPresent()) {
-                        result = String.valueOf(invokerOut.getSecond().get());
-                    }
-                } else {
-                    return result;
+                Optional<Object> invokerOut = TimeIt.timeIt(invoker, () -> invoker.execute(snippet));
+                if (invokerOut.isPresent()) {
+                    response = String.valueOf(invokerOut.get());
                 }
             }
-            return result;
+            return response;
         } finally {
             addAllDiagnostics(preprocessor.diagnostics());
             addAllDiagnostics(treeParser.diagnostics());

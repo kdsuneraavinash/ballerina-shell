@@ -20,6 +20,6 @@
     "description": "View error.",
     "code": "readRecord(r2);",
     "stdout": "Exception occurred: error(\"Record is nil\")\n",
-    "exitCode": 1
+    "error": "InvokerException"
   }
 ]
