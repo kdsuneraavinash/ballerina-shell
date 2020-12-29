@@ -18,7 +18,6 @@
 
 package io.ballerina.shell.cli;
 
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -40,13 +39,6 @@ public abstract class TerminalAdapter {
     protected static final int BRIGHT = 8;
 
     private static final String NEWLINE = "\n";
-
-    /**
-     * Returns the writer object to write.
-     *
-     * @return Writer to write.
-     */
-    protected abstract PrintWriter writer();
 
     /**
      * Colors a text by the given color.
@@ -71,13 +63,12 @@ public abstract class TerminalAdapter {
      *
      * @param text Text to output.
      */
-    public void println(String text) {
-        this.writer().println(text);
-        this.writer().flush();
-    }
+    public abstract void println(String text);
 
     public void result(String text) {
-        this.println(this.color(text, BLUE | BRIGHT));
+        if (text != null) {
+            this.println(this.color(text, BLUE | BRIGHT));
+        }
     }
 
     public void error(String text) {

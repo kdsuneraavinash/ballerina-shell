@@ -16,27 +16,24 @@
  * under the License.
  */
 
-package io.ballerina.shell.cli.handlers;
-
+import base.TestAdapter;
+import base.TestCase;
+import base.TestCases;
 import io.ballerina.shell.cli.BallerinaShell;
+import io.ballerina.shell.cli.Configuration;
+import io.ballerina.shell.cli.TerminalAdapter;
 
-import java.util.function.Supplier;
+import java.util.List;
 
 /**
- * Handler that will output a string.
- * String is given as a callback.
+ * Base test class to test the shell.
  */
-public class StringInfoCommand extends AbstractCommand {
-    protected Supplier<String> supplier;
-
-    public StringInfoCommand(BallerinaShell ballerinaShell,
-                             Supplier<String> supplier) {
-        super(ballerinaShell);
-        this.supplier = supplier;
-    }
-
-    @Override
-    public void run(String... args) {
-        ballerinaShell.outputInfo(supplier.get());
+public abstract class AbstractShellTest {
+    protected void testShell(String fileName) {
+        List<TestCase> testCases = TestUtils.loadTestCases(fileName, TestCases.class);
+        Configuration configuration = new Configuration(false, Configuration.EvaluatorMode.DEFAULT);
+        TerminalAdapter terminalAdapter = new TestAdapter(testCases);
+        BallerinaShell ballerinaShell = new BallerinaShell(configuration, terminalAdapter);
+        ballerinaShell.run();
     }
 }

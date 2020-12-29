@@ -102,9 +102,7 @@ public class BallerinaShell {
             try {
                 if (!commandHandler.handle(source)) {
                     String result = evaluator.evaluate(source);
-                    if (result != null) {
-                        terminal.result(result);
-                    }
+                    terminal.result(result);
                 }
             } catch (Exception e) {
                 if (!evaluator.hasErrors()) {

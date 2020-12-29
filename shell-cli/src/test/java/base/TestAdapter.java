@@ -16,44 +16,46 @@
  * under the License.
  */
 
-package io.ballerina.shell.cli.jline;
+package base;
 
 import io.ballerina.shell.cli.TerminalAdapter;
-import org.jline.reader.EndOfFileException;
-import org.jline.reader.LineReader;
-import org.jline.reader.UserInterruptException;
-import org.jline.utils.AttributedStringBuilder;
-import org.jline.utils.AttributedStyle;
+import org.testng.Assert;
+
+import java.util.List;
 
 /**
- * Terminal adapter which encapsulates Jline.
+ * Adapter to test cases.
  */
-public class JlineTerminalAdapter extends TerminalAdapter {
-    private final LineReader lineReader;
+public class TestAdapter extends TerminalAdapter {
+    private final List<TestCase> testCases;
+    private int currentTest;
 
-    public JlineTerminalAdapter(LineReader lineReader) {
-        this.lineReader = lineReader;
+    public TestAdapter(List<TestCase> testCases) {
+        this.testCases = testCases;
     }
 
     @Override
     protected String color(String text, int color) {
-        return new AttributedStringBuilder()
-                .style(AttributedStyle.DEFAULT.foreground(color))
-                .append(text).toAnsi();
+        return text;
     }
 
     @Override
     public String readLine(String prefix, String postfix) {
-        try {
-            return lineReader.readLine(prefix, postfix, (Character) null, null);
-        } catch (UserInterruptException | EndOfFileException e) {
-            return "";
-        }
+        return currentTestCase().getInput();
     }
 
     @Override
     public void println(String text) {
-        lineReader.getTerminal().writer().println(text);
-        lineReader.getTerminal().writer().flush();
+    }
+
+    @Override
+    public void result(String text) {
+        Assert.assertEquals(text, currentTestCase().getOutput(),
+                currentTestCase().getDescription());
+        currentTest++;
+    }
+
+    private TestCase currentTestCase() {
+        return testCases.get(currentTest);
     }
 }
