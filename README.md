@@ -1,12 +1,8 @@
 # Ballerina Shell
 
-A REPL program for the [ballerina language](https://github.com/ballerina-platform/ballerina-lang). Ballerina is an open
-source programming language and platform for cloud-era application programmers to easily write software that just works.
+A REPL program for the [ballerina language](https://github.com/ballerina-platform/ballerina-lang). Ballerina is an open source programming language and platform for cloud-era application programmers to easily write software that just works.
 
-The Ballerina-shell tool is an interactive tool for learning the Ballerina programming language and prototyping
-Ballerina code. Ballerina-shell is a Read-Evaluate-Print Loop (REPL), which evaluates declarations, statements, and
-expressions as they are entered and immediately shows the results. Currently, the tool is run via the command line.
-Using Ballerina-shell, you can enter program statements one at a time and immediately see the result.
+The Ballerina-shell tool is an interactive tool for learning the Ballerina programming language and prototyping Ballerina code. Ballerina-shell is a Read-Evaluate-Print Loop (REPL), which evaluates declarations, statements, and expressions as they are entered and immediately shows the results. Currently, the tool is run via the command line. Using Ballerina-shell, you can enter program statements one at a time and immediately see the result.
 
 ## Demo
 
@@ -41,7 +37,15 @@ The project is implemented in two base modules.
   ```ballerina
   // This will not work due to type EN converting to english
   enum Language {EN="english", TA="tamil", SI="sinhala"}
-  EN variable = "english"
+  EN variable = "english"  // <- Error
+  ```
+
+- **Support with external libraries not tested completely** - Even though it is possible to run this against external libraries, this is not fully tested. Some issues, especially relating to invincible types, may occur. For an example following is a possible problematic scenario.
+
+  ```ballerina
+  import abc/pqr
+  // If pqr:call() returns a value of which the type is private, following will fail.
+  var r = pqr:call()
   ```
 
 ### Related Issues
@@ -120,6 +124,5 @@ post on reple: "Replay-Based" REPLs for Compiled Languages and limitations/fixes
 
 [RCRL](https://github.com/onqtam/rcrl) - Read-Compile-Run-Loop: tiny and powerful interactive C++ compiler (REPL)
 
-[JShell](https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm#JSHEL-GUID-630F27C8-1195-4989-9F6B-2C51D46F52C8)
-- A REPL for Java programming language.
+[JShell](https://docs.oracle.com/javase/9/jshell/introduction-jshell.htm#JSHEL-GUID-630F27C8-1195-4989-9F6B-2C51D46F52C8) - A REPL for Java programming language.
 

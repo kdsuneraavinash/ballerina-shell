@@ -39,12 +39,9 @@ public class ReplShellLauncher implements Callable<Integer> {
     @CommandLine.Option(names = {"-d", "--debug"}, description = "Whether to enable debug mode from start.")
     private boolean isDebug = false;
 
-    @Override
-    public Integer call() throws Exception {
-        Configuration configuration = new Configuration(isDebug, mode);
-        ReplShellApplication.execute(configuration);
-        return 0;
-    }
+    @SuppressWarnings("FieldMayBeFinal")
+    @CommandLine.Option(names = {"-f", "--force-dumb"}, description = "Whether to force use of dumb terminal.")
+    private boolean forceDumb = false;
 
     /**
      * Launch the REPL.
@@ -55,5 +52,12 @@ public class ReplShellLauncher implements Callable<Integer> {
         int exitCode = new CommandLine(new ReplShellLauncher())
                 .setCaseInsensitiveEnumValuesAllowed(true).execute(args);
         System.exit(exitCode);
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        Configuration configuration = new Configuration(isDebug, forceDumb, mode);
+        ReplShellApplication.execute(configuration);
+        return 0;
     }
 }
