@@ -18,7 +18,7 @@ dependencies {
     implementation(group: 'info.picocli', name: 'picocli', version: '4.5.2')
     annotationProcessor 'info.picocli:picocli-codegen:4.5.2'
 
-    implementation(group: 'org.jline', name: 'jline', version: '3.17.1')
+    implementation(group: 'org.jline', name: 'jline', version: '3.11.0')
     testImplementation('org.testng:testng:6.14.3') {
         because("To test the core functionality")
     }
