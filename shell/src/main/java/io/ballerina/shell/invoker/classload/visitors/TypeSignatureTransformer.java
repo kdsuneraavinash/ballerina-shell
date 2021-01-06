@@ -198,14 +198,17 @@ public class TypeSignatureTransformer extends TypeSymbolTransformer<String> {
     @Override
     protected void visit(RecordTypeSymbol symbol) {
         // Record type symbol.
+
         StringJoiner joiner;
-        if (symbol.inclusive()) {
+        // TODO: Find a better way to decide if a symbol is sealed or not.
+        boolean isRecordInclusive = !symbol.signature().endsWith("|}");
+        if (isRecordInclusive) {
             joiner = new StringJoiner(" ", "{ ", " }");
             symbol.fieldDescriptors().stream().map(fd -> transformField(fd) + ";").forEach(joiner::add);
         } else {
             joiner = new StringJoiner(" ", "{| ", " |}");
             symbol.fieldDescriptors().stream().map(fd -> transformField(fd) + ";").forEach(joiner::add);
-            symbol.restTypeDescriptor().ifPresent(typeDescriptor -> joiner.add(typeDescriptor.signature() + "...;"));
+            symbol.restTypeDescriptor().ifPresent(typeDescriptor -> joiner.add(transformType(typeDescriptor) + "...;"));
         }
         this.setState("record " + joiner.toString());
     }
@@ -278,6 +281,7 @@ public class TypeSignatureTransformer extends TypeSymbolTransformer<String> {
         // XML. If signature is `xml` it is kept as is.
         // Otherwise, signature is recalculated. This signature is at least 'never'.
         String stringRepr = "xml";
+        // TODO: Find better way to check if xml type is empty. (BType is xmlType)
         if (!symbol.signature().equals("xml")) {
             String typeRepr = symbol.typeParameter().map(this::transformType).orElse("never");
             stringRepr = "xml<" + typeRepr + ">";

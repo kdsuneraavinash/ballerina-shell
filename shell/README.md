@@ -84,7 +84,7 @@ function f(int x) returns int{
 
 Variable declarations undergo two stages of compilation. The initial compilation is done to find the variable symbol information. The latter compilation is done to execute and save the after-state.
 
-The initial compilation is done similar to module-level declarations. However, the snippets are placed inside a method to enable complex expressions as initializers that would be illegal in a top-level variable declaration and to enable list/array/record binding patterns. The symbols in the method are extracted via `visibleSymbols` API in the `SemanticModel`. The location for symbol finding is taken using `SyntaxTree`. The type will be taken for any `VariableSymbol` or `FunctionSymbol` using their `symbol.typeDescriptor()` method. However, the type is returned as a string from this method and thus some regex parsing is done to find any required imports to include the type. The main reason for this is the `var` type variables.
+The initial compilation is done similar to module-level declarations. However, the snippets are placed inside a method to enable complex expressions as initializers that would be illegal in a top-level variable declaration and to enable list/array/record binding patterns. The symbols in the method are extracted via `visibleSymbols` API in the `SemanticModel`. The location for symbol finding is taken using `SyntaxTree`. The type will be taken for any `VariableSymbol` or `FunctionSymbol` using their `symbol.typeDescriptor()` method. The type is then traversed and transformed into a string and implicit imports are found that are required to include the type. The main reason for this is the `var` type variables.
 
 ```ballerina
 var x = abc:X()
@@ -94,7 +94,7 @@ import pqr
 pqr:Y x = abc:X()
 ```
 
-However, there can be some edge cases unhanded by the current implementation.
+However, there can be some edge cases unhanded by the current implementation. Also, private types with `var` is not supported since there is currently no implementation to find if a type is not public.
 
 > TODO: Fix bugs of edge cases related to type.
 
