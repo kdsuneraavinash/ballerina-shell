@@ -19,8 +19,8 @@
 import base.TestAdapter;
 import base.TestCase;
 import base.TestCases;
+import io.ballerina.shell.cli.BShellConfiguration;
 import io.ballerina.shell.cli.BallerinaShell;
-import io.ballerina.shell.cli.Configuration;
 import io.ballerina.shell.cli.TerminalAdapter;
 
 import java.util.List;
@@ -31,7 +31,7 @@ import java.util.List;
 public abstract class AbstractShellTest {
     protected void testShell(String fileName) {
         List<TestCase> testCases = TestUtils.loadTestCases(fileName, TestCases.class);
-        Configuration configuration = new Configuration(false, true, Configuration.EvaluatorMode.DEFAULT);
+        BShellConfiguration configuration = new BShellConfiguration(false, true);
         TerminalAdapter terminalAdapter = new TestAdapter(testCases);
         BallerinaShell ballerinaShell = new BallerinaShell(configuration, terminalAdapter);
         ballerinaShell.run();
