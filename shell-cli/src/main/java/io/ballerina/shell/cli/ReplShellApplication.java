@@ -49,7 +49,7 @@ public class ReplShellApplication {
         if (configuration.isDumb()) {
             terminal = TerminalBuilder.builder()
                     .streams(configuration.getInputStream(), configuration.getOutputStream())
-                    .dumb(true).build();
+                    .jna(false).jansi(false).dumb(true).build();
         } else {
             terminal = TerminalBuilder.terminal();
             configuration.setDumb(terminal.getType().equals(Terminal.TYPE_DUMB));

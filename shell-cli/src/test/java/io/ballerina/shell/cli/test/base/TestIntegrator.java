@@ -64,30 +64,33 @@ public class TestIntegrator extends Thread {
                 StringBuilder recordedInput = new StringBuilder();
                 while (true) {
                     String line = Objects.requireNonNull(testReader.readLine());
-                    recordedInput.append(line);
+                    recordedInput.append(line).append(System.lineSeparator());
                     if (line.endsWith(shellPrompt)) {
                         break;
                     }
                 }
 
-                // The input will be in format "[GARBAGE][PROMPT][INPUT][OUTPUT][PROMPT]".
-                String recordedContent = recordedInput.toString();
+                // The input will be in format "[GARBAGE][PROMPT][INPUT][OUTPUT][PROMPT]\n".
+                String recordedContent = filteredString(recordedInput.toString());
                 // Remove all unnecessary prefix/prompt strings. (Remove GARBAGE and PROMPT)
                 recordedContent = recordedContent.substring(recordedContent.indexOf(shellPrompt));
                 recordedContent = recordedContent.substring(shellPrompt.length(),
-                        recordedContent.length() - shellPrompt.length());
+                        recordedContent.length() - shellPrompt.length() - System.lineSeparator().length());
 
                 // Extract INPUT and verify.
                 String recordedContentInput = recordedContent.substring(0, testCase.getInput().length());
                 Assert.assertEquals(recordedContentInput, testCase.getInput(), testCase.getDescription());
 
                 // Extract OUTPUT and test.
-                String shellOutput = recordedContent.substring(testCase.getInput().length());
-                shellOutput = shellOutput.substring(TERM_TRIM_CHARS, shellOutput.length() - TERM_TRIM_CHARS);
+                String shellOutput = recordedContent.substring(testCase.getInput().length()).trim();
                 String expectedOutput = Objects.requireNonNullElse(testCase.getOutput(), "");
                 Assert.assertEquals(shellOutput, expectedOutput, testCase.getDescription());
             }
         } catch (IOException ignored) {
         }
+    }
+
+    private String filteredString(String rawString) {
+        return rawString.replaceAll("(\\x9B|\\x1B\\[)[0-?]*[ -/]*[@-~]", "");
     }
 }

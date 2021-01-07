@@ -22,9 +22,15 @@ import org.testng.annotations.Test;
 
 public class BasicShellTest extends AbstractIntegrationTest {
     private static final String BASIC_SMOKE_TEST = "testcases/basics.smoke.json";
+    private static final String BASIC_VALUES_TEST = "testcases/basics.values.json";
 
     @Test
-    public void testCase1() throws Exception {
+    public void testBasicSmoke() throws Exception {
         testShell(BASIC_SMOKE_TEST);
+    }
+
+    @Test
+    public void testBasicValues() throws Exception {
+        testShell(BASIC_VALUES_TEST);
     }
 }
