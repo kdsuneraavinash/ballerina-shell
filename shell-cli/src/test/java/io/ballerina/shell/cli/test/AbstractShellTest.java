@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,12 +16,14 @@
  * under the License.
  */
 
-import base.TestAdapter;
-import base.TestCase;
-import base.TestCases;
+package io.ballerina.shell.cli.test;
+
 import io.ballerina.shell.cli.BShellConfiguration;
 import io.ballerina.shell.cli.BallerinaShell;
 import io.ballerina.shell.cli.TerminalAdapter;
+import io.ballerina.shell.cli.test.base.TestAdapter;
+import io.ballerina.shell.cli.test.base.TestCase;
+import io.ballerina.shell.cli.test.base.TestCases;
 
 import java.util.List;
 
