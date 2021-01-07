@@ -16,11 +16,12 @@
  * under the License.
  */
 
-package io.ballerina.shell.cli.test;
+package io.ballerina.shell.cli.test.shell.adapter;
 
 import io.ballerina.shell.cli.BShellConfiguration;
 import io.ballerina.shell.cli.BallerinaShell;
 import io.ballerina.shell.cli.TerminalAdapter;
+import io.ballerina.shell.cli.test.TestUtils;
 import io.ballerina.shell.cli.test.base.TestAdapter;
 import io.ballerina.shell.cli.test.base.TestCase;
 import io.ballerina.shell.cli.test.base.TestCases;

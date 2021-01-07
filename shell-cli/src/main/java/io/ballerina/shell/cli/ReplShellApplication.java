@@ -48,7 +48,7 @@ public class ReplShellApplication {
 
         if (configuration.isDumb()) {
             terminal = TerminalBuilder.builder()
-                    .streams(System.in, System.out)
+                    .streams(configuration.getInputStream(), configuration.getOutputStream())
                     .dumb(true).build();
         } else {
             terminal = TerminalBuilder.terminal();

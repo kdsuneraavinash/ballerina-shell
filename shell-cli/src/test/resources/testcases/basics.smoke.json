@@ -13,6 +13,11 @@
     "output": "110"
   },
   {
+    "description": "View expression value",
+    "input": "i + 2",
+    "output": "112"
+  },
+  {
     "description": "Exit terminal",
     "input": "/exit"
   }

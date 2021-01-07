@@ -18,8 +18,40 @@
 
 package io.ballerina.shell.cli.test.integration;
 
+import io.ballerina.shell.cli.BShellConfiguration;
+import io.ballerina.shell.cli.ReplShellApplication;
+import io.ballerina.shell.cli.test.TestUtils;
+import io.ballerina.shell.cli.test.base.TestIntegrator;
+import io.ballerina.shell.cli.test.base.TestCase;
+import io.ballerina.shell.cli.test.base.TestCases;
+import org.jline.reader.EndOfFileException;
+
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.util.List;
+
 /**
  * Base class for integration tests.
  */
 public class AbstractIntegrationTest {
+    protected void testShell(String fileName) throws Exception {
+        List<TestCase> testCases = TestUtils.loadTestCases(fileName, TestCases.class);
+
+        PipedOutputStream testOut = new PipedOutputStream();
+        PipedInputStream shellIn = new PipedInputStream(testOut);
+        PipedOutputStream shellOut = new PipedOutputStream();
+        PipedInputStream testIn = new PipedInputStream(shellOut);
+
+        TestIntegrator testIntegrator = new TestIntegrator(testIn, testOut, testCases);
+        testIntegrator.start();
+
+        try {
+            BShellConfiguration configuration = new BShellConfiguration(false,
+                    BShellConfiguration.EvaluatorMode.DEFAULT, shellIn, shellOut);
+            ReplShellApplication.execute(configuration);
+        } catch (EndOfFileException ignored) {
+        }
+
+        testIntegrator.interrupt();
+    }
 }

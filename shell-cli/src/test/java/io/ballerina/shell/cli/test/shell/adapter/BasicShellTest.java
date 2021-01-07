@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.cli.test;
+package io.ballerina.shell.cli.test.shell.adapter;
 
 import org.testng.annotations.Test;
 
