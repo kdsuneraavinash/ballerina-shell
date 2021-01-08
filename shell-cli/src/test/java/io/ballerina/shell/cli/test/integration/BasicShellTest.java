@@ -20,6 +20,9 @@ package io.ballerina.shell.cli.test.integration;
 
 import org.testng.annotations.Test;
 
+/**
+ * Test integration basic tests.
+ */
 public class BasicShellTest extends AbstractIntegrationTest {
     private static final String BASIC_SMOKE_TEST = "testcases/basics.smoke.json";
     private static final String BASIC_VALUES_TEST = "testcases/basics.values.json";

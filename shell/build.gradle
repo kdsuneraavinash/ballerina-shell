@@ -34,11 +34,11 @@ repositories {
 
 dependencies {
     // First party dependencies of the implementation
-    implementation name: 'ballerina-parser-2.0.0-Preview8-SNAPSHOT'
-    implementation name: 'ballerina-tools-api-2.0.0-Preview8-SNAPSHOT'
-    implementation name: 'ballerina-lang-2.0.0-Preview8-SNAPSHOT'
-    implementation name: 'ballerina-rt-2.0.0-Preview8-SNAPSHOT'
-    implementation name: 'central-client-2.0.0-Preview8-SNAPSHOT'
+    implementation name: 'ballerina-parser-2.0.0-Preview9-SNAPSHOT'
+    implementation name: 'ballerina-tools-api-2.0.0-Preview9-SNAPSHOT'
+    implementation name: 'ballerina-lang-2.0.0-Preview9-SNAPSHOT'
+    implementation name: 'ballerina-rt-2.0.0-Preview9-SNAPSHOT'
+    implementation name: 'central-client-2.0.0-Preview9-SNAPSHOT'
 
     // Required transitive dependencies
     implementation name: 'asm-9.0'

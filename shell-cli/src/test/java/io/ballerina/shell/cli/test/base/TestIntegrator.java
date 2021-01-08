@@ -38,7 +38,6 @@ import static io.ballerina.shell.cli.PropertiesLoader.REPL_PROMPT;
  * by piping input/output streams.
  */
 public class TestIntegrator extends Thread {
-    public static final int TERM_TRIM_CHARS = 8;
     private final InputStream inputStream;
     private final OutputStream outputStream;
     private final List<TestCase> testCases;
