@@ -22,6 +22,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.ballerina.compiler.api.symbols.FunctionSymbol;
 import io.ballerina.compiler.api.symbols.Symbol;
+import io.ballerina.compiler.api.symbols.SymbolKind;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
 import io.ballerina.compiler.api.symbols.VariableSymbol;
 import io.ballerina.compiler.syntax.tree.FunctionBodyBlockNode;
@@ -409,8 +410,10 @@ public class ClassLoadInvoker extends Invoker implements ImportProcessor {
             return Map.entry(enumName.get(), newSnippet.toString());
         } else {
             for (Symbol symbol : symbols) {
-                this.newSymbols.add(new HashedSymbol(symbol));
-                return Map.entry(symbol.name(), newSnippet.toString());
+                if (!symbol.kind().equals(SymbolKind.MODULE)) {
+                    this.newSymbols.add(new HashedSymbol(symbol));
+                    return Map.entry(symbol.name(), newSnippet.toString());
+                }
             }
         }
 
