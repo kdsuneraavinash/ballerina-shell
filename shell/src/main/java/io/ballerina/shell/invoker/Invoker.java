@@ -203,12 +203,19 @@ public abstract class Invoker extends DiagnosticReporter {
         return createdFile;
     }
 
+    /**
+     * Get the file that would be used as the buffer for loading project.
+     *
+     * @return File to use.
+     * @throws IOException If file open failed.
+     */
     private File getBufferFile() throws IOException {
         if (this.bufferFile == null) {
             this.bufferFile = USE_TEMP_FILE
                     ? File.createTempFile("main-", ".bal")
                     : new File("main.bal");
             this.bufferFile.deleteOnExit();
+            addDiagnostic(Diagnostic.debug("Ballerina source file used as buffer: " + this.bufferFile));
         }
         return this.bufferFile;
     }
