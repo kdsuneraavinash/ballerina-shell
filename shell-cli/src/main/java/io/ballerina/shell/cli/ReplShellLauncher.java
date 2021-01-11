@@ -43,6 +43,9 @@ public class ReplShellLauncher implements Callable<Integer> {
     @CommandLine.Option(names = {"-f", "--force-dumb"}, description = "Whether to force use of dumb terminal.")
     private boolean forceDumb = false;
 
+    @CommandLine.Option(names = {"-t", "--time-out"}, description = "Timeout to use for tree parsing.")
+    private long timeOut = 1000;
+
     /**
      * Launch the REPL.
      *
@@ -56,7 +59,9 @@ public class ReplShellLauncher implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        BShellConfiguration configuration = new BShellConfiguration(isDebug, forceDumb, mode);
+        BShellConfiguration configuration = new BShellConfiguration.Builder()
+                .setDebug(isDebug).setDumb(forceDumb)
+                .setTreeParsingTimeoutMs(timeOut).setEvaluatorMode(mode).build();
         ReplShellApplication.execute(configuration);
         return 0;
     }

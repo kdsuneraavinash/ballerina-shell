@@ -33,7 +33,7 @@ import java.util.Scanner;
  */
 public abstract class TestUtils {
     private static final String SPECIAL_DELIMITER = "\\A";
-    private static final long TEST_TREE_PARSER_TIMEOUT_MS = 500;
+    private static final long TEST_TREE_PARSER_TIMEOUT_MS = 10000;
 
     /**
      * Loads a JSON fie with the given class format.

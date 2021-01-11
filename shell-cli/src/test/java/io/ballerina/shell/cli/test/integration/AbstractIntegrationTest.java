@@ -21,9 +21,9 @@ package io.ballerina.shell.cli.test.integration;
 import io.ballerina.shell.cli.BShellConfiguration;
 import io.ballerina.shell.cli.ReplShellApplication;
 import io.ballerina.shell.cli.test.TestUtils;
-import io.ballerina.shell.cli.test.base.TestIntegrator;
 import io.ballerina.shell.cli.test.base.TestCase;
 import io.ballerina.shell.cli.test.base.TestCases;
+import io.ballerina.shell.cli.test.base.TestIntegrator;
 import org.jline.reader.EndOfFileException;
 
 import java.io.PipedInputStream;
@@ -46,8 +46,9 @@ public class AbstractIntegrationTest {
         testIntegrator.start();
 
         try {
-            BShellConfiguration configuration = new BShellConfiguration(false,
-                    BShellConfiguration.EvaluatorMode.DEFAULT, shellIn, shellOut);
+            BShellConfiguration configuration = new BShellConfiguration.Builder()
+                    .setInputStream(shellIn).setOutputStream(shellOut)
+                    .setDumb(true).setTreeParsingTimeoutMs(10000).build();
             ReplShellApplication.execute(configuration);
         } catch (EndOfFileException ignored) {
         }
