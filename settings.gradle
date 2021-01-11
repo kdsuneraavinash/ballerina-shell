@@ -1,4 +1,4 @@
 rootProject.name = 'ballerina-shell'
-include 'shell'
+include 'shell-core'
 include 'shell-cli'
 

@@ -20,7 +20,7 @@ plugins {
     id 'java'
 }
 
-description = 'Ballerina - Syntax API Quoter'
+description = 'Ballerina Shell - REPL for Ballerina'
 
 group = 'io.ballerina'
 version = '0.0.1-SNAPSHOT'
