@@ -64,21 +64,31 @@ public class TestIntegrator extends Thread {
             for (TestCase testCase : testCases) {
                 // Give input and record shell in/out.
                 testPrint.println(testCase.getCode() + System.lineSeparator());
-                StringBuilder recordedInput = new StringBuilder();
-                while (true) {
-                    String line = Objects.requireNonNull(testReader.readLine());
-                    recordedInput.append(line).append(System.lineSeparator());
-                    if (line.endsWith(shellPrompt)) {
-                        break;
-                    }
-                }
 
-                // The input will be in format "[GARBAGE][PROMPT][INPUT][OUTPUT][PROMPT]\n".
-                String recordedContent = filteredString(recordedInput.toString());
-                // Remove all unnecessary prefix/prompt strings. (Remove GARBAGE and PROMPT)
-                recordedContent = recordedContent.substring(recordedContent.indexOf(shellPrompt));
-                recordedContent = recordedContent.substring(shellPrompt.length(),
-                        recordedContent.length() - shellPrompt.length() - System.lineSeparator().length());
+                String recordedContent;
+                while (true) {
+                    StringBuilder recordedInput = new StringBuilder();
+                    while (true) {
+                        String line = Objects.requireNonNull(testReader.readLine());
+                        recordedInput.append(line).append(System.lineSeparator());
+                        if (line.endsWith(shellPrompt)) {
+                            break;
+                        }
+                    }
+
+                    // The input will be in format "[GARBAGE][PROMPT][INPUT][OUTPUT][PROMPT][GARBAGE]".
+                    recordedContent = filteredString(recordedInput.toString());
+                    // Remove all unnecessary prefix/prompt strings. (Remove GARBAGE and PROMPT)
+                    // recordedContent = [INPUT][OUTPUT][PROMPT][GARBAGE]
+                    recordedContent = recordedContent.substring(recordedContent.indexOf(shellPrompt) + shellPrompt.length());
+                    if (recordedContent.indexOf(shellPrompt) <= 0) {
+                        continue;
+                    }
+
+                    // recordedContent = [INPUT][OUTPUT]
+                    recordedContent = recordedContent.substring(0, recordedContent.indexOf(shellPrompt));
+                    break;
+                }
 
                 // Extract INPUT and verify.
                 String recordedContentInput = recordedContent.substring(0, testCase.getCode().length());
@@ -87,9 +97,9 @@ public class TestIntegrator extends Thread {
                 // Extract OUTPUT and test.
                 String shellOutput = recordedContent.substring(testCase.getCode().length()).trim();
                 String expectedOutput = Objects.requireNonNullElse(testCase.getExpr(), "");
-                Assert.assertEquals(shellOutput, expectedOutput, testCase.getDescription());
+                Assert.assertEquals(shellOutput.trim(), expectedOutput.trim(), testCase.getDescription());
 
-                Assert.assertEquals(out.toString(), testCase.getStdout(), testCase.getDescription());
+                Assert.assertEquals(out.toString().trim(), testCase.getStdout().trim(), testCase.getDescription());
                 out.reset();
             }
         } catch (IOException ignored) {
@@ -99,6 +109,8 @@ public class TestIntegrator extends Thread {
     }
 
     private String filteredString(String rawString) {
-        return rawString.replaceAll("(\\x9B|\\x1B\\[)[0-?]*[ -/]*[@-~]", "");
+        return rawString
+                .replaceAll("(\\x9B|\\x1B\\[)[0-?]*[ -/]*[@-~]", "")
+                .replace("\r\n", "\n");
     }
 }
