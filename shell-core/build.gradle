@@ -33,6 +33,8 @@ repositories {
 }
 
 dependencies {
+    implementation project(":shell-rt")
+
     // First party dependencies of the implementation
     implementation name: 'ballerina-parser-2.0.0-Preview9-SNAPSHOT'
     implementation name: 'ballerina-tools-api-2.0.0-Preview9-SNAPSHOT'

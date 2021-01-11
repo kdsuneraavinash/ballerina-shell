@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2021, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * WSO2 Inc. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
@@ -16,9 +16,7 @@
  * under the License.
  */
 
-package io.ballerina.shell.invoker.classload;
-
-import io.ballerina.shell.utils.StringUtils;
+package io.ballerina.shell.rt;
 
 import java.io.PrintStream;
 import java.util.Arrays;
@@ -30,7 +28,8 @@ import java.util.HashMap;
  * Persists the global variables.
  * Uses a string id (context id) to keep different sessions.
  */
-public class ClassLoadMemory {
+public class InvokerMemory {
+    private static final String QUOTE = "'";
     private static final HashMap<String, HashMap<String, Object>> memory = new HashMap<>();
 
     /**
@@ -41,10 +40,9 @@ public class ClassLoadMemory {
      * @param name      Name of the variables.
      * @return The value of the variable.
      */
-    @SuppressWarnings("unused")
     public static Object recall(String contextId, String name) {
         if (memory.containsKey(contextId)) {
-            return memory.get(contextId).getOrDefault(StringUtils.quoted(name.trim()), null);
+            return memory.get(contextId).getOrDefault(quoted(name.trim()), null);
         }
         return null;
     }
@@ -56,10 +54,9 @@ public class ClassLoadMemory {
      * @param name      Name of the variable.
      * @param value     Value of the variable.
      */
-    @SuppressWarnings("unused")
     public static void memorize(String contextId, String name, Object value) {
         HashMap<String, Object> contextMem = memory.getOrDefault(contextId, new HashMap<>());
-        contextMem.put(StringUtils.quoted(name.trim()), value);
+        contextMem.put(quoted(name.trim()), value);
         memory.put(contextId, contextMem);
     }
 
@@ -76,20 +73,30 @@ public class ClassLoadMemory {
 
     // Outputting utility functions
 
-    @SuppressWarnings("unused")
     public static void printerr(Object object) {
         println("Exception occurred: ", object);
     }
 
-    @SuppressWarnings("unused")
     public static String sprintf(String string, Object... objects) {
         return String.format(string, objects);
     }
 
-    @SuppressWarnings("unused")
     public static void println(Object... objects) {
         PrintStream printStream = System.out;
         Arrays.stream(objects).forEach(printStream::print);
         printStream.println();
+    }
+
+    /**
+     * Creates an quoted identifier to use for variable names.
+     *
+     * @param identifier Identifier without quote.
+     * @return Quoted identifier.
+     */
+    private static String quoted(String identifier) {
+        if (String.valueOf(identifier).startsWith(QUOTE)) {
+            return identifier;
+        }
+        return QUOTE + identifier;
     }
 }
