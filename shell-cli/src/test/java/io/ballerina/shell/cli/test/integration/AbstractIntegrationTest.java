@@ -34,7 +34,7 @@ import java.util.List;
  * Base class for integration tests.
  */
 public class AbstractIntegrationTest {
-    protected void testShell(String fileName) throws Exception {
+    protected void test(String fileName) throws Exception {
         List<TestCase> testCases = TestUtils.loadTestCases(fileName, TestCases.class);
 
         PipedOutputStream testOut = new PipedOutputStream();
