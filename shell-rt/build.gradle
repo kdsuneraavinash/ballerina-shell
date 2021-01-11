@@ -25,4 +25,16 @@ description = 'Ballerina Shell - Runtime Dependencies'
 group = 'io.ballerina'
 version = '0.0.1-SNAPSHOT'
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation('org.testng:testng:6.14.3')
+}
+
+test {
+    useTestNG()
+}
+
 ext.moduleName = 'io.ballerina.shell.rt'
